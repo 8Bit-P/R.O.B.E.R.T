@@ -1,0 +1,70 @@
+﻿<Window x:Class="ROBERT_UI.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:ROBERT_UI"
+        mc:Ignorable="d"
+        Height="600" Width="920"
+        WindowStyle="None"
+        ResizeMode="NoResize"
+        Background="Transparent"
+        AllowsTransparency="True">
+
+    <Window.Resources>
+        <Style x:Key="BoxStyle" TargetType="Border">
+            <Setter Property="Background" Value="#383450"/>
+            <Setter Property="CornerRadius" Value="10"/>
+            <Setter Property="Margin" Value="10"/>
+            <Setter Property="Height" Value="100"/>
+            <Setter Property="Width" Value="200"/>
+        </Style>
+    </Window.Resources>
+
+    <Border Background="#272537" CornerRadius="20">
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="500"/>
+                <ColumnDefinition/>
+            </Grid.ColumnDefinitions>
+
+            <Grid.RowDefinitions>
+                <RowDefinition Height="75"/>
+                <RowDefinition/>
+            </Grid.RowDefinitions>
+
+            <TextBlock 
+                Foreground="White"
+                VerticalAlignment="Top"
+                HorizontalAlignment="Left"
+                FontSize="22"
+                Margin="24,18,0,0"> 
+                    R.O.B.E.R.T
+            </TextBlock>
+
+            <Grid Grid.Column="0" Grid.Row="1" Margin="10">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- First Row -->
+                <Border Style="{StaticResource StepperCardTheme}" Grid.Row="0" Grid.Column="0" />
+                <Border Style="{StaticResource StepperCardTheme}" Grid.Row="0" Grid.Column="1" />
+
+                <!-- Second Row -->
+                <Border Style="{StaticResource StepperCardTheme}" Grid.Row="1" Grid.Column="0" />
+                <Border Style="{StaticResource StepperCardTheme}" Grid.Row="1" Grid.Column="1" />
+
+                <!-- Third Row -->
+                <Border Style="{StaticResource StepperCardTheme}" Grid.Row="2" Grid.Column="0" />
+                <Border Style="{StaticResource StepperCardTheme}" Grid.Row="2" Grid.Column="1" />
+            </Grid>
+        </Grid>
+    </Border>
+</Window>
