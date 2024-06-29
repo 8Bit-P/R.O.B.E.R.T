@@ -4,7 +4,7 @@
         <Setter Property="Background" Value="#383450"/>
         <Setter Property="CornerRadius" Value="10"/>
         <Setter Property="Margin" Value="10"/>
-        <Setter Property="Height" Value="100"/>
-        <Setter Property="Width" Value="200"/>
+        <Setter Property="Height" Value="155"/>
+        <Setter Property="Width" Value="155"/>
     </Style>
 </ResourceDictionary>

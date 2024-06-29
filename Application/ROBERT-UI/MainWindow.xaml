@@ -21,7 +21,7 @@
         </Style>
     </Window.Resources>
 
-    <Border Background="#272537" CornerRadius="20">
+    <Border Background="#272537" CornerRadius="10">
         <Grid>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="500"/>
@@ -29,7 +29,7 @@
             </Grid.ColumnDefinitions>
 
             <Grid.RowDefinitions>
-                <RowDefinition Height="75"/>
+                <RowDefinition Height="50"/>
                 <RowDefinition/>
             </Grid.RowDefinitions>
 
@@ -39,7 +39,7 @@
                 HorizontalAlignment="Left"
                 FontSize="22"
                 Margin="24,18,0,0"> 
-                    R.O.B.E.R.T
+                    R.O.B.E.R.T UI
             </TextBlock>
 
             <Grid Grid.Column="0" Grid.Row="1" Margin="10">
@@ -54,7 +54,24 @@
                 </Grid.RowDefinitions>
 
                 <!-- First Row -->
-                <Border Style="{StaticResource StepperCardTheme}" Grid.Row="0" Grid.Column="0" />
+                <Border Style="{StaticResource StepperCardTheme}" Grid.Row="0" Grid.Column="0" >
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="25"/>
+                            <RowDefinition Height="50"/>
+                            <RowDefinition/>
+                        </Grid.RowDefinitions>
+
+                        <TextBlock 
+                            Foreground="White"
+                            VerticalAlignment="Top"
+                            HorizontalAlignment="Left"
+                            FontSize="12"
+                            > 
+                                J1 - stepper
+                        </TextBlock>
+                    </Grid>
+                </Border>
                 <Border Style="{StaticResource StepperCardTheme}" Grid.Row="0" Grid.Column="1" />
 
                 <!-- Second Row -->
@@ -64,6 +81,24 @@
                 <!-- Third Row -->
                 <Border Style="{StaticResource StepperCardTheme}" Grid.Row="2" Grid.Column="0" />
                 <Border Style="{StaticResource StepperCardTheme}" Grid.Row="2" Grid.Column="1" />
+            </Grid>
+
+            <Grid Grid.Column="2" Grid.Row="0" Margin="10">
+               <!--TODO: make a dropdown in the same style with 2 options COM3, COM4-->
+               <!--/Make also a circle to display status in green or red so that it represents connected or disconnected-->
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top">
+                    <!-- Dropdown -->
+                    <!--<ComboBox Style="{StaticResource RoundedComboBox}" SelectedIndex="0">
+                        <ComboBoxItem Content="Select" IsEnabled="False" />
+                        <ComboBoxItem Content="COM3"/>
+                        <ComboBoxItem Content="COM4"/>
+                    </ComboBox>-->
+
+                    <local:COMDropDownCC ItemsSource="{Binding MyStringList}" />
+
+                    <!-- Status Circle -->
+                    <Ellipse Width="15" Height="15" Fill="Red" Margin="10,0,10,0" Name="StatusCircle"/>
+                </StackPanel>
             </Grid>
         </Grid>
     </Border>
