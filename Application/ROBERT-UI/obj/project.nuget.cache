@@ -1,8 +1,16 @@
 {
   "version": 2,
-  "dgSpecHash": "3y8RaxP7BO/En1ba7jEa1YXNxX7ADamB2/gUBxZ7kcitDNCuwoujx2ACLuAId9QZLWz4vxlbt/omMIqxCIDEkA==",
+  "dgSpecHash": "6Fzu5l6rmdJDZpiO7WbwEuEGeHphX7xHogu7oBUR2TW+WDtkp2EOgLCNIcUx1nd5rQBFGEY7JPi1JB/qwr5GcA==",
   "success": true,
   "projectFilePath": "C:\\Users\\apere\\Desktop\\Projects\\R.O.B.E.R.T\\Application\\ROBERT-UI\\ROBERT-UI.csproj",
-  "expectedPackageFiles": [],
+  "expectedPackageFiles": [
+    "C:\\Users\\apere\\.nuget\\packages\\runtime.linux-arm.runtime.native.system.io.ports\\8.0.0\\runtime.linux-arm.runtime.native.system.io.ports.8.0.0.nupkg.sha512",
+    "C:\\Users\\apere\\.nuget\\packages\\runtime.linux-arm64.runtime.native.system.io.ports\\8.0.0\\runtime.linux-arm64.runtime.native.system.io.ports.8.0.0.nupkg.sha512",
+    "C:\\Users\\apere\\.nuget\\packages\\runtime.linux-x64.runtime.native.system.io.ports\\8.0.0\\runtime.linux-x64.runtime.native.system.io.ports.8.0.0.nupkg.sha512",
+    "C:\\Users\\apere\\.nuget\\packages\\runtime.native.system.io.ports\\8.0.0\\runtime.native.system.io.ports.8.0.0.nupkg.sha512",
+    "C:\\Users\\apere\\.nuget\\packages\\runtime.osx-arm64.runtime.native.system.io.ports\\8.0.0\\runtime.osx-arm64.runtime.native.system.io.ports.8.0.0.nupkg.sha512",
+    "C:\\Users\\apere\\.nuget\\packages\\runtime.osx-x64.runtime.native.system.io.ports\\8.0.0\\runtime.osx-x64.runtime.native.system.io.ports.8.0.0.nupkg.sha512",
+    "C:\\Users\\apere\\.nuget\\packages\\system.io.ports\\8.0.0\\system.io.ports.8.0.0.nupkg.sha512"
+  ],
   "logs": []
 }

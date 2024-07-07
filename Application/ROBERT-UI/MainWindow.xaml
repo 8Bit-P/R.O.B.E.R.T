@@ -70,22 +70,22 @@
                             > 
                                 J1 - stepper
                         </TextBlock>
+
+                        <Button Grid.Row="1" Width="50px" Height="50px">+</Button>
+                        <Button Grid.Row="2" Width="50px" Height="50px">-</Button>
+                        <Button Grid.Row="2" Width="50px" Height="50px">-</Button>
                     </Grid>
                 </Border>
                 <Border Style="{StaticResource StepperCardTheme}" Grid.Row="0" Grid.Column="1" />
 
                 <!-- Second Row -->
-                <Border Style="{StaticResource StepperCardTheme}" Grid.Row="1" Grid.Column="0" />
-                <Border Style="{StaticResource StepperCardTheme}" Grid.Row="1" Grid.Column="1" />
 
                 <!-- Third Row -->
-                <Border Style="{StaticResource StepperCardTheme}" Grid.Row="2" Grid.Column="0" />
-                <Border Style="{StaticResource StepperCardTheme}" Grid.Row="2" Grid.Column="1" />
             </Grid>
 
             <Grid Grid.Column="2" Grid.Row="0" Margin="10">
-               <!--TODO: make a dropdown in the same style with 2 options COM3, COM4-->
-               <!--/Make also a circle to display status in green or red so that it represents connected or disconnected-->
+                <!--TODO: make a dropdown in the same style with 2 options COM3, COM4-->
+                <!--/Make also a circle to display status in green or red so that it represents connected or disconnected-->
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top">
                     <!-- Dropdown -->
                     <!--<ComboBox Style="{StaticResource RoundedComboBox}" SelectedIndex="0">
@@ -94,10 +94,13 @@
                         <ComboBoxItem Content="COM4"/>
                     </ComboBox>-->
 
-                    <local:COMDropDownCC ItemsSource="{Binding MyStringList}" />
+                    <ComboBox Name="dropdownCOM" SelectionChanged="dropdownCOM_SelectionChanged">
+                        <!-- Default Item -->
+                        <ComboBoxItem Content="Select" IsEnabled="False" />
+                    </ComboBox>
 
                     <!-- Status Circle -->
-                    <Ellipse Width="15" Height="15" Fill="Red" Margin="10,0,10,0" Name="StatusCircle"/>
+                    <Ellipse Width="10" Height="10" Fill="#d12f0a" Margin="10,0,10,0" Name="StatusCircle"/>
                 </StackPanel>
             </Grid>
         </Grid>

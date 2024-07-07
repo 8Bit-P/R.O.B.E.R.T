@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ROBERT-UI")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+526687d8089c6a68f58134c9cde809c03d9d1638")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+8e4ece7e34ae447f701cfafd50e2cea7b29ee02b")]
 [assembly: System.Reflection.AssemblyProductAttribute("ROBERT-UI")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ROBERT-UI")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
