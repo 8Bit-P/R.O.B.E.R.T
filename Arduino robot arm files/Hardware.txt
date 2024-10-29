@@ -16,9 +16,9 @@ Limit switches:
 Pulleys and belts:
 	GT2 16tooth (4pcs) -
 	GT2 16tooth timing pulley without tooth (2pcs)
-	GT2 6mm closed loop belts (280mm 2pcs, 200mm 1pcs, 158mm 1pcs) -
+	GT2 6mm closed loop belts (- (solo 1 he comprado) 280mm 2pcs, 200mm 1pcs, - 158mm 1pcs) -
 	HTD3 16T pulley
-	HTD3 closed belt 330mm
+	HTD3 closed belt 330mm - 
 
 Bearings:
 	608 8x22x7 (2pcs) -

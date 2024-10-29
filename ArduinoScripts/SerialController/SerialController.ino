@@ -3,6 +3,10 @@
 
 //Command codes
 #define MoveCommand "MOVE"
+#define CheckCommand "CHECK"
+
+//Response codes
+#define ConectedResponse "CONNECTED"
 
 //Error codes
 #define CommandFormatError "C001" // Command was not properly formated
@@ -11,23 +15,29 @@
 
 // Define stepper motor connections and motor interface type. 
 //TODO: map pins correctly
-#define J1stepPin 2
-#define J1dirPin 3
+#define J1stepPin 26 //E0-STEP
+#define J1dirPin 28 // E0-DIR 
+#define J1enablePin 24 // E0-EN
 
-#define J2stepPin 4
-#define J2dirPin 5
+#define J2stepPin 36 //E1-STEP
+#define J2dirPin 34 //E1-DIR
+#define J2enablePin 30 // E1-EN
 
-#define J3stepPin 6
-#define J3dirPin 7
+#define J3stepPin 54 // X-STEP
+#define J3dirPin 55 // X-DIR
+#define J3enablePin 38 // X-EN
 
-#define J4stepPin 8
-#define J4dirPin 9
+#define J4stepPin 60 // Y-STEP
+#define J4dirPin 61 // Y-DIR
+#define J4enablePin 56 // Y-EN
 
 #define J5stepPin 10
 #define J5dirPin 11
+#define J5enablePin 24 // 
 
 #define J6stepPin 12
 #define J6dirPin 13
+#define J6enablePin 24 // 
 
 
 AccelStepper j1 = AccelStepper(motorInterfaceType, J1stepPin,J1dirPin);
@@ -78,6 +88,9 @@ void processMoveCommand(String actionString){
 }
 
 void moveStepper(int stepperNum, int steps) {
+
+  Serial.println("Hasta aqui llega");
+
   AccelStepper* stepper;
 
   // Select the stepper motor
@@ -116,6 +129,10 @@ void moveStepper(int stepperNum, int steps) {
 
 void setup() {
   Serial.begin(9600);
+
+  pinMode(J1enablePin , OUTPUT);
+  digitalWrite(J1enablePin , LOW);
+  
   // Set the maximum speed in steps per second:
   initializeSteppers();
 }
@@ -124,6 +141,7 @@ void loop() {
   while(Serial.available()) {
     String command = Serial.readString();
 
+    Serial.print("Commmand received: ");
     Serial.println(command);
 
     //Process String
@@ -139,6 +157,10 @@ void loop() {
       //Perform proper action according to command 
       if(commandCode == MoveCommand) {
         processMoveCommand(commandAction);
+      }
+      else if (commandCode == CheckCommand) {
+        //This sends a response to verify the Arduino is correctly connected through serial
+        Serial.println(ConectedResponse);
       }
       else{
         Serial.println(CommandNotDefined);

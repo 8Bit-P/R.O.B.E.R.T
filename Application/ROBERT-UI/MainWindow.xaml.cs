@@ -10,6 +10,8 @@ namespace ROBERT_UI
     /// </summary>
     public partial class MainWindow : Window
     {
+        string currentPort; 
+
         public MainWindow()
         {
             InitializeComponent();
@@ -20,6 +22,9 @@ namespace ROBERT_UI
         {
             string[] availablePorts = SerialPort.GetPortNames();
 
+            dropdownCOM.Items.Clear(); //Clear items in dropdown
+
+            //Update items with found ports
             foreach (string port in availablePorts)
             {
                 dropdownCOM.Items.Add(port);
@@ -89,7 +94,7 @@ namespace ROBERT_UI
             string response = SendAndReceiveFromSelectedPort("CHECK>");
             MessageBox.Show(response);
 
-            if (!String.IsNullOrEmpty(response))
+            if (!String.IsNullOrEmpty(response) && response == "CONNECTED")
             {
                 StatusCircle.Fill = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#24e072"));
             }

@@ -84,16 +84,9 @@
             </Grid>
 
             <Grid Grid.Column="2" Grid.Row="0" Margin="10">
-                <!--TODO: make a dropdown in the same style with 2 options COM3, COM4-->
                 <!--/Make also a circle to display status in green or red so that it represents connected or disconnected-->
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top">
                     <!-- Dropdown -->
-                    <!--<ComboBox Style="{StaticResource RoundedComboBox}" SelectedIndex="0">
-                        <ComboBoxItem Content="Select" IsEnabled="False" />
-                        <ComboBoxItem Content="COM3"/>
-                        <ComboBoxItem Content="COM4"/>
-                    </ComboBox>-->
-
                     <ComboBox Name="dropdownCOM" SelectionChanged="dropdownCOM_SelectionChanged">
                         <!-- Default Item -->
                         <ComboBoxItem Content="Select" IsEnabled="False" />
