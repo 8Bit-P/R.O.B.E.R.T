@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "robert-ui",
+  "productName": "robert-app",
   "version": "0.1.0",
-  "identifier": "com.robert-ui.app",
+  "identifier": "com.robert-app.app",
   "build": {
     "beforeDevCommand": "npm run dev",
     "devUrl": "http://localhost:1420",
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "robert-ui",
+        "title": "robert-app",
         "width": 800,
         "height": 600
       }

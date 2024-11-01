@@ -2,5 +2,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 fn main() {
-    robert_ui_lib::run()
+    robert_app_lib::run()
 }
