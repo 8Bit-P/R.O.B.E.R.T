@@ -27,7 +27,7 @@ const Connection = () => {
   };
 
   return (
-    <div className="ml-2">
+    <div className="ml-2" style={{fontFamily:"nothing"}}>
       <div className="flex items-center justify-start space-x-4 w-full">
         <form className="mb-2 mt-2">
           <select

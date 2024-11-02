@@ -15,7 +15,7 @@ const SteppersState = () => {
   };
 
   return (
-    <div className="grid grid-cols-2 gap-2 mt-2 pl-2">
+    <div className="grid grid-cols-2 gap-2 mt-2 pl-2" style={{fontFamily:"nothing"}}>
       {toggleStates.map((isChecked, index) => (
         <div key={index} className="flex items-center mt-2">
           <span className="mr-2 w-5 select-none">S{index + 1}</span> {/* Label for each toggle */}
