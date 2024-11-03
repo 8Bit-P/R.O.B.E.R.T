@@ -12,9 +12,9 @@
   "app": {
     "windows": [
       {
-        "title": "robert-app",
-        "width": 800,
-        "height": 600
+        "title": "R.O.B.E.R.T - Dashboard",
+        "width": 1200,
+        "height": 1000
       }
     ],
     "security": {
