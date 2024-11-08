@@ -141,8 +141,8 @@ void loop() {
   while(Serial.available()) {
     String command = Serial.readString();
 
-    Serial.print("Commmand received: ");
-    Serial.println(command);
+    // Serial.print("Commmand received: ");
+    // Serial.println(command);
 
     //Process String
     //1. Get command sent (Command type and action)
