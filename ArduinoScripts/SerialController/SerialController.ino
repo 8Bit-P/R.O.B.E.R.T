@@ -4,6 +4,8 @@
 //Command codes
 #define MoveCommand "MOVE"
 #define CheckCommand "CHECK"
+#define SetVelocityCommand "SETVEL"
+#define SetAccelerationCommand "SETACC"
 
 //Response codes
 #define ConectedResponse "CONNECTED"
@@ -12,6 +14,10 @@
 #define CommandFormatError "C001" // Command was not properly formated
 #define CommandNotDefined "C002"
 #define InvalidStepper "I001"
+
+//Ranges
+#define AccelerationUpperRange = 1000 //TODO: check actual upper ranges
+#define VelocityUpperRange = 2000     //TODO: check actual upper ranges
 
 // Define stepper motor connections and motor interface type. 
 //TODO: map pins correctly
@@ -38,6 +44,14 @@
 #define J6stepPin 12
 #define J6dirPin 13
 #define J6enablePin 24 // 
+
+enum CommandCode {
+  MOVE,
+  CHECK,
+  SETVEL,
+  SETACC,
+  UNKNOWN
+};
 
 
 AccelStepper j1 = AccelStepper(motorInterfaceType, J1stepPin,J1dirPin);
@@ -79,7 +93,6 @@ void processMoveCommand(String actionString){
       // Serial.println(steps);
 
       moveStepper(stepperNumber,steps);
-
 
       //Update String 
       actionLeft = actionLeft.substring(delimiterIndex+1);
@@ -127,6 +140,50 @@ void moveStepper(int stepperNum, int steps) {
   }
 }
 
+void setAcceleration(String actionString){
+
+    //Set acceleration command should have the format -> SETACC>ACCELERATION_VALUE;
+
+    int acceleration = atoi(actionString.c_str());
+
+    j1.setAcceleration(acceleration);
+    j2.setAcceleration(acceleration);
+    j3.setAcceleration(acceleration);
+    j4.setAcceleration(acceleration);
+    j5.setAcceleration(acceleration);
+    j6.setAcceleration(acceleration);
+}
+
+void setVelocity(String actionString){
+    //Set velocity command should have the format -> SETVEL>VELOCITY_VALUE;
+    int velocity = atoi(actionString.c_str());
+
+    Serial.print("Velocity Set to: ");
+    Serial.println(velocity);
+
+    j1.setMaxSpeed(2000);
+    j2.setMaxSpeed(2000);
+    j3.setMaxSpeed(2000);
+    j4.setMaxSpeed(2000);
+    j5.setMaxSpeed(2000);
+    j6.setMaxSpeed(2000);
+}
+
+CommandCode getCommandCode(const char* command) {
+  if (strcmp(command, "MOVE") == 0) {
+    return MOVE;
+  } else if (strcmp(command, "CHECK") == 0) {
+    return CHECK;
+  } else if (strcmp(command, "SETVEL") == 0) {
+    return SETVEL;
+  } else if (strcmp(command, "SETACC") == 0) {
+    return SETACC;
+  } else {
+    return UNKNOWN;
+  }
+}
+
+
 void setup() {
   Serial.begin(9600);
 
@@ -151,24 +208,32 @@ void loop() {
 
     //Check if '>' is found in the string 
     if(commandDelimiterIndex != -1){
-      String commandCode = command.substring(0,commandDelimiterIndex);
+      CommandCode commandCode = getCommandCode(command.substring(0,commandDelimiterIndex).c_str());
       String commandAction = command.substring(commandDelimiterIndex+1);
 
       //Perform proper action according to command 
-      if(commandCode == MoveCommand) {
-        processMoveCommand(commandAction);
-      }
-      else if (commandCode == CheckCommand) {
-        //This sends a response to verify the Arduino is correctly connected through serial
-        Serial.println(ConectedResponse);
-      }
-      else{
-        Serial.println(CommandNotDefined);
-      }
+      switch (commandCode) {
+        case MOVE:
+          processMoveCommand(commandAction);
+          break;
 
-    }
-    else{
-      Serial.println(CommandFormatError);
+        case CHECK:
+          // This sends a response to verify the Arduino is correctly connected through serial
+          Serial.println(ConectedResponse);
+          break;
+
+        case SETVEL:
+          setVelocity(commandAction);
+          break;
+
+        case SETACC:
+          setAcceleration(commandAction);
+          break;
+
+        default:
+          Serial.println(CommandNotDefined);
+          break;
+      }
     }
 
   }

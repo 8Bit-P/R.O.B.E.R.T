@@ -1,69 +1,55 @@
 import { useEffect, useState } from "react";
+import { useConnection } from "../../context/ConnectionContext";
+import { getPorts, connectToPortAPI } from "../../api/connectionAPI";
+import { ConnectionStates, DEFAULT_PORT_LABEL } from "../../constants/connectionConstants";
+
 import toast from 'react-hot-toast';
 import ToggleInput from "../ToggleInput";
 
 const Connection = () => {
-  const enum ConnectionStates {
-    REFUSED_CONNECTION = "#FD0200",
-    ACCEPTED_CONNECTION = "#69B59E",
-    NOT_PROBED = "#6B7280",
-    PROBING = "#EA580C",
-  }
-
-  const invoke = window.__TAURI__.core.invoke;
-
-  const [isConnected, setIsConnected] = useState(false);
-  const [port, setPort] = useState("Select a port");
-  const [ports, setPorts] = useState<string[]>([]); //Available ports
-  const [connectionState, setConnectionState] = useState(
-    ConnectionStates.NOT_PROBED
-  );
+  const [ports, setPorts] = useState<string[]>([]); // Available ports
+  
+  const { port, setIsConnected, isConnected,connectionState, setConnectionState, connectToPort, disconnectPort } = useConnection();
 
   // Retrieve available ports on start
   useEffect(() => {
     refreshPorts();
   }, []);
 
-  const refreshPorts = () => {
-    invoke<string[]>("get_ports")
-      .then((response) => {
-        setPorts(response); // Set the response directly as the new state
-      })
-      .catch((error) => console.error("Failed to get ports:", error));
+  const refreshPorts = async () => {
+    try {
+      const response = await getPorts();
+      setPorts(response);
+    } catch (error) {
+      console.error("Failed to get ports:", error);
+    }
   };
 
-  const handleChangePort = (e: any) => {
-    //Disconnect if connected previously
-    setIsConnected(false);
+  const handleChangePort = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    disconnectPort();
     setConnectionState(ConnectionStates.NOT_PROBED);
-    setPort(e.target.value);
+    connectToPort(e.target.value);
   };
 
   const handleToggleConnection = async () => {
-    // Toggle the connection state
     setIsConnected(!isConnected);
-  
-    // Only perform the operation when the user tries to enable the connection
+
     if (!isConnected) {
       try {
-        // Set loading state while the connection is being attempted
         setConnectionState(ConnectionStates.PROBING);
-  
-        // Invoke the connection command asynchronously
-        const response = await invoke<string[]>("connect_to_port", { port });
-  
-        // Show the response in a toast (converted to string for display)
-        toast(response.toString());
 
+        const response = await connectToPortAPI(port!);
+
+        toast(response.toString());
         setConnectionState(ConnectionStates.ACCEPTED_CONNECTION);
       } catch (error) {
-        // Log the error and show an error toast
         toast(`Error trying to connect to port: ${error}`);
-
         setConnectionState(ConnectionStates.REFUSED_CONNECTION);
         setIsConnected(false);
-        setPort("Select a port");
-      } 
+        connectToPort(DEFAULT_PORT_LABEL);
+      }
+    } else {
+      setConnectionState(ConnectionStates.NOT_PROBED);
     }
   };
 
@@ -78,7 +64,7 @@ const Connection = () => {
             id="countries"
             className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-100px p-2.5 select-none"
           >
-            <option value="default">Select a port</option>
+            <option value="default">{DEFAULT_PORT_LABEL}</option>
             {ports.map((portItem) => (
               <option key={portItem} value={portItem}>
                 {portItem}

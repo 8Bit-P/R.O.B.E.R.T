@@ -1,17 +1,13 @@
-// Import necessary crates
 use serialport::available_ports;
 use crate::utils::send_and_receive_from_selected_port;
+use crate::constants;
 
-#[tauri::command]
-pub fn greet(name: &str) -> String {
-    format!("Hello, {}! You've been greeted from Rust!", name)
-}
 
 #[tauri::command]
 pub fn connect_to_port(port: &str) -> Result<String, String> {
-    match send_and_receive_from_selected_port("CHECK>", port) {
+    match send_and_receive_from_selected_port(constants::CommandCodes::CHECK, port) {
         Ok(response) => {
-            if response.trim() == "CONNECTED" {
+            if response.trim() == constants::ResponseCodes::CONNECTED{
                 Ok(format!("Successfully connected to port: {}.", port))
             } else {
                 Err(format!("Failed to connect to port: {}. Unexpected response: {}", port, response))
