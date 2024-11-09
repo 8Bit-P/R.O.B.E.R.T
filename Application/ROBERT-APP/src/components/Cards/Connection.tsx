@@ -1,53 +1,90 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useConnection } from "../../context/ConnectionContext";
+import { getPorts, connectToPortAPI } from "../../api/connectionAPI";
+import { ConnectionStates, DEFAULT_PORT_LABEL } from "../../constants/connectionConstants";
+
+import toast from 'react-hot-toast';
 import ToggleInput from "../ToggleInput";
 
 const Connection = () => {
+  const [ports, setPorts] = useState<string[]>([]); // Available ports
+  
+  const { port, setIsConnected, isConnected,connectionState, setConnectionState, connectToPort, disconnectPort } = useConnection();
 
-  const enum ConnectionStates {
-    REFUSED_CONNECTION = "#FD0200",
-    ACCEPTED_CONNECTION = "#69B59E",
-    NOT_PROBED = "gray-500" 
-  }
+  // Retrieve available ports on start
+  useEffect(() => {
+    refreshPorts();
+  }, []);
 
-  const [isConnected, setIsConnected] = useState(false);
-  const [port, setPort] = useState("Select a port");
-  const [connectionState, setConnectionState] = useState(ConnectionStates.NOT_PROBED)
-
-  const handleChangePort = (e: any) => {
-    //Disconnect if connected previously
-    setIsConnected(false);
-    setPort(e.target.value);
-
-    //TODO: Handle connecting logic
+  const refreshPorts = async () => {
+    try {
+      const response = await getPorts();
+      setPorts(response);
+    } catch (error) {
+      console.error("Failed to get ports:", error);
+    }
   };
 
-  const handleToggleConnection = () => {
-    // Toggle connection state
+  const handleChangePort = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    disconnectPort();
+    setConnectionState(ConnectionStates.NOT_PROBED);
+    connectToPort(e.target.value);
+  };
+
+  const handleToggleConnection = async () => {
     setIsConnected(!isConnected);
+
+    if (!isConnected) {
+      try {
+        setConnectionState(ConnectionStates.PROBING);
+
+        const response = await connectToPortAPI(port!);
+
+        toast(response.toString());
+        setConnectionState(ConnectionStates.ACCEPTED_CONNECTION);
+      } catch (error) {
+        toast(`Error trying to connect to port: ${error}`);
+        setConnectionState(ConnectionStates.REFUSED_CONNECTION);
+        setIsConnected(false);
+        connectToPort(DEFAULT_PORT_LABEL);
+      }
+    } else {
+      setConnectionState(ConnectionStates.NOT_PROBED);
+    }
   };
 
   return (
-    <div className="ml-2" style={{fontFamily:"nothing"}}>
+    <div className="ml-2" style={{ fontFamily: "nothing" }}>
       <div className="flex items-center justify-start space-x-4 w-full">
         <form className="mb-2 mt-2">
           <select
+            onClick={refreshPorts}
             onChange={handleChangePort}
             defaultValue={"default"}
             id="countries"
             className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-100px p-2.5 select-none"
           >
-            <option value="default">Select a port</option>
-            <option value="COM3">COM3</option>
-            <option value="COM2">COM2</option>
+            <option value="default">{DEFAULT_PORT_LABEL}</option>
+            {ports.map((portItem) => (
+              <option key={portItem} value={portItem}>
+                {portItem}
+              </option>
+            ))}
           </select>
         </form>
 
         {/* Status indicator dot */}
-        <div className="w-2 h-2 bg-gray-500 rounded-full"  style={{backgroundColor: connectionState}}/>
+        <div
+          className="w-2 h-2 bg-gray-500 rounded-full"
+          style={{ backgroundColor: connectionState }}
+        />
       </div>
 
       <div className="inline-flex items-center">
-        <ToggleInput isChecked={isConnected} handleToggleInput={handleToggleConnection}/>
+        <ToggleInput
+          isChecked={isConnected}
+          handleToggleInput={handleToggleConnection}
+        />
         <span
           className="ms-3 text-sm font-medium"
           style={{ userSelect: "none" }}
