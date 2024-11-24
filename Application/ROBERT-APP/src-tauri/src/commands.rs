@@ -48,18 +48,20 @@ pub fn set_velocity(port: &str, velocity: i8) -> Result<String, String> {
 }
 
 #[tauri::command]
-pub fn increment_step(port: &str, joint_index:i8, n_steps: i16 ) -> Result<String, String> {
+pub fn move_step(port: &str, joint_index:i8, n_steps: i16 ) -> Result<String, String> {
+
+    println!("###DEBUG### - REACHING COMMAND.");
     //Arduino command format: MOVE>JOINT_NSTEPS;
-    let increment_step_command = format!(
-        "{}JOINT{}_{};",
+    let move_step_command = format!(
+        "{}J{}_{};",
         constants::CommandCodes::MOVE,
         joint_index,
         n_steps
     );
 
-    match send_and_receive_from_selected_port(&increment_step_command, port) {
-        Ok(response) => Ok(format!("Succesfully send increment_step command. Response: {}",response)),
-        Err(e) => Err(format!("Unexpected error while sending increment step command. Error: {}", e)),
+    match send_and_receive_from_selected_port(&move_step_command, port) {
+        Ok(response) => Ok(format!("Succesfully send move_step command. Response: {}",response)),
+        Err(e) => Err(format!("Unexpected error while sending move_step command. Error: {}", e)),
     }
 }
 

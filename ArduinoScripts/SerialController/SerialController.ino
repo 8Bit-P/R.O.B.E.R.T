@@ -102,7 +102,8 @@ void processMoveCommand(String actionString){
 
 void moveStepper(int stepperNum, int steps) {
 
-  Serial.println("Hasta aqui llega");
+  Serial.print("Moving stepper: J"); Serial.print(stepperNum);
+  Serial.print(" "); Serial.print(steps); Serial.println(" steps");
 
   AccelStepper* stepper;
 

@@ -1,4 +1,24 @@
+import { useConnection } from '../../context/ConnectionContext';
+import { moveStep } from "../../api/commands";
+
 const JointControl = () => {
+
+  const { port, isConnected } = useConnection();
+
+  //Individual increase of joint angle
+  const handleJointIncrement = (jointIndex:number) => {
+    if(isConnected){
+      moveStep(port,jointIndex,1)
+    }
+  }
+
+  //Individual decrease of joint angle
+  const handleJointDecrement = (jointIndex:number) => {
+    if(isConnected){
+      moveStep(port,jointIndex,-1)
+    }
+  }
+
   return (
     <div style={{ fontFamily: "nothing" }} className="h-full w-full flex">
       <div className="w-2/5 p-4 border-r border-gray-300">
@@ -14,7 +34,7 @@ const JointControl = () => {
             >
               <button
                 className="bg-red-500 text-white text-xl rounded-lg px-3 py-1 w-10 h-10 select-none hover:bg-red-600"
-                onClick={() => console.log(`Decrement J${index + 1}`)}
+                onClick={() => handleJointIncrement(index)}
               >
                 -
               </button>
@@ -23,7 +43,7 @@ const JointControl = () => {
               </span>
               <button
                 className="bg-red-500 text-xl text-white rounded-lg px-3 py-1 w-10 h-10 select-none hover:bg-red-600"
-                onClick={() => console.log(`Increment J${index + 1}`)}
+                onClick={() => handleJointDecrement(index)}
               >
                 +
               </button>

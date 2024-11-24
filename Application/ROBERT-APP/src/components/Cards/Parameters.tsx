@@ -7,7 +7,6 @@ const Parameters = () => {
   const [acceleration, setAcceleration] = useState(50);
   const [velocity, setVelocity] = useState(50);
 
-  const [isAnimating, setIsAnimating] = useState(false);
 
   const { port, isConnected, connectionState } = useConnection();
 
@@ -18,7 +17,6 @@ const Parameters = () => {
   // Initial animation
   useEffect(() => {
     if (isConnected && connectionState === ConnectionStates.ACCEPTED_CONNECTION) {
-      setIsAnimating(true);
 
       let tempVelocity = 50;
       let tempAcceleration = 50;
@@ -62,7 +60,6 @@ const Parameters = () => {
 
                     if (tempVelocity >= 50 && tempAcceleration >= 50) {
                       clearInterval(toFiftyInterval);
-                      setIsAnimating(false);
                     }
                   }, 5);
                 }

@@ -27,3 +27,14 @@ export const setVelocity = async (port: string | null | undefined, velocity: num
 
   return invoke<string[]>("set_velocity", { port, velocity });
 };
+
+export const moveStep = async (port: string | null | undefined, jointIndex: number | null | undefined, nSteps: number | null | undefined): Promise<string[]> => {
+
+  // Check if `port` or `velocity` is null or undefined
+  if (port == null || jointIndex == null || nSteps == null) {
+    throw new Error("port, joint_index and steps must be provided and cannot be null or undefined");
+  }
+
+  return invoke<string[]>("move_step", { port, jointIndex, nSteps:nSteps });
+};
+
