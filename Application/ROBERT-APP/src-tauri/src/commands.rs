@@ -17,6 +17,53 @@ pub fn connect_to_port(port: &str) -> Result<String, String> {
     }
 }
 
+#[tauri::command]
+pub fn set_acceleration(port: &str, acceleration: i8) -> Result<String, String> {
+    //Arduino command format: SETACC>ACCELERATION_VALUE;
+    let set_acc_command = format!(
+        "{}{}",
+        constants::CommandCodes::SETACC,
+        acceleration
+    );
+
+    match send_and_receive_from_selected_port(&set_acc_command, port) {
+        Ok(response) => Ok(format!("Succesfully send set_acc command. Response: {}",response)),
+        Err(e) => Err(format!("Unexpected error while sending set_acc command. Error: {}", e)),
+    }
+}
+
+#[tauri::command]
+pub fn set_velocity(port: &str, velocity: i8) -> Result<String, String> {
+    //Arduino command format: SETACC>ACCELERATION_VALUE;
+    let set_vel_command = format!(
+        "{}{}",
+        constants::CommandCodes::SETVEL,
+        velocity
+    );
+
+    match send_and_receive_from_selected_port(&set_vel_command, port) {
+        Ok(response) => Ok(format!("Succesfully send set_vel command. Response: {}",response)),
+        Err(e) => Err(format!("Unexpected error while sending set_vel command. Error: {}", e)),
+    }
+}
+
+#[tauri::command]
+pub fn increment_step(port: &str, joint_index:i8, n_steps: i16 ) -> Result<String, String> {
+    //Arduino command format: MOVE>JOINT_NSTEPS;
+    let increment_step_command = format!(
+        "{}JOINT{}_{};",
+        constants::CommandCodes::MOVE,
+        joint_index,
+        n_steps
+    );
+
+    match send_and_receive_from_selected_port(&increment_step_command, port) {
+        Ok(response) => Ok(format!("Succesfully send increment_step command. Response: {}",response)),
+        Err(e) => Err(format!("Unexpected error while sending increment step command. Error: {}", e)),
+    }
+}
+
+
 
 #[tauri::command]
 pub fn get_ports() -> Vec<String> {

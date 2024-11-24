@@ -152,14 +152,14 @@ void setAcceleration(String actionString){
     j4.setAcceleration(acceleration);
     j5.setAcceleration(acceleration);
     j6.setAcceleration(acceleration);
+
+    Serial.print("Acceleration Set to: ");
+    Serial.println(acceleration);
 }
 
 void setVelocity(String actionString){
     //Set velocity command should have the format -> SETVEL>VELOCITY_VALUE;
     int velocity = atoi(actionString.c_str());
-
-    Serial.print("Velocity Set to: ");
-    Serial.println(velocity);
 
     j1.setMaxSpeed(2000);
     j2.setMaxSpeed(2000);
@@ -167,6 +167,9 @@ void setVelocity(String actionString){
     j4.setMaxSpeed(2000);
     j5.setMaxSpeed(2000);
     j6.setMaxSpeed(2000);
+
+    Serial.print("Velocity Set to: ");
+    Serial.println(velocity);
 }
 
 CommandCode getCommandCode(const char* command) {

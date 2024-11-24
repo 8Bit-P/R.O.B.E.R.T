@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useConnection } from "../../context/ConnectionContext";
-import { getPorts, connectToPortAPI } from "../../api/connectionAPI";
+import { getPorts, connectToPortAPI } from "../../api/commands";
 import { ConnectionStates, DEFAULT_PORT_LABEL } from "../../constants/connectionConstants";
 
 import toast from 'react-hot-toast';

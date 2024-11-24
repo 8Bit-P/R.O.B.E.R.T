@@ -1,21 +1,28 @@
 import { useEffect, useState } from 'react';
 import { useConnection } from '../../context/ConnectionContext';
 import { ConnectionStates } from '../../constants/connectionConstants';
+import { setAcceleration as setAPIacceleration, setVelocity as setAPIVelocity } from "../../api/commands";
 
 const Parameters = () => {
   const [acceleration, setAcceleration] = useState(50);
   const [velocity, setVelocity] = useState(50);
 
-  const { isConnected, connectionState } = useConnection();
+  const [isAnimating, setIsAnimating] = useState(false);
 
-  //Initial animation
+  const { port, isConnected, connectionState } = useConnection();
+
+  // State to track the timeout for debouncing
+  const [accelerationTimeout, setAccelerationTimeout] = useState<number | null>(null);
+  const [velocityTimeout, setVelocityTimeout] = useState<number| null>(null);
+
+  // Initial animation
   useEffect(() => {
-    // Only trigger the animation when a connection is made
     if (isConnected && connectionState === ConnectionStates.ACCEPTED_CONNECTION) {
+      setIsAnimating(true);
+
       let tempVelocity = 50;
       let tempAcceleration = 50;
 
-      // First animation: go from 50 to 100
       const upInterval = setInterval(() => {
         tempVelocity += 1;
         tempAcceleration += 1;
@@ -23,11 +30,9 @@ const Parameters = () => {
         setVelocity(tempVelocity);
         setAcceleration(tempAcceleration);
 
-        // Once we reach 100, clear this interval and start the down animation
         if (tempVelocity >= 100 && tempAcceleration >= 100) {
           clearInterval(upInterval);
 
-          // Second animation: go back to 50
           const downInterval = setInterval(() => {
             tempVelocity -= 1;
             tempAcceleration -= 1;
@@ -35,11 +40,9 @@ const Parameters = () => {
             setVelocity(tempVelocity);
             setAcceleration(tempAcceleration);
 
-            // Once we reach 50, clear this interval and start the down-to-0 animation
             if (tempVelocity <= 50 && tempAcceleration <= 50) {
               clearInterval(downInterval);
 
-              // Third animation: go down to 0
               const toZeroInterval = setInterval(() => {
                 tempVelocity -= 1;
                 tempAcceleration -= 1;
@@ -47,11 +50,9 @@ const Parameters = () => {
                 setVelocity(tempVelocity);
                 setAcceleration(tempAcceleration);
 
-                // Once we reach 0, clear this interval and start the up-to-50 animation
                 if (tempVelocity <= 0 && tempAcceleration <= 0) {
                   clearInterval(toZeroInterval);
 
-                  // Final animation: go back up to 50
                   const toFiftyInterval = setInterval(() => {
                     tempVelocity += 1;
                     tempAcceleration += 1;
@@ -59,19 +60,65 @@ const Parameters = () => {
                     setVelocity(tempVelocity);
                     setAcceleration(tempAcceleration);
 
-                    // Clear interval once we reach 50
                     if (tempVelocity >= 50 && tempAcceleration >= 50) {
                       clearInterval(toFiftyInterval);
+                      setIsAnimating(false);
                     }
-                  }, 5); // Adjust speed as needed
+                  }, 5);
                 }
-              }, 5); // Adjust speed as needed
+              }, 5);
             }
-          }, 5); // Adjust speed as needed
+          }, 5);
         }
-      }, 5); // Adjust speed as needed
+      }, 5);
     }
   }, [isConnected, connectionState]);
+
+  // Debounced change handler for velocity
+  const handleVelocityChange = (newVelocity: number) => {
+    if (velocityTimeout) {
+      clearTimeout(velocityTimeout); // Clear previous timeout if any
+    }
+
+    setVelocity(newVelocity); // Set new velocity state
+
+    // Set a timeout to send the command after a delay (300ms here)
+    const timeout = setTimeout(() => {
+      if (isConnected) {
+        setAPIVelocity(port!, newVelocity); // Send velocity command
+      }
+    }, 300); // Adjust delay as needed
+    setVelocityTimeout(timeout); // Store the timeout ID to clear it if needed
+  };
+
+  // Debounced change handler for acceleration
+  const handleAccelerationChange = (newAcceleration: number) => {
+    if (accelerationTimeout) {
+      clearTimeout(accelerationTimeout); // Clear previous timeout if any
+    }
+
+    setAcceleration(newAcceleration); // Set new acceleration state
+
+    // Set a timeout to send the command after a delay (300ms here)
+    const timeout = setTimeout(() => {
+      if (isConnected) {
+        setAPIacceleration(port!, newAcceleration); // Send acceleration command
+      }
+    }, 300); // Adjust delay as needed
+    setAccelerationTimeout(timeout); // Store the timeout ID to clear it if needed
+  };
+
+  // Velocity slider change handler
+  const handleVelocitySliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newVelocity = Number(e.target.value);
+    handleVelocityChange(newVelocity);
+  };
+
+  // Acceleration slider change handler
+  const handleAccelerationSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newAcceleration = Number(e.target.value);
+    handleAccelerationChange(newAcceleration);
+  };
 
   return (
     <div style={{ fontFamily: 'nothing' }} className="space-y-4 p-4 pl-2">
@@ -84,7 +131,7 @@ const Parameters = () => {
             min="0"
             max="100"
             value={acceleration}
-            onChange={(e) => setAcceleration(Number(e.target.value))}
+            onChange={handleAccelerationSliderChange} // Call the debounced change handler
             className="w-[150px] h-1 ml-2 appearance-none bg-gray-300 bg-dotted-slider rounded-md"
             style={{
               backgroundImage:
@@ -103,7 +150,7 @@ const Parameters = () => {
             min="0"
             max="100"
             value={velocity}
-            onChange={(e) => setVelocity(Number(e.target.value))}
+            onChange={handleVelocitySliderChange} // Call the debounced change handler
             className="w-[150px] h-1 ml-11 appearance-none bg-gray-300 bg-dotted-slider rounded-md"
             style={{
               backgroundImage:
