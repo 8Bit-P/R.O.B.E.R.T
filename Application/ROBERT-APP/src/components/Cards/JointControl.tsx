@@ -1,23 +1,22 @@
-import { useConnection } from '../../context/ConnectionContext';
+import { useConnection } from "../../context/ConnectionContext";
 import { moveStep } from "../../api/commands";
 
 const JointControl = () => {
-
   const { port, isConnected } = useConnection();
 
   //Individual increase of joint angle
-  const handleJointIncrement = (jointIndex:number) => {
-    if(isConnected){
-      moveStep(port,jointIndex,1)
+  const handleJointIncrement = (jointIndex: number) => {
+    if (isConnected) {
+      moveStep(port, jointIndex, +1).then((res) => console.log(res));
     }
-  }
+  };
 
   //Individual decrease of joint angle
-  const handleJointDecrement = (jointIndex:number) => {
-    if(isConnected){
-      moveStep(port,jointIndex,-1)
+  const handleJointDecrement = (jointIndex: number) => {
+    if (isConnected) {
+      moveStep(port, jointIndex, +1).then((res) => console.log(res));
     }
-  }
+  };
 
   return (
     <div style={{ fontFamily: "nothing" }} className="h-full w-full flex">
@@ -34,7 +33,7 @@ const JointControl = () => {
             >
               <button
                 className="bg-red-500 text-white text-xl rounded-lg px-3 py-1 w-10 h-10 select-none hover:bg-red-600"
-                onClick={() => handleJointIncrement(index)}
+                onClick={() => handleJointDecrement(index)} //TODO: +1 on index to start on J1
               >
                 -
               </button>
@@ -43,7 +42,7 @@ const JointControl = () => {
               </span>
               <button
                 className="bg-red-500 text-xl text-white rounded-lg px-3 py-1 w-10 h-10 select-none hover:bg-red-600"
-                onClick={() => handleJointDecrement(index)}
+                onClick={() => handleJointIncrement(index)} //TODO: +1 on index to start on J1
               >
                 +
               </button>
