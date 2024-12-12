@@ -28,7 +28,7 @@ pub async fn set_acceleration(port: &str, acceleration: i8) -> Result<String, St
 
     match send_and_receive_from_selected_port(&set_acc_command, port).await {
         Ok(response) => Ok(format!("Succesfully send set_acc command. Response: {}",response)),
-        Err(e) => Err(format!("Unexpected error while sending set_acc command. Error: {}", e)),
+        Err(e) => Err(format!("Error: {}", e)),
     }
 }
 
@@ -43,7 +43,7 @@ pub async fn set_velocity(port: &str, velocity: i8) -> Result<String, String> {
 
     match send_and_receive_from_selected_port(&set_vel_command, port).await {
         Ok(response) => Ok(format!("Succesfully send set_vel command. Response: {}",response)),
-        Err(e) => Err(format!("Unexpected error while sending set_vel command. Error: {}", e)),
+        Err(e) => Err(format!("Error: {}", e)),
     }
 }
 
@@ -60,7 +60,7 @@ pub async fn move_step(port: &str, joint_index:i8, n_steps: i16 ) -> Result<Stri
 
     match send_and_receive_from_selected_port(&move_step_command, port).await {
         Ok(response) => Ok(format!("Succesfully send move_step command. Response: {}",response)),
-        Err(e) => Err(format!("Unexpected error while sending move_step command. Error: {}", e)),
+        Err(e) => Err(format!("Error: {}", e)),
     }
 }
 

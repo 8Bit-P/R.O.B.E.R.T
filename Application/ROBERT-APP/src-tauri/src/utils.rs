@@ -7,7 +7,7 @@ use crate::constants;
 
 pub async fn send_and_receive_from_selected_port(data: &str, port_name: &str) -> Result<String, String> {
     let baud_rate = 9600;
-    let timeout_duration = Duration::from_secs(2); // Adjust timeout if necessary
+    let timeout_duration = Duration::from_secs(3); // Adjust timeout if necessary
 
     // Open the serial port
     let mut port = tokio_serial::new(port_name, baud_rate)
@@ -66,6 +66,7 @@ pub async fn send_and_receive_from_selected_port(data: &str, port_name: &str) ->
                     None
                 }
             }) {
+                println!("###DEBUG### - Error response from device: {}", error_message);
                 // If it's an error, return an Err with the corresponding error message
                 Err(format!("Error response from device: {}", error_message))
             } else {

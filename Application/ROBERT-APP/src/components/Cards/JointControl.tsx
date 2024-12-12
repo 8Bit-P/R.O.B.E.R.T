@@ -1,13 +1,26 @@
 import { useConnection } from "../../context/ConnectionContext";
 import { moveStep } from "../../api/commands";
+import { useState } from "react";
+
+import toast from "react-hot-toast";
 
 const JointControl = () => {
   const { port, isConnected } = useConnection();
+  const [jointValues, setJointValues] = useState<(number | string)[]>(Array(6).fill(""));
 
+  
+  const handleInputChange = (index: number, value: string) => {
+    const newValues = [...jointValues];
+    newValues[index] = value === "" ? "" : parseInt(value) || 0;
+    setJointValues(newValues);
+  };
+  
   //Individual increase of joint angle
   const handleJointIncrement = (jointIndex: number) => {
     if (isConnected) {
-      moveStep(port, jointIndex, +1).then((res) => console.log(res));
+      moveStep(port, jointIndex, +1)
+        .then((res) => console.log(res))
+        .catch((err) => toast.error(err));
     }
   };
 
@@ -33,7 +46,7 @@ const JointControl = () => {
             >
               <button
                 className="bg-red-500 text-white text-xl rounded-lg px-3 py-1 w-10 h-10 select-none hover:bg-red-600"
-                onClick={() => handleJointDecrement(index)} //TODO: +1 on index to start on J1
+                onClick={() => handleJointDecrement(index)} 
               >
                 -
               </button>
@@ -42,7 +55,7 @@ const JointControl = () => {
               </span>
               <button
                 className="bg-red-500 text-xl text-white rounded-lg px-3 py-1 w-10 h-10 select-none hover:bg-red-600"
-                onClick={() => handleJointIncrement(index)} //TODO: +1 on index to start on J1
+                onClick={() => handleJointIncrement(index+1)}
               >
                 +
               </button>
@@ -63,6 +76,8 @@ const JointControl = () => {
                 type="number"
                 min="0"
                 max="360"
+                value={jointValues[index]} // Controlled input
+                onChange={(e) => handleInputChange(index, e.target.value)}
                 className="w-full p-2 border border-gray-300 rounded-md text-center hover:border-blue-400 hover:bg-blue-50"
                 placeholder="0-360"
               />
@@ -70,13 +85,21 @@ const JointControl = () => {
           ))}
         </div>
 
-        {/* Run button */}
-        <button
-          className="bg-gray-500 text-white font-semibold mt-4 ml-[205px] px-4 py-2 rounded-lg hover:bg-gray-600"
-          onClick={() => console.log("Run command for custom angles")}
-        >
-          Run
-        </button>
+        <div className="flex float-right space-x-4 mt-4">
+          <button
+            className="border-2 border-gray-500 font-semibold px-4 py-2 rounded-lg hover:bg-gray-200"
+            onClick={() => setJointValues(Array(6).fill(""))}
+          >
+            Clear
+          </button>
+
+          <button
+            className="bg-gray-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-gray-600"
+            onClick={() => console.log("Run command for custom angles")}
+          >
+            Run
+          </button>
+        </div>
       </div>
     </div>
   );

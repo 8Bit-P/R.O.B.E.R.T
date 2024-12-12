@@ -102,9 +102,6 @@ void processMoveCommand(String actionString){
 
 void moveStepper(int stepperNum, int steps) {
 
-  Serial.print("Moving stepper: J"); Serial.print(stepperNum);
-  Serial.print(" "); Serial.print(steps); Serial.println(" steps");
-
   AccelStepper* stepper;
 
   // Select the stepper motor
@@ -131,6 +128,9 @@ void moveStepper(int stepperNum, int steps) {
       Serial.println(InvalidStepper);
       return;
   }
+
+  Serial.print("Moving stepper: J"); Serial.print(stepperNum);
+  Serial.print(" "); Serial.print(steps); Serial.println(" steps");
 
   // Set the target position relative to the current position
   stepper->move(steps);

@@ -21,7 +21,7 @@ const Connection = () => {
       const response = await getPorts();
       setPorts(response);
     } catch (error) {
-      console.error("Failed to get ports:", error);
+      toast.error(`Failed to get ports: ${error}`);
     }
   };
 
@@ -40,10 +40,10 @@ const Connection = () => {
 
         const response = await connectToPortAPI(port!);
 
-        toast(response.toString());
+        toast.success(response.toString());
         setConnectionState(ConnectionStates.ACCEPTED_CONNECTION);
       } catch (error) {
-        toast(`Error trying to connect to port: ${error}`);
+        toast.error(`Error trying to connect to port: ${error}`);
         setConnectionState(ConnectionStates.REFUSED_CONNECTION);
         setIsConnected(false);
         connectToPort(DEFAULT_PORT_LABEL);
