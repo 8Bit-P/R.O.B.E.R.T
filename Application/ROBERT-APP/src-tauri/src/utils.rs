@@ -6,7 +6,7 @@ use crate::constants;
 
 
 pub async fn send_and_receive_from_selected_port(data: &str, port_name: &str) -> Result<String, String> {
-    let baud_rate = 9600;
+    let baud_rate = 115200;
     let timeout_duration = Duration::from_secs(3); // Adjust timeout if necessary
 
     // Open the serial port
@@ -18,10 +18,13 @@ pub async fn send_and_receive_from_selected_port(data: &str, port_name: &str) ->
         .open_native_async()
         .map_err(|e| format!("Failed to open serial port: {}", e))?;
 
-    println!("###DEBUG### - Sending data: {}", data);
+    // Concatenate '~' to the data
+    let data_to_send = format!("{}~", data);
+
+    println!("###DEBUG### - Sending data: {}", data_to_send);
 
     // Write the data to the port
-    port.write_all(data.as_bytes())
+    port.write_all(data_to_send.as_bytes())
         .await
         .map_err(|e| format!("Failed to write to serial port: {}", e))?;
     port.flush()
@@ -77,5 +80,4 @@ pub async fn send_and_receive_from_selected_port(data: &str, port_name: &str) ->
         Ok(Err(e)) => Err(e),
         Err(_) => Err("Timeout while waiting for response".to_string()),
     }
-    
 }

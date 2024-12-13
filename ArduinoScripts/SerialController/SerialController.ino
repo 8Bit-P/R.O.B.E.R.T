@@ -189,7 +189,7 @@ CommandCode getCommandCode(const char* command) {
 
 
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(115200);
 
   pinMode(J1enablePin , OUTPUT);
   digitalWrite(J1enablePin , LOW);
@@ -200,7 +200,7 @@ void setup() {
 
 void loop() {
   while(Serial.available()) {
-    String command = Serial.readString();
+    String command = Serial.readStringUntil('~');
 
     // Serial.print("Commmand received: ");
     // Serial.println(command);

@@ -46,7 +46,7 @@ const JointControl = () => {
             >
               <button
                 className="bg-red-500 text-white text-xl rounded-lg px-3 py-1 w-10 h-10 select-none hover:bg-red-600"
-                onClick={() => handleJointDecrement(index)} 
+                onClick={() => handleJointDecrement(index+1)} 
               >
                 -
               </button>
