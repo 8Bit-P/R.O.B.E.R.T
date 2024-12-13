@@ -21,7 +21,7 @@ const SteppersState = () => {
 
     //Send command
     if(isConnected){
-      toggleStepperState(port, index, toggleStates[index] ? "ENABLED" : "DISABLED")
+      toggleStepperState(port, index+1, !toggleStates[index] ? "ENABLED" : "DISABLED")
         .then((res) => console.log(res))
         .catch((err) => toast.error(err));
     }
@@ -36,7 +36,7 @@ const SteppersState = () => {
           <ToggleInput
             isChecked={isChecked}
             handleToggleInput={() => handleToggleInput(index)} // Pass index to handler
-            isConnected={isConnected}
+            isActive={isConnected}
           />
         </div>
       ))}

@@ -67,7 +67,7 @@ pub async fn move_step(port: &str, joint_index:i8, n_steps: i16 ) -> Result<Stri
 #[tauri::command]
 pub async fn toggle_stepper(port: &str, joint_index:i8, enabled: &str ) -> Result<String, String> {
 
-    //Arduino command format: MOVE>JOINT_NSTEPS;
+    //Arduino command format: TOGGLE>JOINT_STATE;
     let toggle_command = format!(
         "{}J{}_{};",
         constants::CommandCodes::TOGGLE,

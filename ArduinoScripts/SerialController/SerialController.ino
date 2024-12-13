@@ -109,7 +109,8 @@ void processMoveCommand(String actionString){
 }
 
 void processToggleCommand(String actionString){
-  //Move Command actions should have the format -> TOGGLE>JOINT_STATE;
+  //Toggle command actions should have the format -> TOGGLE>JOINT_STATE;
+  String actionLeft = actionString;
 
   while(actionLeft.indexOf(";") != -1) {
       int delimiterIndex = actionLeft.indexOf(";");
@@ -126,10 +127,10 @@ void processToggleCommand(String actionString){
       String stateStr = currentAction.substring(jointDelimiter+1);
       bool state;
 
-      if(strcmp(stateStr, Enabled) == 0){
+      if(stateStr == Enabled){
         state = true;
       }
-      else if(strcmp(stateStr, Disabled) == 0){
+      else if(stateStr == Disabled){
         state = false;
       }
       else{

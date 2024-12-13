@@ -82,6 +82,7 @@ const Connection = () => {
 
       <div className="inline-flex items-center">
         <ToggleInput
+          isActive={true}
           isChecked={isConnected}
           handleToggleInput={handleToggleConnection}
         />
