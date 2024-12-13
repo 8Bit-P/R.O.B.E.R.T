@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useConnection } from "../../context/ConnectionContext";
-import { getPorts, connectToPortAPI } from "../../api/connectionAPI";
+import { getPorts, connectToPortAPI } from "../../api/commands";
 import { ConnectionStates, DEFAULT_PORT_LABEL } from "../../constants/connectionConstants";
 
 import toast from 'react-hot-toast';
@@ -21,7 +21,7 @@ const Connection = () => {
       const response = await getPorts();
       setPorts(response);
     } catch (error) {
-      console.error("Failed to get ports:", error);
+      toast.error(`Failed to get ports: ${error}`);
     }
   };
 
@@ -40,10 +40,10 @@ const Connection = () => {
 
         const response = await connectToPortAPI(port!);
 
-        toast(response.toString());
+        toast.success(response.toString());
         setConnectionState(ConnectionStates.ACCEPTED_CONNECTION);
       } catch (error) {
-        toast(`Error trying to connect to port: ${error}`);
+        toast.error(`Error trying to connect to port: ${error}`);
         setConnectionState(ConnectionStates.REFUSED_CONNECTION);
         setIsConnected(false);
         connectToPort(DEFAULT_PORT_LABEL);
@@ -82,6 +82,7 @@ const Connection = () => {
 
       <div className="inline-flex items-center">
         <ToggleInput
+          isActive={true}
           isChecked={isConnected}
           handleToggleInput={handleToggleConnection}
         />

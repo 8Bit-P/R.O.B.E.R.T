@@ -14,7 +14,8 @@ import { Toaster } from "react-hot-toast";
 function App() {
   return (
     <ConnectionProvider>
-      <Toaster />
+      <Toaster position="bottom-right" reverseOrder={false}/>
+      
       <main className="flex flex-col items-center justify-center ">
         <div className="w-[1060px]">
           <div className="flex items-center justify-between mb-5 mt-10">

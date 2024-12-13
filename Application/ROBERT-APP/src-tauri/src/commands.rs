@@ -4,8 +4,8 @@ use crate::constants;
 
 
 #[tauri::command]
-pub fn connect_to_port(port: &str) -> Result<String, String> {
-    match send_and_receive_from_selected_port(constants::CommandCodes::CHECK, port) {
+pub async fn connect_to_port(port: &str) -> Result<String, String> {
+    match send_and_receive_from_selected_port(constants::CommandCodes::CHECK, port).await {
         Ok(response) => {
             if response.trim() == constants::ResponseCodes::CONNECTED{
                 Ok(format!("Successfully connected to port: {}.", port))
@@ -14,6 +14,70 @@ pub fn connect_to_port(port: &str) -> Result<String, String> {
             }
         }
         Err(e) => Err(format!("Failed to connect to port: {}. Error: {}", port, e)),
+    }
+}
+
+#[tauri::command]
+pub async fn set_acceleration(port: &str, acceleration: i8) -> Result<String, String> {
+    //Arduino command format: SETACC>ACCELERATION_VALUE;
+    let set_acc_command = format!(
+        "{}{}",
+        constants::CommandCodes::SETACC,
+        acceleration
+    );
+
+    match send_and_receive_from_selected_port(&set_acc_command, port).await {
+        Ok(response) => Ok(format!("Succesfully sent set_acc command. Response: {}",response)),
+        Err(e) => Err(format!("Error: {}", e)),
+    }
+}
+
+#[tauri::command]
+pub async fn set_velocity(port: &str, velocity: i8) -> Result<String, String> {
+    //Arduino command format: SETACC>ACCELERATION_VALUE;
+    let set_vel_command = format!(
+        "{}{}",
+        constants::CommandCodes::SETVEL,
+        velocity
+    );
+
+    match send_and_receive_from_selected_port(&set_vel_command, port).await {
+        Ok(response) => Ok(format!("Succesfully sent set_vel command. Response: {}",response)),
+        Err(e) => Err(format!("Error: {}", e)),
+    }
+}
+
+#[tauri::command]
+pub async fn move_step(port: &str, joint_index:i8, n_steps: i16 ) -> Result<String, String> {
+
+    //Arduino command format: MOVE>JOINT_NSTEPS;
+    let move_step_command = format!(
+        "{}J{}_{};",
+        constants::CommandCodes::MOVE,
+        joint_index,
+        n_steps
+    );
+
+    match send_and_receive_from_selected_port(&move_step_command, port).await {
+        Ok(response) => Ok(format!("Succesfully sent move_step command. Response: {}",response)),
+        Err(e) => Err(format!("Error: {}", e)),
+    }
+}
+
+#[tauri::command]
+pub async fn toggle_stepper(port: &str, joint_index:i8, enabled: &str ) -> Result<String, String> {
+
+    //Arduino command format: TOGGLE>JOINT_STATE;
+    let toggle_command = format!(
+        "{}J{}_{};",
+        constants::CommandCodes::TOGGLE,
+        joint_index,
+        enabled
+    );
+
+    match send_and_receive_from_selected_port(&toggle_command, port).await {
+        Ok(response) => Ok(format!("Succesfully sent toggle_step command. Response: {}",response)),
+        Err(e) => Err(format!("Error: {}", e)),
     }
 }
 
