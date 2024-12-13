@@ -6,7 +6,10 @@
 #define CheckCommand "CHECK"
 #define SetVelocityCommand "SETVEL"
 #define SetAccelerationCommand "SETACC"
+#define ToggleStepperCommand "TOGGLE"
 
+#define Enabled "ENABLED"
+#define Disabled "DISABLED"
 //Response codes
 #define ConectedResponse "CONNECTED"
 
@@ -14,6 +17,7 @@
 #define CommandFormatError "C001" // Command was not properly formated
 #define CommandNotDefined "C002"
 #define InvalidStepper "I001"
+#define InvalidState "I002"
 
 //Ranges
 #define AccelerationUpperRange = 1000 //TODO: check actual upper ranges
@@ -50,16 +54,17 @@ enum CommandCode {
   CHECK,
   SETVEL,
   SETACC,
+  TOGGLE,
   UNKNOWN
 };
 
 
-AccelStepper j1 = AccelStepper(motorInterfaceType, J1stepPin,J1dirPin);
-AccelStepper j2 = AccelStepper(motorInterfaceType, J2stepPin,J2dirPin);
-AccelStepper j3 = AccelStepper(motorInterfaceType, J3stepPin,J3dirPin);
-AccelStepper j4 = AccelStepper(motorInterfaceType, J4stepPin,J4dirPin);
-AccelStepper j5 = AccelStepper(motorInterfaceType, J5stepPin,J5dirPin);
-AccelStepper j6 = AccelStepper(motorInterfaceType, J6stepPin,J6dirPin);
+AccelStepper j1 = AccelStepper(motorInterfaceType, J1stepPin, J1dirPin);
+AccelStepper j2 = AccelStepper(motorInterfaceType, J2stepPin, J2dirPin);
+AccelStepper j3 = AccelStepper(motorInterfaceType, J3stepPin, J3dirPin);
+AccelStepper j4 = AccelStepper(motorInterfaceType, J4stepPin, J4dirPin);
+AccelStepper j5 = AccelStepper(motorInterfaceType, J5stepPin, J5dirPin);
+AccelStepper j6 = AccelStepper(motorInterfaceType, J6stepPin, J6dirPin);
 
 void initializeSteppers(){
   j1.setMaxSpeed(2000); j1.setAcceleration(1000);
@@ -68,12 +73,18 @@ void initializeSteppers(){
   j4.setMaxSpeed(2000); j4.setAcceleration(1000);
   j5.setMaxSpeed(2000); j5.setAcceleration(1000);
   j6.setMaxSpeed(2000); j6.setAcceleration(1000);
+
+  pinMode(J1enablePin , OUTPUT); digitalWrite(J1enablePin , LOW);
+  pinMode(J2enablePin , OUTPUT); digitalWrite(J2enablePin , LOW);
+  pinMode(J3enablePin , OUTPUT); digitalWrite(J3enablePin , LOW);
+  pinMode(J4enablePin , OUTPUT); digitalWrite(J4enablePin , LOW);
+  pinMode(J5enablePin , OUTPUT); digitalWrite(J5enablePin , LOW);
+  pinMode(J6enablePin , OUTPUT); digitalWrite(J6enablePin , LOW);
 }
 
 void processMoveCommand(String actionString){
 
   String actionLeft = actionString;
-
 
   //Move Command actions should have the format -> MOVE>JOINT_NSTEPS;
   while(actionLeft.indexOf(";") != -1) {
@@ -89,15 +100,56 @@ void processMoveCommand(String actionString){
       int stepperNumber = atoi(joint.substring(1).c_str());
       int steps = atoi(currentAction.substring(jointDelimiter+1).c_str());
 
-      // Serial.println(joint);
-      // Serial.println(steps);
-
       moveStepper(stepperNumber,steps);
 
       //Update String 
       actionLeft = actionLeft.substring(delimiterIndex+1);
   }
   
+}
+
+void processToggleCommand(String actionString){
+  //Move Command actions should have the format -> TOGGLE>JOINT_STATE;
+
+  while(actionLeft.indexOf(";") != -1) {
+      int delimiterIndex = actionLeft.indexOf(";");
+
+      String currentAction = actionLeft.substring(0,delimiterIndex);
+
+      //Apply current action
+
+      //Get joint
+      int jointDelimiter = currentAction.indexOf("_");
+      String joint = currentAction.substring(0,jointDelimiter);
+      int stepperNumber = atoi(joint.substring(1).c_str());
+      
+      String stateStr = currentAction.substring(jointDelimiter+1);
+      bool state;
+
+      if(strcmp(stateStr, Enabled) == 0){
+        state = true;
+      }
+      else if(strcmp(stateStr, Disabled) == 0){
+        state = false;
+      }
+      else{
+        Serial.println(InvalidState);
+        return;
+      }
+
+      toggleStepper(stepperNumber, state);
+
+      Serial.print("Stepper: J"); Serial.print(stepperNumber); Serial.print(" "); Serial.println(stateStr);
+
+      //Update String 
+      actionLeft = actionLeft.substring(delimiterIndex+1);
+  }
+}
+
+void toggleStepper(int stepperNum, bool enabled){
+    if(stepperNum <= 0 || stepperNum > 6) Serial.println(InvalidStepper);
+
+    digitalWrite(J6enablePin , enabled ? LOW : HIGH);
 }
 
 void moveStepper(int stepperNum, int steps) {
@@ -174,14 +226,16 @@ void setVelocity(String actionString){
 }
 
 CommandCode getCommandCode(const char* command) {
-  if (strcmp(command, "MOVE") == 0) {
+  if (strcmp(command, MoveCommand) == 0) {
     return MOVE;
-  } else if (strcmp(command, "CHECK") == 0) {
+  } else if (strcmp(command, CheckCommand) == 0) {
     return CHECK;
-  } else if (strcmp(command, "SETVEL") == 0) {
+  } else if (strcmp(command, SetVelocityCommand) == 0) {
     return SETVEL;
-  } else if (strcmp(command, "SETACC") == 0) {
+  } else if (strcmp(command, SetAccelerationCommand) == 0) {
     return SETACC;
+  } else if (strcmp(command, ToggleStepperCommand) == 0) {
+    return TOGGLE;
   } else {
     return UNKNOWN;
   }
@@ -191,8 +245,7 @@ CommandCode getCommandCode(const char* command) {
 void setup() {
   Serial.begin(115200);
 
-  pinMode(J1enablePin , OUTPUT);
-  digitalWrite(J1enablePin , LOW);
+  
   
   // Set the maximum speed in steps per second:
   initializeSteppers();
@@ -232,6 +285,10 @@ void loop() {
 
         case SETACC:
           setAcceleration(commandAction);
+          break;
+
+        case TOGGLE:
+          processToggleCommand(commandAction);
           break;
 
         default:
