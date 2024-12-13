@@ -27,7 +27,7 @@ pub async fn set_acceleration(port: &str, acceleration: i8) -> Result<String, St
     );
 
     match send_and_receive_from_selected_port(&set_acc_command, port).await {
-        Ok(response) => Ok(format!("Succesfully send set_acc command. Response: {}",response)),
+        Ok(response) => Ok(format!("Succesfully sent set_acc command. Response: {}",response)),
         Err(e) => Err(format!("Error: {}", e)),
     }
 }
@@ -42,7 +42,7 @@ pub async fn set_velocity(port: &str, velocity: i8) -> Result<String, String> {
     );
 
     match send_and_receive_from_selected_port(&set_vel_command, port).await {
-        Ok(response) => Ok(format!("Succesfully send set_vel command. Response: {}",response)),
+        Ok(response) => Ok(format!("Succesfully sent set_vel command. Response: {}",response)),
         Err(e) => Err(format!("Error: {}", e)),
     }
 }
@@ -59,7 +59,24 @@ pub async fn move_step(port: &str, joint_index:i8, n_steps: i16 ) -> Result<Stri
     );
 
     match send_and_receive_from_selected_port(&move_step_command, port).await {
-        Ok(response) => Ok(format!("Succesfully send move_step command. Response: {}",response)),
+        Ok(response) => Ok(format!("Succesfully sent move_step command. Response: {}",response)),
+        Err(e) => Err(format!("Error: {}", e)),
+    }
+}
+
+#[tauri::command]
+pub async fn toggle_stepper(port: &str, joint_index:i8, enabled: &str ) -> Result<String, String> {
+
+    //Arduino command format: MOVE>JOINT_NSTEPS;
+    let toggle_command = format!(
+        "{}J{}_{};",
+        constants::CommandCodes::TOGGLE,
+        joint_index,
+        enabled
+    );
+
+    match send_and_receive_from_selected_port(&toggle_command, port).await {
+        Ok(response) => Ok(format!("Succesfully sent toggle_step command. Response: {}",response)),
         Err(e) => Err(format!("Error: {}", e)),
     }
 }

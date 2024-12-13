@@ -9,6 +9,7 @@ impl CommandCodes {
     pub const CHECK: &'static str = "CHECK>";
     pub const SETVEL: &'static str = "SETVEL>";
     pub const SETACC: &'static str = "SETACC>";
+    pub const TOGGLE: &'static str = "TOGGLE>";
 }
 
 // Response Codes

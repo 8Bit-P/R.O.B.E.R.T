@@ -38,3 +38,14 @@ export const moveStep = async (port: string | null | undefined, jointIndex: numb
   return invoke<string[]>("move_step", { port, jointIndex, nSteps:nSteps });
 };
 
+export const toggleStepperState = async (port: string | null | undefined, jointIndex: number | null | undefined, enabled: string | null | undefined): Promise<string[]> => {
+
+  // Check if `port` or `velocity` is null or undefined
+  if (port == null || jointIndex == null || enabled == null) {
+    throw new Error("port, joint_index and enabled must be provided and cannot be null or undefined");
+  }
+
+  return invoke<string[]>("toggle_stepper", { port, jointIndex, enabled });
+};
+
+

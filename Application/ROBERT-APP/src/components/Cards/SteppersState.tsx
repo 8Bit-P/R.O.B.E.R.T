@@ -1,7 +1,13 @@
 import { useState } from "react";
+import { useConnection } from "../../context/ConnectionContext";
+import { toggleStepperState } from "../../api/commands";
+
 import ToggleInput from "../ToggleInput";
+import toast from "react-hot-toast";
 
 const SteppersState = () => {
+
+  const { port, isConnected } = useConnection();
   // Initialize state as an array of booleans
   const [toggleStates, setToggleStates] = useState([true, true, true, true, true, true]);
 
@@ -12,6 +18,14 @@ const SteppersState = () => {
       newStates[index] = !newStates[index]; // Toggle the specific index
       return newStates; // Return the updated states
     });
+
+    //Send command
+    if(isConnected){
+      toggleStepperState(port, index, toggleStates[index] ? "ENABLED" : "DISABLED")
+        .then((res) => console.log(res))
+        .catch((err) => toast.error(err));
+    }
+
   };
 
   return (
@@ -22,6 +36,7 @@ const SteppersState = () => {
           <ToggleInput
             isChecked={isChecked}
             handleToggleInput={() => handleToggleInput(index)} // Pass index to handler
+            isConnected={isConnected}
           />
         </div>
       ))}
