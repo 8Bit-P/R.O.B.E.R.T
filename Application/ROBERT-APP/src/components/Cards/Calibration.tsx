@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useConnection } from '../../context/ConnectionContext';
 import { calibrateStepper } from '../../api/commands';
 
@@ -22,6 +22,14 @@ const Calibration = () => {
     CalibrationStates.NOT_CALIBRATED,
     CalibrationStates.NOT_CALIBRATED,
   ]);
+
+  useEffect(() => {
+    if(isConnected){
+      //TODO: send command to check for stepper state and update them accordingly
+    }
+  
+  }, [isConnected])
+  
 
   const handleCalibrate = (index: number) => {
     if (isConnected) {
