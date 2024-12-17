@@ -14,5 +14,7 @@ void loop() {
     // Serial.print("Commmand received: ");
     // Serial.println(command);
     processCommand(command);
+
+    //TODO: periodically report position of steppers back
   }
 }

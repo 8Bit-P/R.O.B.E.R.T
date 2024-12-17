@@ -9,6 +9,7 @@ enum CommandCode {
     SETVEL,
     SETACC,
     TOGGLE,
+    CALIBRATE,
     UNKNOWN
 };
 
@@ -17,5 +18,6 @@ CommandCode getCommandCode(const String& command);
 void processCommand(String command);
 void processToggleCommand(String actionString);
 void processMoveCommand(String actionString);
+void processCalibrateCommand(String actionString);
 
 #endif

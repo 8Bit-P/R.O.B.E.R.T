@@ -38,6 +38,10 @@ void processCommand(String command){
           processToggleCommand(commandAction);
           break;
 
+        case CALIBRATE:
+          processCalibrateCommand(commandAction);
+          break;
+
         default:
           Serial.println(CommandNotDefined);
           break;
@@ -46,11 +50,12 @@ void processCommand(String command){
 }
 
 CommandCode getCommandCode(const String& command) {
-    if (command == "MOVE") return MOVE;
-    if (command == "CHECK") return CHECK;
-    if (command == "SETVEL") return SETVEL;
-    if (command == "SETACC") return SETACC;
-    if (command == "TOGGLE") return TOGGLE;
+    if (command == MoveCommand) return MOVE;
+    if (command == CheckCommand) return CHECK;
+    if (command == SetVelocityCommand) return SETVEL;
+    if (command == SetAccelerationCommand) return SETACC;
+    if (command == ToggleStepperCommand) return TOGGLE;
+    if (command == CalibrateStepperCommand) return CALIBRATE;
     return UNKNOWN;
 }
 
@@ -92,7 +97,7 @@ void processToggleCommand(String actionString){
       int jointDelimiter = currentAction.indexOf("_");
       String joint = currentAction.substring(0,jointDelimiter);
       int stepperNumber = atoi(joint.substring(1).c_str());
-      //gET STATE
+      //Get State
       String stateStr = currentAction.substring(jointDelimiter+1);
       bool state;
 
@@ -116,3 +121,26 @@ void processToggleCommand(String actionString){
   }
 }
 
+void processCalibrateCommand(String actionString){
+  //Toggle command actions should have the format -> CALIBRATE>JOINT;
+  String actionLeft = actionString;
+
+  //Iterate through the provided steppers
+  while(actionLeft.indexOf(";") != -1) {
+      int delimiterIndex = actionLeft.indexOf(";");
+
+      String currentAction = actionLeft.substring(0,delimiterIndex);
+
+      //Get joint
+      int jointDelimiter = currentAction.indexOf("_");
+      String joint = currentAction.substring(0,jointDelimiter);
+      int stepperNumber = atoi(joint.substring(1).c_str());
+
+      calibrateStepper(stepperNumber);
+
+      Serial.print("Stepper: J"); Serial.print(stepperNumber); Serial.print(" Calibrated");
+
+      //Update String 
+      actionLeft = actionLeft.substring(delimiterIndex+1);
+  }
+}

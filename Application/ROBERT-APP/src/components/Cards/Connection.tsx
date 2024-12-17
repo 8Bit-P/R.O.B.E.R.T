@@ -46,7 +46,6 @@ const Connection = () => {
         toast.error(`Error trying to connect to port: ${error}`);
         setConnectionState(ConnectionStates.REFUSED_CONNECTION);
         setIsConnected(false);
-        connectToPort(DEFAULT_PORT_LABEL);
       }
     } else {
       setConnectionState(ConnectionStates.NOT_PROBED);

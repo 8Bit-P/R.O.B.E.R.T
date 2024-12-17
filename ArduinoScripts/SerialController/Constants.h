@@ -9,6 +9,7 @@
 #define SetVelocityCommand "SETVEL"
 #define SetAccelerationCommand "SETACC"
 #define ToggleStepperCommand "TOGGLE"
+#define CalibrateStepperCommand "CALIBRATE"
 
 #define Enabled "ENABLED"
 #define Disabled "DISABLED"
@@ -50,5 +51,14 @@
 #define J6stepPin 12
 #define J6dirPin 13
 #define J6enablePin 24 // 
+
+//TODO: set correct pins
+// Limit switch pin definitions
+#define J1limitPin 2   
+#define J2limitPin 3   
+#define J3limitPin 4   
+#define J4limitPin 5  
+#define J5limitPin 6  
+#define J6limitPin 7  
 
 #endif
