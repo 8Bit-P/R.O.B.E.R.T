@@ -4,7 +4,7 @@
 
 
 void processCommand(String command){
-//Process String
+
     //1. Get command sent (Command type and action)
     int commandDelimiterIndex = command.indexOf('>');
 
@@ -26,14 +26,12 @@ void processCommand(String command){
 
         case SETVEL:
           //TODO: change velocity scale to match library specification
-          int velocity = atoi(commandAction.c_str());
-          setVelocity(velocity);
+          setVelocity(atoi(commandAction.c_str()));
           break;
 
         case SETACC:
          //TODO: change acceleration scale to match library specification
-          int acceleration = atoi(commandAction.c_str());
-          setAcceleration(acceleration);
+          setAcceleration(atoi(commandAction.c_str()));
           break;
 
         case TOGGLE:
@@ -66,16 +64,14 @@ void processMoveCommand(String actionString){
 
       String currentAction = actionLeft.substring(0,delimiterIndex);
 
-      //Apply current action
-
       //Get joint
       int jointDelimiter = currentAction.indexOf("_");
       String joint = currentAction.substring(0,jointDelimiter);
       int stepperNumber = atoi(joint.substring(1).c_str());
+      //Get number of steps
       int steps = atoi(currentAction.substring(jointDelimiter+1).c_str());
 
       moveStepper(stepperNumber,steps);
-
       //Update String 
       actionLeft = actionLeft.substring(delimiterIndex+1);
   }
@@ -86,18 +82,17 @@ void processToggleCommand(String actionString){
   //Toggle command actions should have the format -> TOGGLE>JOINT_STATE;
   String actionLeft = actionString;
 
+  //Iterate through the provided steppers
   while(actionLeft.indexOf(";") != -1) {
       int delimiterIndex = actionLeft.indexOf(";");
 
       String currentAction = actionLeft.substring(0,delimiterIndex);
 
-      //Apply current action
-
       //Get joint
       int jointDelimiter = currentAction.indexOf("_");
       String joint = currentAction.substring(0,jointDelimiter);
       int stepperNumber = atoi(joint.substring(1).c_str());
-      
+      //gET STATE
       String stateStr = currentAction.substring(jointDelimiter+1);
       bool state;
 

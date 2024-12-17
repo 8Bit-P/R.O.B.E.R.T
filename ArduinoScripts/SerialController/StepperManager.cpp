@@ -80,8 +80,7 @@ void setAcceleration(int acceleration){
     j5.setAcceleration(acceleration);
     j6.setAcceleration(acceleration);
 
-    Serial.print("Acceleration Set to: ");
-    Serial.println(acceleration);
+    Serial.print("Acceleration Set to: "); Serial.println(acceleration);
 }
 
 void setVelocity(int velocity){
