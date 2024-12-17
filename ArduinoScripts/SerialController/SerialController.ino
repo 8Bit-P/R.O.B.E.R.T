@@ -222,8 +222,7 @@ void setVelocity(String actionString){
     j5.setMaxSpeed(2000);
     j6.setMaxSpeed(2000);
 
-    Serial.print("Velocity Set to: ");
-    Serial.println(velocity);
+    Serial.print("Velocity Set to: "); Serial.println(velocity);
 }
 
 CommandCode getCommandCode(const char* command) {
@@ -242,7 +241,6 @@ CommandCode getCommandCode(const char* command) {
   }
 }
 
-
 void setup() {
   Serial.begin(115200);
 
@@ -259,9 +257,13 @@ void loop() {
     // Serial.print("Commmand received: ");
     // Serial.println(command);
 
-    //Process String
-    //1. Get command sent (Command type and action)
+    processCommand(command);
+  }
+}
 
+void processCommand(String command){
+//Process String
+    //1. Get command sent (Command type and action)
     int commandDelimiterIndex = command.indexOf('>');
 
     //Check if '>' is found in the string 
@@ -297,8 +299,6 @@ void loop() {
           break;
       }
     }
-
-  }
 }
 
 

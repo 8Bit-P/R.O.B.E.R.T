@@ -48,6 +48,17 @@ export const toggleStepperState = async (port: string | null | undefined, jointI
   return invoke<string[]>("toggle_stepper", { port, jointIndex, enabled });
 };
 
+//Returns a string indicating which steppers are enabled or disabled
+export const checkSteppersState = async (port: string | null | undefined): Promise<string[]> => {
+
+  // Check if `port` is null or undefined
+  if (port == null) {
+    throw new Error("port and cannot be null or undefined");
+  }
+
+  return invoke<string[]>("check_steppers", { port });
+};
+
 export const calibrateStepper = async (port: string | null | undefined, jointsIndexes: number[] | null | undefined): Promise<string[]> => {
 
   // Check if `port` or `velocity` is null or undefined
