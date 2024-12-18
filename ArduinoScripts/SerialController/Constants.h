@@ -18,6 +18,7 @@
 #define ConnectedResponse "CONNECTED"
 #define CalibrationResponse "[CALIBRATION];"
 #define StepsPositionResponse "[STEPS_POSITION];"
+#define InfoResponse "[INFO];"
 
 //Error codes
 #define CommandFormatError "C001" // Command was not properly formated
