@@ -1,4 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useConnection } from '../../context/ConnectionContext';
+import { calibrateStepper } from '../../api/commands';
+
+import toast from "react-hot-toast";
 
 const enum CalibrationStates {
   NOT_CALIBRATED = "#FD0200", // Red for uncalibrated
@@ -7,6 +11,9 @@ const enum CalibrationStates {
 }
 
 const Calibration = () => {
+
+  const { port, isConnected } = useConnection();
+
   const [calibrationStates, setCalibrationStates] = useState([
     CalibrationStates.NOT_CALIBRATED,
     CalibrationStates.NOT_CALIBRATED,
@@ -16,38 +23,79 @@ const Calibration = () => {
     CalibrationStates.NOT_CALIBRATED,
   ]);
 
-  const handleCalibrate = (index: number) => {
-    setCalibrationStates((prevStates) => {
-      const newStates = [...prevStates];
-      newStates[index] = CalibrationStates.CALIBRATING;
-      return newStates;
-    });
+  useEffect(() => {
+    if(isConnected){
+      //TODO: send command to check for stepper state and update them accordingly
+    }
+  
+  }, [isConnected])
+  
 
-    // Simulate calibration process
-    //TODO: implement actual calibration
-    setTimeout(() => {
+  const handleCalibrate = (index: number) => {
+    if (isConnected) {
+      //Set state as calibrating
       setCalibrationStates((prevStates) => {
         const newStates = [...prevStates];
-        newStates[index] = CalibrationStates.CALIBRATED; // Set to CALIBRATED after process
+        newStates[index] = CalibrationStates.CALIBRATING;
         return newStates;
       });
-    }, 2000); // Simulated delay for calibration
+
+      var calibrationIndexArray: number[] = [index];
+
+      //Add 1 to each index 
+      calibrationIndexArray = calibrationIndexArray.map(idx => idx + 1);
+
+      calibrateStepper(port, calibrationIndexArray)
+      .then((res) => {
+
+          //If no error response assume joint is calibrated 
+          console.log(res)
+          setCalibrationStates((prevStates) => {
+            const newStates = [...prevStates];
+            newStates[index] = CalibrationStates.CALIBRATED; // Set to CALIBRATED after process
+            return newStates;
+          });
+      })
+      .catch((err) => {
+        toast.error(err)
+        //Set state as not calibrated again
+        setCalibrationStates((prevStates) => {
+          const newStates = [...prevStates];
+          newStates[index] = CalibrationStates.NOT_CALIBRATED; // Set to CALIBRATED after process
+          return newStates;
+        });
+      });
+    }
   };
 
   const handleCalibrateAll = () => {
-    setCalibrationStates(new Array(6).fill(CalibrationStates.CALIBRATING));
+    if(isConnected){
 
-    // Simulate calibration for all
-    //TODO: implement actual calibration
-    setTimeout(() => {
-      setCalibrationStates(new Array(6).fill(CalibrationStates.CALIBRATED)); // Set all to CALIBRATED
-    }, 2000); // Simulated delay for calibration
+      setCalibrationStates(new Array(6).fill(CalibrationStates.CALIBRATING));
+
+      var calibrationIndexArray: number[] = Array.from({ length: 6 }, (_, index) => index);
+
+      //Add 1 to each index 
+      calibrationIndexArray = calibrationIndexArray.map(idx => idx + 1);
+
+      calibrateStepper(port, calibrationIndexArray)
+      .then((res) => {
+          //If no error response assume joints are calibrated 
+          console.log(res)
+          setCalibrationStates(new Array(6).fill(CalibrationStates.CALIBRATED)); // Set all to CALIBRATED
+      })
+      .catch((err) => {
+        toast.error(err)
+        setCalibrationStates(new Array(6).fill(CalibrationStates.NOT_CALIBRATED));
+      });
+    }
+
   };
 
   return (
     <div style={{ fontFamily: 'nothing' }} className="p-4 space-y-3">
       {[...Array(6)].map((_, index) => (
-        <div key={index} className="flex items-center space-x-2">
+        <div key={index+1} className="flex items-center space-x-2">
           <button 
             onClick={() => handleCalibrate(index)} 
             className="bg-white border border-gray-300 text-gray-700 px-2 py-1 rounded w-32 text-left hover:bg-gray-50 focus:outline-none"
