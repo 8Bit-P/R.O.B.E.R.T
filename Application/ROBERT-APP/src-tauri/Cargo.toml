@@ -1,8 +1,8 @@
 [package]
 name = "robert-app"
-version = "0.1.0"
-description = "A Tauri App"
-authors = ["you"]
+version = "0.2.0"
+description = "Desktop app to control an Arduino based, 6-DoF robotic arm"
+authors = ["Pablo Pérez Martín"]
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html

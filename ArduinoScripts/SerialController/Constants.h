@@ -10,17 +10,20 @@
 #define SetAccelerationCommand "SETACC"
 #define ToggleStepperCommand "TOGGLE"
 #define CalibrateStepperCommand "CALIBRATE"
+#define GetStepperStepPositionCommand "GETSTEPPOS"
 
 #define Enabled "ENABLED"
 #define Disabled "DISABLED"
 //Response codes
-#define ConectedResponse "CONNECTED"
+#define ConnectedResponse "CONNECTED"
+#define CalibrationResponse "[CALIBRATION];"
+#define StepsPositionResponse "[STEPS_POSITION];"
 
 //Error codes
 #define CommandFormatError "C001" // Command was not properly formated
 #define CommandNotDefined "C002"
 #define InvalidStepper "I001"
-#define InvalidState "I002"
+#define InvalidState "I002" //Invalid state for stepper
 
 //Ranges
 #define AccelerationUpperRange = 1000 //TODO: check actual upper ranges

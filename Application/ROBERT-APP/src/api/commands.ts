@@ -53,7 +53,7 @@ export const checkSteppersState = async (port: string | null | undefined): Promi
 
   // Check if `port` is null or undefined
   if (port == null) {
-    throw new Error("port and cannot be null or undefined");
+    throw new Error("port cannot be null or undefined");
   }
 
   return invoke<string[]>("check_steppers", { port });
@@ -61,9 +61,11 @@ export const checkSteppersState = async (port: string | null | undefined): Promi
 
 export const calibrateStepper = async (port: string | null | undefined, jointsIndexes: number[] | null | undefined): Promise<string[]> => {
 
+  console.log("indexes");console.log(jointsIndexes)
+
   // Check if `port` or `velocity` is null or undefined
   if (port == null || jointsIndexes == null) {
-    throw new Error("port, jointsIndexes must be provided and cannot be null or undefined");
+    throw new Error("port and jointsIndexes must be provided and cannot be null or undefined");
   }
 
   return invoke<string[]>("calibrate_steppers", { port, jointsIndexes });

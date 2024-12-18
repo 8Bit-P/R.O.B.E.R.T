@@ -10,13 +10,15 @@ impl CommandCodes {
     pub const SETVEL: &'static str = "SETVEL>";
     pub const SETACC: &'static str = "SETACC>";
     pub const TOGGLE: &'static str = "TOGGLE>";
+    pub const CALIBRATE: &'static str = "CALIBRATE>";
 }
 
 // Response Codes
 pub struct ResponseCodes;
 
 impl ResponseCodes {
-    pub const CONNECTED: &'static str = "CONNECTED";
+    pub const CONNECTED_RESPONSE: &'static str = "CONNECTED";
+    pub const CALIBRATION_RESPONSE: &'static str = "[CALIBRATION];";
 }
 
 // Error Codes (as a HashMap for easy lookup by code)

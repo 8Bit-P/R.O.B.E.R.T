@@ -105,10 +105,11 @@ void moveStepper(int stepperNum, int steps) {
 }
 
 void calibrateStepper(int stepperNum) {
-    AccelStepper* stepper = getStepperByIndex(stepperNum);
 
     int limitPin = getLimitSwitchPin(stepperNum);
     if (limitPin == -1) return; // Invalid stepper
+
+    AccelStepper* stepper = getStepperByIndex(stepperNum);
 
     Serial.print("Calibrating Stepper J");
     Serial.println(stepperNum);
@@ -119,9 +120,10 @@ void calibrateStepper(int stepperNum) {
 
     stepper->move(-100000); // Move a large negative distance
 
-    while (digitalRead(limitPin) == HIGH) {
-        stepper->run();
-    }
+    //TODO: REMOVE COMMENTS AND TEST
+    // while (digitalRead(limitPin) == HIGH) {
+    //     stepper->run();
+    // }
 
     // Stop the motor when the limit switch is reached
     stepper->stop();
@@ -129,6 +131,7 @@ void calibrateStepper(int stepperNum) {
     // Set the current position as zero (home position)
     stepper->setCurrentPosition(0);
 
+    Serial.print(CalibrationResponse);
     Serial.print("Stepper J");Serial.print(stepperNum);
     Serial.println(" calibrated to home position.");
 }

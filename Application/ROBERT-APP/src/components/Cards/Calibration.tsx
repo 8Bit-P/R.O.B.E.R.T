@@ -42,6 +42,9 @@ const Calibration = () => {
 
       var calibrationIndexArray: number[] = [index];
 
+      //Add 1 to each index 
+      calibrationIndexArray = calibrationIndexArray.map(idx => idx + 1);
+
       calibrateStepper(port, calibrationIndexArray)
       .then((res) => {
 
@@ -70,7 +73,10 @@ const Calibration = () => {
 
       setCalibrationStates(new Array(6).fill(CalibrationStates.CALIBRATING));
 
-      var calibrationIndexArray: number[] = Array.from({ length: 6 }, (_, index) => index + 1);
+      var calibrationIndexArray: number[] = Array.from({ length: 6 }, (_, index) => index);
+
+      //Add 1 to each index 
+      calibrationIndexArray = calibrationIndexArray.map(idx => idx + 1);
 
       calibrateStepper(port, calibrationIndexArray)
       .then((res) => {
@@ -89,9 +95,9 @@ const Calibration = () => {
   return (
     <div style={{ fontFamily: 'nothing' }} className="p-4 space-y-3">
       {[...Array(6)].map((_, index) => (
-        <div key={index} className="flex items-center space-x-2">
+        <div key={index+1} className="flex items-center space-x-2">
           <button 
-            onClick={() => handleCalibrate(index+1)} 
+            onClick={() => handleCalibrate(index)} 
             className="bg-white border border-gray-300 text-gray-700 px-2 py-1 rounded w-32 text-left hover:bg-gray-50 focus:outline-none"
           >
             Calibrate S{index + 1}

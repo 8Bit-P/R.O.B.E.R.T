@@ -21,7 +21,7 @@ void processCommand(String command){
 
         case CHECK:
           // This sends a response to verify the Arduino is correctly connected through serial
-          Serial.println(ConectedResponse);
+          Serial.println(ConnectedResponse);
           break;
 
         case SETVEL:
@@ -122,25 +122,33 @@ void processToggleCommand(String actionString){
 }
 
 void processCalibrateCommand(String actionString){
-  //Toggle command actions should have the format -> CALIBRATE>JOINT;
   String actionLeft = actionString;
 
-  //Iterate through the provided steppers
+  // Check if the action string contains semicolons
+  if (actionLeft.indexOf(";") == -1) {
+    Serial.println(CommandFormatError);
+    return;
+  }
+
+  // Iterate through the provided steppers
   while(actionLeft.indexOf(";") != -1) {
       int delimiterIndex = actionLeft.indexOf(";");
 
-      String currentAction = actionLeft.substring(0,delimiterIndex);
+      // Get joint string (e.g., "J1")
+      String joint = actionLeft.substring(0, delimiterIndex);
 
-      //Get joint
-      int jointDelimiter = currentAction.indexOf("_");
-      String joint = currentAction.substring(0,jointDelimiter);
+      // Convert the joint to an integer, skipping the "J" character
       int stepperNumber = atoi(joint.substring(1).c_str());
 
+      // Calibrate the stepper (assuming calibrateStepper is defined)
       calibrateStepper(stepperNumber);
 
-      Serial.print("Stepper: J"); Serial.print(stepperNumber); Serial.print(" Calibrated");
+      // Update actionLeft string to remove processed joint
+      actionLeft = actionLeft.substring(delimiterIndex + 1);
+  }
 
-      //Update String 
-      actionLeft = actionLeft.substring(delimiterIndex+1);
+  // Check if there's any remaining string after the loop
+  if (actionLeft.length() > 0) {
+    Serial.println(CommandFormatError);
   }
 }

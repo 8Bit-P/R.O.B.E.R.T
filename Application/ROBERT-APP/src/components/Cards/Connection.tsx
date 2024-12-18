@@ -32,6 +32,9 @@ const Connection = () => {
   };
 
   const handleToggleConnection = async () => {
+
+    if(port === "default") return;
+
     setIsConnected(!isConnected);
 
     if (!isConnected) {

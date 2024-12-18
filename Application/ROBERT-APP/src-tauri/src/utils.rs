@@ -3,8 +3,6 @@ use tokio_serial::{DataBits, Parity, SerialPortBuilderExt, StopBits};
 use tokio::time::{timeout, Duration};
 use crate::constants;
 
-
-
 pub async fn send_and_receive_from_selected_port(data: &str, port_name: &str) -> Result<String, String> {
     let baud_rate = 115200;
     let timeout_duration = Duration::from_secs(3); // Adjust timeout if necessary
