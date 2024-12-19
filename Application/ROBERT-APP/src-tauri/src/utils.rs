@@ -42,7 +42,7 @@ pub async fn send_and_receive_from_selected_port(data: &str, port_name: &str) ->
                     println!("###DEBUG### - Read {} bytes", bytes_read);
 
                     // Check if we have received a complete response, such as ending with a newline
-                    if response.ends_with(b"\n") {
+                    if response.ends_with(b"\n") || response.ends_with(b"~"){
                         break Ok(());
                     }
                 }
@@ -69,7 +69,7 @@ pub async fn send_and_receive_from_selected_port(data: &str, port_name: &str) ->
             }) {
                 println!("###DEBUG### - Error response from device: {}", error_message);
                 // If it's an error, return an Err with the corresponding error message
-                Err(format!("Error response from device: {}", error_message))
+                Err(format!("Response from device: {}", error_message))
             } else {
                 // Otherwise, return the response as a success
                 Ok(response_string)

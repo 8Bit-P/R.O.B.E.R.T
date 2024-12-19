@@ -125,3 +125,7 @@ void setVelocity(int velocity) {
     Serial.print("Velocity set to: "); Serial.println(velocity);
 }
 
+//TODO:
+void reportSteppersPositions(){
+  Serial.print(StepsPositionResponse);Serial.println("Random string");
+}
