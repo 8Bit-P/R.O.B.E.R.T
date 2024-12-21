@@ -12,7 +12,7 @@ const enum CalibrationStates {
 
 const Calibration = () => {
 
-  const { port, isConnected } = useConnection();
+  const { isConnected } = useConnection();
 
   const [calibrationStates, setCalibrationStates] = useState([
     CalibrationStates.NOT_CALIBRATED,
@@ -45,7 +45,7 @@ const Calibration = () => {
       //Add 1 to each index 
       calibrationIndexArray = calibrationIndexArray.map(idx => idx + 1);
 
-      calibrateStepper(port, calibrationIndexArray)
+      calibrateStepper(calibrationIndexArray)
       .then((res) => {
 
           //If no error response assume joint is calibrated 
@@ -78,7 +78,7 @@ const Calibration = () => {
       //Add 1 to each index 
       calibrationIndexArray = calibrationIndexArray.map(idx => idx + 1);
 
-      calibrateStepper(port, calibrationIndexArray)
+      calibrateStepper(calibrationIndexArray)
       .then((res) => {
           //If no error response assume joints are calibrated 
           console.log(res)

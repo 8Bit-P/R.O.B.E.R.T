@@ -5,7 +5,7 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 
 const JointControl = () => {
-  const { port, isConnected } = useConnection();
+  const { isConnected } = useConnection();
   const [jointValues, setJointValues] = useState<(number | string)[]>(Array(6).fill(""));
 
   
@@ -18,7 +18,7 @@ const JointControl = () => {
   //Individual increase of joint angle
   const handleJointIncrement = (jointIndex: number) => {
     if (isConnected) {
-      moveStep(port, jointIndex, +1)
+      moveStep(jointIndex, +1)
         .then((res) => console.log(res))
         .catch((err) => toast.error(err));
     }
@@ -27,7 +27,9 @@ const JointControl = () => {
   //Individual decrease of joint angle
   const handleJointDecrement = (jointIndex: number) => {
     if (isConnected) {
-      moveStep(port, jointIndex, +1).then((res) => console.log(res));
+      moveStep(jointIndex, -1)
+        .then((res) => console.log(res))
+        .catch((err) => toast.error(err));
     }
   };
 

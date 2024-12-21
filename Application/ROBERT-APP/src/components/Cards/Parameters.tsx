@@ -8,7 +8,7 @@ const Parameters = () => {
   const [velocity, setVelocity] = useState(50);
 
 
-  const { port, isConnected, connectionState } = useConnection();
+  const { isConnected, connectionState } = useConnection();
 
   // State to track the timeout for debouncing
   const [accelerationTimeout, setAccelerationTimeout] = useState<number | null>(null);
@@ -82,7 +82,7 @@ const Parameters = () => {
     // Set a timeout to send the command after a delay (300ms here)
     const timeout = setTimeout(() => {
       if (isConnected) {
-        setAPIVelocity(port!, newVelocity); // Send velocity command
+        setAPIVelocity(newVelocity); // Send velocity command
       }
     }, 300); // Adjust delay as needed
     setVelocityTimeout(timeout); // Store the timeout ID to clear it if needed
@@ -99,7 +99,7 @@ const Parameters = () => {
     // Set a timeout to send the command after a delay (300ms here)
     const timeout = setTimeout(() => {
       if (isConnected) {
-        setAPIacceleration(port!, newAcceleration); // Send acceleration command
+        setAPIacceleration(newAcceleration); // Send acceleration command
       }
     }, 300); // Adjust delay as needed
     setAccelerationTimeout(timeout); // Store the timeout ID to clear it if needed

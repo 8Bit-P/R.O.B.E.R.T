@@ -7,7 +7,7 @@ import toast from "react-hot-toast";
 
 const SteppersState = () => {
 
-  const { port, isConnected } = useConnection();
+  const { isConnected } = useConnection();
   // Initialize state as an array of booleans
   const [toggleStates, setToggleStates] = useState([true, true, true, true, true, true]);
 
@@ -21,7 +21,7 @@ const SteppersState = () => {
 
     //Send command
     if(isConnected){
-      toggleStepperState(port, index+1, !toggleStates[index] ? "ENABLED" : "DISABLED")
+      toggleStepperState(index+1, !toggleStates[index] ? "ENABLED" : "DISABLED")
         .then((res) => console.log(res))
         .catch((err) => toast.error(err));
     }
