@@ -27,6 +27,7 @@ pub static ERROR_CODES: Lazy<HashMap<&'static str, &'static str>> = Lazy::new(||
     m.insert("C001", "Command was not properly formatted");
     m.insert("C002", "Command not defined");
     m.insert("I001", "Invalid stepper");
+    m.insert("I002", "Invalid stepper state");
     m
 });
 
