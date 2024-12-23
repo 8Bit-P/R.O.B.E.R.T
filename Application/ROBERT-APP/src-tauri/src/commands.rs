@@ -1,5 +1,5 @@
 use serialport::available_ports;
-use tokio_serial::{DataBits, Parity, SerialPortBuilderExt, StopBits};
+use tokio_serial::SerialPortBuilderExt;
 use tokio::time::Duration;
 use tokio::sync::Mutex;
 use std::sync::Arc;
@@ -7,11 +7,13 @@ use tauri::State;
 use crate::state::SharedAppState;
 use crate::utils::send_and_receive_from_shared_state;
 use crate::constants;
+use crate::background_tasks::read_serial_task;
 
 #[tauri::command]
 pub async fn connect_to_port<'a>(
     port: String, 
-    state: State<'a, SharedAppState>, // State from Tauri
+    state: State<'a, SharedAppState>, 
+    app_handle: tauri::AppHandle,
 ) -> Result<String, String> {
     let baud_rate = 115200;
     let timeout_duration = Duration::from_secs(3);
@@ -23,13 +25,13 @@ pub async fn connect_to_port<'a>(
     // Create and configure the serial connection
     let serial_connection = tokio_serial::new(port, baud_rate)
         .timeout(timeout_duration)
-        .data_bits(DataBits::Eight)
-        .parity(Parity::None)
-        .stop_bits(StopBits::One)
+        .data_bits(tokio_serial::DataBits::Eight)
+        .parity(tokio_serial::Parity::None)
+        .stop_bits(tokio_serial::StopBits::One)
         .open_native_async()
         .map_err(|e| format!("Failed to open serial port: {}", e))?;
 
-    // Wrap the connection in a Mutex and Arc (tokio::sync::Mutex now)
+    // Wrap the connection in a Mutex and Arc
     let shared_connection = Arc::new(Mutex::new(serial_connection));
 
     // Store the connection in the shared state
@@ -38,10 +40,15 @@ pub async fn connect_to_port<'a>(
         app_state.set_connection(shared_connection.clone());
     }
 
-    // Extract the shared state (Arc<RwLock<AppState>>) and call the function
+    // Start the background reading task
+    let state_inner = state.inner().clone();
+    tokio::spawn(async move {
+        read_serial_task(state_inner, app_handle).await;
+    });
+
+    // Perform a CHECK command to verify connection
     match send_and_receive_from_shared_state(crate::constants::CommandCodes::CHECK, state.inner().clone()).await {
         Ok(response) => {
-            
             if response.trim() == crate::constants::ResponseCodes::CONNECTED_RESPONSE {
                 Ok(format!("Successfully connected to port: {}.", port_cloned))
             } else {
@@ -62,6 +69,9 @@ pub async fn disconnect_from_active_connection<'a>(
 ) -> Result<String, String> {
     // Lock the shared app state
     let mut app_state = state.write().await;
+
+    // Stop the background task
+    app_state.stop_notify.notify_one();
 
     // Clear the connection using the clear_connection method
     app_state.clear_connection();

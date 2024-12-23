@@ -11,6 +11,15 @@ import SteppersState from "./components/Cards/SteppersState";
 import { ConnectionProvider } from "./context/ConnectionContext";
 import { Toaster } from "react-hot-toast";
 
+import { listen } from '@tauri-apps/api/event';
+
+listen('serial_data', (event) => {
+  const data = event.payload;
+  console.log("Received serial data:", data);
+  // Process the data (e.g., update UI)
+});
+
+
 function App() {
   return (
     <ConnectionProvider>
