@@ -21,50 +21,45 @@ constexpr char ConnectedResponse[] = "CONNECTED";
 constexpr char CalibrationResponse[] = "[CALIBRATION];";
 constexpr char StepsPositionResponse[] = "[STEPS_POSITION];";
 constexpr char InfoResponse[] = "[INFO];";
-
-// Error codes
-constexpr char CommandFormatError[] = "C001"; // Command was not properly formatted
-constexpr char CommandNotDefined[] = "C002";
-constexpr char InvalidStepper[] = "I001";
-constexpr char InvalidState[] = "I002"; // Invalid state for stepper
+//Error codes
+#define CommandFormatError "C001" // Command was not properly formated
+#define CommandNotDefined "C002" // Given command is not defined
+#define InvalidStepper "I001" // Invalid stepper selected
+#define InvalidState "I002" //Invalid state for stepper
 
 // Ranges
 constexpr int AccelerationUpperRange = 1000; // TODO: check actual upper ranges
 constexpr int VelocityUpperRange = 2000;     // TODO: check actual upper ranges
 
 // Define stepper motor connections and motor interface type. 
-// TODO: map pins correctly
-constexpr int J1stepPin = 26; // E0-STEP
-constexpr int J1dirPin = 28;  // E0-DIR
-constexpr int J1enablePin = 24; // E0-EN
+#define J1stepPin 45 //TB6600 STEP
+#define J1dirPin 47 //TB6600 DIR
+#define J1enablePin 32 //TB6600 ENABLE
+#define J1limitPin 19  //Z-MAX
 
-constexpr int J2stepPin = 36; // E1-STEP
-constexpr int J2dirPin = 34;  // E1-DIR
-constexpr int J2enablePin = 30; // E1-EN
+#define J2stepPin 26 //E0-STEP
+#define J2dirPin 28 //E0-DIR
+#define J2enablePin 24 // E0-EN
+#define J2limitPin 2 //X-MAX
 
-constexpr int J3stepPin = 54; // X-STEP
-constexpr int J3dirPin = 55;  // X-DIR
-constexpr int J3enablePin = 38; // X-EN
+#define J3stepPin 36 //E1-STEP
+#define J3dirPin 34 //E1-DIR
+#define J3enablePin 30 // E1-EN
+#define J3limitPin 18 //Z-MIN
 
-constexpr int J4stepPin = 60; // Y-STEP
-constexpr int J4dirPin = 61;  // Y-DIR
-constexpr int J4enablePin = 56; // Y-EN
+#define J4stepPin 54 //X-STEP
+#define J4dirPin 55 //X-DIR
+#define J4enablePin 38 //X-EN
+#define J4limitPin 5 //X-MIN 
 
-constexpr int J5stepPin = 10;
-constexpr int J5dirPin = 11;
-constexpr int J5enablePin = 24;
+#define J5stepPin 60 //Y-STEP
+#define J5dirPin 61 //Y-DIR
+#define J5enablePin 56 //Y-EN 
+#define J5limitPin 14 //Y-MIN
 
-constexpr int J6stepPin = 12;
-constexpr int J6dirPin = 13;
-constexpr int J6enablePin = 24;
-
-// TODO: set correct pins
-// Limit switch pin definitions
-constexpr int J1limitPin = 2;
-constexpr int J2limitPin = 3;
-constexpr int J3limitPin = 4;
-constexpr int J4limitPin = 5;
-constexpr int J5limitPin = 6;
-constexpr int J6limitPin = 7;
+#define J6stepPin 12 //Z-STEP
+#define J6dirPin 13 //Z-DIR
+#define J6enablePin 24 //Z-EN
+#define J6limitPin 15 //Y-MAX    
 
 #endif
