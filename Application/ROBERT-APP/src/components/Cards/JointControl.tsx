@@ -3,6 +3,7 @@ import { moveStep } from "../../api/commands";
 import { useState } from "react";
 
 import toast from "react-hot-toast";
+import { DEFAULT_INCREMENT_STEPS } from "../../constants/connectionConstants";
 
 const JointControl = () => {
   const { isConnected } = useConnection();
@@ -18,7 +19,7 @@ const JointControl = () => {
   //Individual increase of joint angle
   const handleJointIncrement = (jointIndex: number) => {
     if (isConnected) {
-      moveStep(jointIndex, +1)
+      moveStep(jointIndex, +DEFAULT_INCREMENT_STEPS)
         .then((res) => console.log(res))
         .catch((err) => toast.error(err));
     }
@@ -27,7 +28,7 @@ const JointControl = () => {
   //Individual decrease of joint angle
   const handleJointDecrement = (jointIndex: number) => {
     if (isConnected) {
-      moveStep(jointIndex, -1)
+      moveStep(jointIndex, -DEFAULT_INCREMENT_STEPS)
         .then((res) => console.log(res))
         .catch((err) => toast.error(err));
     }
