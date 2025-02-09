@@ -14,14 +14,5 @@ void loop() {
     // Serial.print("Commmand received: ");
     // Serial.println(command);
     processCommand(command);
-
-    // Serial.print("J1LIMIT: ");
-    // Serial.println(digitalRead(J1limitPin));
-    // Serial.print("J2LIMIT: ");
-    // Serial.println(digitalRead(J2limitPin));
-
-    // delay(100);
-
-    //TODO: periodically report position of steppers back
   }
 }
