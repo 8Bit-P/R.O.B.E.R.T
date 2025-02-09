@@ -33,7 +33,8 @@ void initializeSteppers() {
     //Stepper controlled by TB6600 has inverse behaviour on enable pin
     digitalWrite(enablePins[0], HIGH);
 
-    Serial.print(InfoResponse);Serial.println("Steppers initialized.");
+    //TODO: see if need to keep it
+    //Serial.print(InfoResponse);Serial.println("Steppers initialized.");
 }
 
 AccelStepper* getStepperByIndex(int stepperIndex) {
@@ -85,7 +86,10 @@ void toggleStepper(int stepperNum, bool enabled) {
     }
 
     int enablePin = enablePins[stepperNum - 1];
-    digitalWrite(enablePin, enabled ? LOW : HIGH); // LOW to enable, HIGH to disable
+
+    if(stepperNum == 1) digitalWrite(enablePin, enabled ? HIGH : LOW); // HIGH to enable, LOW to disable (only on stepper 1 tb6600)
+    else digitalWrite(enablePin, enabled ? LOW : HIGH); // LOW to enable, HIGH to disable 
+    
 }
 
 
