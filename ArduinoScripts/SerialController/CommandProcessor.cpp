@@ -63,6 +63,10 @@ void processMoveCommand(String actionString){
 
   String actionLeft = actionString;
 
+  if(actionString.indexOf(";") == -1){
+    Serial.println(CommandFormatError);
+  }
+
   //Move Command actions should have the format -> MOVE>JOINT_NSTEPS;
   while(actionLeft.indexOf(";") != -1) {
       int delimiterIndex = actionLeft.indexOf(";");
