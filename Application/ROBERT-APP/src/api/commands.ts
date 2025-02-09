@@ -50,6 +50,7 @@ export const toggleStepperState = async (jointIndex: number | null | undefined, 
   return invoke<string[]>("toggle_stepper", { jointIndex, enabled });
 };
 
+//TODO: implement
 //Returns a string indicating which steppers are enabled or disabled
 export const checkSteppersState = async (): Promise<string[]> => {
   return invoke<string[]>("check_steppers");
@@ -57,13 +58,24 @@ export const checkSteppersState = async (): Promise<string[]> => {
 
 export const calibrateStepper = async (jointsIndexes: number[] | null | undefined): Promise<string[]> => {
 
-  console.log("indexes");console.log(jointsIndexes)
-
   if (jointsIndexes == null) {
     throw new Error("port and jointsIndexes must be provided and cannot be null or undefined");
   }
 
   return invoke<string[]>("calibrate_steppers", { jointsIndexes });
+};
+
+export const driveStepperToAngle = async (jointsAngles: Map<number,number> | null | undefined): Promise<string[]> => {
+
+  console.log(jointsAngles);
+
+  if (jointsAngles == null) {
+    throw new Error("port and jointAngles must be provided and cannot be null or undefined");
+  }
+
+  const jointsAnglesArray = Array.from(jointsAngles.entries());
+
+  return invoke<string[]>("drive_steppers_to_angles", { jointsAngles: jointsAnglesArray });
 };
 
 

@@ -1,5 +1,5 @@
 import { useConnection } from "../../context/ConnectionContext";
-import { moveStep } from "../../api/commands";
+import { driveStepperToAngle, moveStep } from "../../api/commands";
 import { useState } from "react";
 
 import toast from "react-hot-toast";
@@ -14,6 +14,18 @@ const JointControl = () => {
     const newValues = [...jointValues];
     newValues[index] = value === "" ? "" : parseInt(value) || 0;
     setJointValues(newValues);
+  };
+
+  const driveToCustomAngle = () => {
+    const jointAngles = new Map<number, number>();
+  
+    jointValues.forEach((value, index) => {
+      if (value !== "") {
+        jointAngles.set(index + 1, Number(value)); // Joint numbers are 1-based
+      }
+    });
+  
+    driveStepperToAngle(jointAngles);
   };
   
   //Individual increase of joint angle
@@ -98,7 +110,7 @@ const JointControl = () => {
 
           <button
             className="bg-gray-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-gray-600"
-            onClick={() => console.log("Run command for custom angles")}
+            onClick={driveToCustomAngle}
           >
             Run
           </button>

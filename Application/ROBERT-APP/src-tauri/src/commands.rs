@@ -80,7 +80,7 @@ pub async fn set_acceleration<'a>(
     let set_acc_command = format!(
         "{}{}",
         constants::CommandCodes::SETACC,
-        acceleration
+        (acceleration * 10)
     );
 
     // Send the command using the shared connection
@@ -99,7 +99,7 @@ pub async fn set_velocity<'a>(
     let set_vel_command = format!(
         "{}{}",
         constants::CommandCodes::SETVEL,
-        velocity
+        (velocity * 10)
     );
 
     // Send the command using the shared connection
