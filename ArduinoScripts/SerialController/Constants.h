@@ -11,7 +11,7 @@ constexpr char SetVelocityCommand[] = "SETVEL";
 constexpr char SetAccelerationCommand[] = "SETACC";
 constexpr char ToggleStepperCommand[] = "TOGGLE";
 constexpr char CalibrateStepperCommand[] = "CALIBRATE";
-constexpr char GetStepperStepPositionCommand[] = "GETSTEPPOS";
+constexpr char SteppersStateCommand[] = "STATE";
 
 constexpr char Enabled[] = "ENABLED";
 constexpr char Disabled[] = "DISABLED";
@@ -19,7 +19,7 @@ constexpr char Disabled[] = "DISABLED";
 // Response codes
 constexpr char ConnectedResponse[] = "CONNECTED";
 constexpr char CalibrationResponse[] = "[CALIBRATION];";
-constexpr char StepsPositionResponse[] = "[STEPS_POSITION];";
+constexpr char SteppersStateResponse[] = "[STATE];";
 constexpr char InfoResponse[] = "[INFO];";
 //Error codes
 #define CommandFormatError "C001" // Command was not properly formated

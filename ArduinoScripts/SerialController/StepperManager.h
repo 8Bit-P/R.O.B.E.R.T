@@ -12,6 +12,7 @@ void calibrateStepper(int stepper);
 int getLimitSwitchPin(int stepperIndex);
 void reportSteppersPositions();
 int moveStepperPositiveSteps(int stepperNum);
+void getSteppersState();
 
 AccelStepper* getStepperByIndex(int stepperIndex);
 

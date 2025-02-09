@@ -10,6 +10,7 @@ enum CommandCode {
     SETACC,
     TOGGLE,
     CALIBRATE,
+    STATE,
     UNKNOWN
 };
 
@@ -19,5 +20,6 @@ void processCommand(String command);
 void processToggleCommand(String actionString);
 void processMoveCommand(String actionString);
 void processCalibrateCommand(String actionString);
+void processStateCommand();
 
 #endif

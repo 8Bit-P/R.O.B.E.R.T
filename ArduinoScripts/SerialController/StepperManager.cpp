@@ -2,12 +2,12 @@
 #include "Constants.h"
 
 AccelStepper steppers[6] = {
-    AccelStepper(motorInterfaceType, J1stepPin, J1dirPin),
-    AccelStepper(motorInterfaceType, J2stepPin, J2dirPin),
-    AccelStepper(motorInterfaceType, J3stepPin, J3dirPin),
-    AccelStepper(motorInterfaceType, J4stepPin, J4dirPin),
-    AccelStepper(motorInterfaceType, J5stepPin, J5dirPin),
-    AccelStepper(motorInterfaceType, J6stepPin, J6dirPin)
+  AccelStepper(motorInterfaceType, J1stepPin, J1dirPin),
+  AccelStepper(motorInterfaceType, J2stepPin, J2dirPin),
+  AccelStepper(motorInterfaceType, J3stepPin, J3dirPin),
+  AccelStepper(motorInterfaceType, J4stepPin, J4dirPin),
+  AccelStepper(motorInterfaceType, J5stepPin, J5dirPin),
+  AccelStepper(motorInterfaceType, J6stepPin, J6dirPin)
 };
 
 // Enable pins for each motor
@@ -17,37 +17,37 @@ const int enablePins[6] = { J1enablePin, J2enablePin, J3enablePin, J4enablePin, 
 const int limitPins[6] = { J1limitPin, J2limitPin, J3limitPin, J4limitPin, J5limitPin, J6limitPin };
 
 void initializeSteppers() {
-    for (int i = 0; i < 6; i++) {
-        // Set max speed and acceleration
-        steppers[i].setMaxSpeed(200);
-        steppers[i].setAcceleration(200);
+  for (int i = 0; i < 6; i++) {
+    // Set max speed and acceleration
+    steppers[i].setMaxSpeed(200);
+    steppers[i].setAcceleration(200);
 
-        // Configure enable pins
-        pinMode(enablePins[i], OUTPUT);
-        digitalWrite(enablePins[i], LOW); // Enable all steppers by default
+    // Configure enable pins
+    pinMode(enablePins[i], OUTPUT);
+    digitalWrite(enablePins[i], LOW);  // Enable all steppers by default
 
-        // Configure limit switch pins
-        pinMode(limitPins[i], INPUT_PULLUP);
-    }
+    // Configure limit switch pins
+    pinMode(limitPins[i], INPUT_PULLUP);
+  }
 
-    //Stepper controlled by TB6600 has inverse behaviour on enable pin
-    digitalWrite(enablePins[0], HIGH);
+  //Stepper controlled by TB6600 has inverse behaviour on enable pin
+  digitalWrite(enablePins[0], HIGH);
 
-    //TODO: see if need to keep it
-    //Serial.print(InfoResponse);Serial.println("Steppers initialized.");
+  //TODO: see if need to keep it
+  //Serial.print(InfoResponse);Serial.println("Steppers initialized.");
 }
 
 AccelStepper* getStepperByIndex(int stepperIndex) {
-    if (stepperIndex < 1 || stepperIndex > 6) {
-        Serial.println(InvalidStepper);
-        return nullptr;
-    }
-    return &steppers[stepperIndex - 1]; // Convert to zero-based index
+  if (stepperIndex < 1 || stepperIndex > 6) {
+    Serial.println(InvalidStepper);
+    return nullptr;
+  }
+  return &steppers[stepperIndex - 1];  // Convert to zero-based index
 }
 
 //Returns whether a stepper moves on positive steps towards the limit switch or away from it
-int moveStepperPositiveSteps(int stepperNum){
-  switch(stepperNum){
+int moveStepperPositiveSteps(int stepperNum) {
+  switch (stepperNum) {
     case 1:
       return J1PositiveToLimit;
       break;
@@ -72,116 +72,156 @@ int moveStepperPositiveSteps(int stepperNum){
 }
 
 int getLimitSwitchPin(int stepperIndex) {
-    if (stepperIndex < 1 || stepperIndex > 6) {
-        Serial.println(InvalidStepper);
-        return -1;
-    }
-    return limitPins[stepperIndex - 1];
+  if (stepperIndex < 1 || stepperIndex > 6) {
+    Serial.println(InvalidStepper);
+    return -1;
+  }
+  return limitPins[stepperIndex - 1];
 }
 
 void toggleStepper(int stepperNum, bool enabled) {
-    if (stepperNum < 1 || stepperNum > 6) {
-        Serial.println(InvalidStepper);
-        return;
-    }
+  if (stepperNum < 1 || stepperNum > 6) {
+    Serial.println(InvalidStepper);
+    return;
+  }
 
-    int enablePin = enablePins[stepperNum - 1];
+  int enablePin = enablePins[stepperNum - 1];
 
-    if(stepperNum == 1) digitalWrite(enablePin, enabled ? HIGH : LOW); // HIGH to enable, LOW to disable (only on stepper 1 tb6600)
-    else digitalWrite(enablePin, enabled ? LOW : HIGH); // LOW to enable, HIGH to disable 
-    
+  if (stepperNum == 1) digitalWrite(enablePin, enabled ? HIGH : LOW);  // HIGH to enable, LOW to disable (only on stepper J1 tb6600)
+  else digitalWrite(enablePin, enabled ? LOW : HIGH);                  // LOW to enable, HIGH to disable
 }
 
 
 void moveStepper(int stepperNum, int steps) {
-    
-    AccelStepper* stepper = getStepperByIndex(stepperNum);
-    int limitPin = getLimitSwitchPin(stepperNum);
-    if (limitPin == -1) return; // Invalid stepper
 
-    int positiveToLimitSwitch = moveStepperPositiveSteps(stepperNum);
+  AccelStepper* stepper = getStepperByIndex(stepperNum);
+  int limitPin = getLimitSwitchPin(stepperNum);
+  if (limitPin == -1) return;  // Invalid stepper
 
-    Serial.print("Moving stepper: J"); Serial.print(stepperNum);
-    Serial.print(" "); Serial.print(steps); Serial.println(" steps");
+  int positiveToLimitSwitch = moveStepperPositiveSteps(stepperNum);
 
-    // Set the target position relative to the current position
-    stepper->move(steps);
+  Serial.print("Moving stepper: J");
+  Serial.print(stepperNum);
+  Serial.print(" ");
+  Serial.print(steps);
+  Serial.println(" steps");
 
-    // Run to the target position unless limit switch is triggered
-    while (stepper->distanceToGo() != 0) {
-        //if going in limit switch direction 
-        if(positiveToLimitSwitch == 1 && steps > 0 || positiveToLimitSwitch == 0 && steps < 0){
-          if (digitalRead(limitPin) == LOW) {
-              Serial.print("Limit switch triggered! Stopping stepper ");
-              Serial.print("J");Serial.println(stepperNum);
-              stepper->stop(); // Stop movement
-              stepper->setCurrentPosition(0); // Optionally reset position
-              break;
-          }
-        }
-        stepper->run();
+  // Set the target position relative to the current position
+  stepper->move(steps);
+
+  // Run to the target position unless limit switch is triggered
+  while (stepper->distanceToGo() != 0) {
+    //if going in limit switch direction
+    if (positiveToLimitSwitch == 1 && steps > 0 || positiveToLimitSwitch == 0 && steps < 0) {
+      if (digitalRead(limitPin) == LOW) {
+        Serial.print("Limit switch triggered! Stopping stepper ");
+        Serial.print("J");
+        Serial.println(stepperNum);
+        stepper->stop();                 // Stop movement
+        stepper->setCurrentPosition(0);  // Optionally reset position
+        break;
+      }
     }
+    stepper->run();
+  }
 }
 
 void calibrateStepper(int stepperNum) {
 
-    int limitPin = getLimitSwitchPin(stepperNum);
-    if (limitPin == -1) {
-      Serial.println(InvalidLimitSwitchConversion);
-      return; // Invalid stepper
-    }
+  int limitPin = getLimitSwitchPin(stepperNum);
+  if (limitPin == -1) {
+    Serial.println(InvalidLimitSwitchConversion);
+    return;  // Invalid stepper
+  }
 
-    AccelStepper* stepper = getStepperByIndex(stepperNum);
+  AccelStepper* stepper = getStepperByIndex(stepperNum);
 
-    Serial.print("Calibrating Stepper J");
-    Serial.println(stepperNum);
+  Serial.print("Calibrating Stepper J");
+  Serial.println(stepperNum);
 
-    // Move the stepper slowly towards the limit switch
-    stepper->setMaxSpeed(200); // Slow speed for calibration
-    stepper->setAcceleration(100);
+  // Move the stepper slowly towards the limit switch
+  stepper->setMaxSpeed(200);  // Slow speed for calibration
+  stepper->setAcceleration(100);
 
-    int positiveToLimitSwitch = moveStepperPositiveSteps(stepperNum);
-    // Move a large positive distance TODO: check positive or negative direction
-    if(positiveToLimitSwitch == 1) stepper->move(100000);
-    else if(positiveToLimitSwitch == 0) stepper->move(-100000);
-    else{
-      Serial.println(InvalidLimitSwitchConversion);
-      return;
-    }
+  int positiveToLimitSwitch = moveStepperPositiveSteps(stepperNum);
+  // Move a large positive distance TODO: check positive or negative direction
+  if (positiveToLimitSwitch == 1) stepper->move(100000);
+  else if (positiveToLimitSwitch == 0) stepper->move(-100000);
+  else {
+    Serial.println(InvalidLimitSwitchConversion);
+    return;
+  }
 
-    while (digitalRead(limitPin) == HIGH) {
-        stepper->run();
-    }
+  while (digitalRead(limitPin) == HIGH) {
+    stepper->run();
+  }
 
-    // Stop the motor when the limit switch is reached
-    stepper->stop();
+  // Stop the motor when the limit switch is reached
+  stepper->stop();
 
-    // Set the current position as zero (home position)
-    stepper->setCurrentPosition(0);
+  // Set the current position as zero (home position)
+  stepper->setCurrentPosition(0);
 
-    Serial.print(CalibrationResponse);
-    Serial.print("Stepper J");Serial.print(stepperNum);
-    Serial.println(" calibrated to home position.");
+  Serial.print(CalibrationResponse);
+  Serial.print("Stepper J");
+  Serial.print(stepperNum);
+  Serial.println(" calibrated to home position.");
 }
 
-void setAcceleration(int acceleration){
-    //Set acceleration command should have the format -> SETACC>ACCELERATION_VALUE;
-    for (int i = 0; i < 6; i++) {
-        steppers[i].setAcceleration(acceleration);
-    }
+void setAcceleration(int acceleration) {
+  //Set acceleration command should have the format -> SETACC>ACCELERATION_VALUE;
+  for (int i = 0; i < 6; i++) {
+    steppers[i].setAcceleration(acceleration);
+  }
 
-    Serial.print("Acceleration Set to: "); Serial.println(acceleration);
+  Serial.print("Acceleration Set to: ");
+  Serial.println(acceleration);
 }
 
 void setVelocity(int velocity) {
   //Set velocity command should have the format -> SETVEL>ACCELERATION_VALUE;
-    for (int i = 0; i < 6; i++) {
-        steppers[i].setMaxSpeed(velocity);
-    }
-    Serial.print("Velocity set to: "); Serial.println(velocity);
+  for (int i = 0; i < 6; i++) {
+    steppers[i].setMaxSpeed(velocity);
+  }
+  Serial.print("Velocity set to: ");
+  Serial.println(velocity);
 }
 
-//TODO:
-void reportSteppersPositions(){
-  Serial.print(StepsPositionResponse);Serial.println("Random string");
+//TODO: update to show unknown position if no calibration done before or steppers disabled at some point
+//TODO: probably change J1 to have inverse disabled/enabled behaviour
+void getSteppersState() {
+  String steppersState = SteppersStateResponse;  // Start with the constant response header
+
+  // First, display all the steppers' states (enabled/disabled)
+  for (int i = 0; i < 6; i++) {
+    // Get the enable pin for the current stepper
+    int enablePin = enablePins[i];
+
+    // Read the state of the enable pin (LOW means enabled, HIGH means disabled)
+    bool isEnabled = (digitalRead(enablePin) == LOW);  // LOW means enabled for most stepper drivers, except J1
+
+    // Append the state to the string
+    steppersState += "J" + String(i + 1) + (isEnabled ? "_ENABLED" : "_DISABLED");
+
+    // Append a separator unless it's the last stepper
+    if (i < 5) steppersState += ";";
+  }
+
+  steppersState += " ";  // Add a space to separate state and position sections
+
+  // Then, display the current positions of all steppers
+  for (int i = 0; i < 6; i++) {
+    // Get the current position of the stepper
+    AccelStepper* stepper = &steppers[i];
+    long currentPosition = stepper->currentPosition();
+
+    // Append the position to the string
+    steppersState += "J" + String(i + 1) + "_" + String(currentPosition);
+
+    // Append a separator unless it's the last stepper
+    if (i < 5) steppersState += ";";
+  }
+
+  // Print the final compact string
+  Serial.println(steppersState);
 }
