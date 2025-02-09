@@ -50,7 +50,7 @@ constexpr int VelocityUpperRange = 2000;     // TODO: check actual upper ranges
 #define J4stepPin 54 //X-STEP
 #define J4dirPin 55 //X-DIR
 #define J4enablePin 38 //X-EN
-#define J4limitPin 5 //X-MIN 
+#define J4limitPin 3 //X-MIN 
 
 #define J5stepPin 60 //Y-STEP
 #define J5dirPin 61 //Y-DIR
