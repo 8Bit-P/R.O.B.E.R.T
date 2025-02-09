@@ -26,6 +26,7 @@ constexpr char InfoResponse[] = "[INFO];";
 #define CommandNotDefined "C002" // Given command is not defined
 #define InvalidStepper "I001" // Invalid stepper selected
 #define InvalidState "I002" //Invalid state for stepper
+#define InvalidLimitSwitchConversion "I003" //Invalid limit switch conversion
 
 // Ranges
 constexpr int AccelerationUpperRange = 1000; // TODO: check actual upper ranges
@@ -61,5 +62,13 @@ constexpr int VelocityUpperRange = 2000;     // TODO: check actual upper ranges
 #define J6dirPin 13 //Z-DIR
 #define J6enablePin 24 //Z-EN
 #define J6limitPin 15 //Y-MAX    
+
+//Moving direction of each stepper
+#define J1PositiveToLimit 0
+#define J2PositiveToLimit 0
+#define J3PositiveToLimit 1
+#define J4PositiveToLimit 1
+#define J5PositiveToLimit 0 //TODO: set when joints developed
+#define J6PositiveToLimit 0
 
 #endif

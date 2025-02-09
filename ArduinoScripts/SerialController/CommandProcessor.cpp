@@ -47,6 +47,9 @@ void processCommand(String command){
           break;
       }
     }
+    else{
+      Serial.println(CommandFormatError);
+    }
 }
 
 CommandCode getCommandCode(const String& command) {
@@ -144,15 +147,11 @@ void processCalibrateCommand(String actionString){
       // Convert the joint to an integer, skipping the "J" character
       int stepperNumber = atoi(joint.substring(1).c_str());
 
-      // Calibrate the stepper (assuming calibrateStepper is defined)
+      // Calibrate the stepper
       calibrateStepper(stepperNumber);
 
       // Update actionLeft string to remove processed joint
       actionLeft = actionLeft.substring(delimiterIndex + 1);
   }
 
-  // Check if there's any remaining string after the loop
-  if (actionLeft.length() > 0) {
-    Serial.println(CommandFormatError);
-  }
 }

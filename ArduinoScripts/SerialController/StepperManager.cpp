@@ -44,6 +44,32 @@ AccelStepper* getStepperByIndex(int stepperIndex) {
     return &steppers[stepperIndex - 1]; // Convert to zero-based index
 }
 
+//Returns whether a stepper moves on positive steps towards the limit switch or away from it
+int moveStepperPositiveSteps(int stepperNum){
+  switch(stepperNum){
+    case 1:
+      return J1PositiveToLimit;
+      break;
+    case 2:
+      return J2PositiveToLimit;
+      break;
+    case 3:
+      return J3PositiveToLimit;
+      break;
+    case 4:
+      return J4PositiveToLimit;
+      break;
+    case 5:
+      return J5PositiveToLimit;
+      break;
+    case 6:
+      return J6PositiveToLimit;
+      break;
+  }
+
+  return -1;
+}
+
 int getLimitSwitchPin(int stepperIndex) {
     if (stepperIndex < 1 || stepperIndex > 6) {
         Serial.println(InvalidStepper);
@@ -64,9 +90,12 @@ void toggleStepper(int stepperNum, bool enabled) {
 
 
 void moveStepper(int stepperNum, int steps) {
+    
     AccelStepper* stepper = getStepperByIndex(stepperNum);
     int limitPin = getLimitSwitchPin(stepperNum);
     if (limitPin == -1) return; // Invalid stepper
+
+    int positiveToLimitSwitch = moveStepperPositiveSteps(stepperNum);
 
     Serial.print("Moving stepper: J"); Serial.print(stepperNum);
     Serial.print(" "); Serial.print(steps); Serial.println(" steps");
@@ -76,12 +105,15 @@ void moveStepper(int stepperNum, int steps) {
 
     // Run to the target position unless limit switch is triggered
     while (stepper->distanceToGo() != 0) {
-        if (digitalRead(limitPin) == LOW) {
-            Serial.print("Limit switch triggered! Stopping stepper ");
-            Serial.print("J");Serial.println(stepperNum);
-            stepper->stop(); // Stop movement
-            stepper->setCurrentPosition(0); // Optionally reset position
-            break;
+        //if going in limit switch direction 
+        if(positiveToLimitSwitch == 1 && steps > 0 || positiveToLimitSwitch == 0 && steps < 0){
+          if (digitalRead(limitPin) == LOW) {
+              Serial.print("Limit switch triggered! Stopping stepper ");
+              Serial.print("J");Serial.println(stepperNum);
+              stepper->stop(); // Stop movement
+              stepper->setCurrentPosition(0); // Optionally reset position
+              break;
+          }
         }
         stepper->run();
     }
@@ -90,7 +122,10 @@ void moveStepper(int stepperNum, int steps) {
 void calibrateStepper(int stepperNum) {
 
     int limitPin = getLimitSwitchPin(stepperNum);
-    if (limitPin == -1) return; // Invalid stepper
+    if (limitPin == -1) {
+      Serial.println(InvalidLimitSwitchConversion);
+      return; // Invalid stepper
+    }
 
     AccelStepper* stepper = getStepperByIndex(stepperNum);
 
@@ -101,7 +136,14 @@ void calibrateStepper(int stepperNum) {
     stepper->setMaxSpeed(200); // Slow speed for calibration
     stepper->setAcceleration(100);
 
-    stepper->move(100000); // Move a large positive distance TODO: check positive or negative direction
+    int positiveToLimitSwitch = moveStepperPositiveSteps(stepperNum);
+    // Move a large positive distance TODO: check positive or negative direction
+    if(positiveToLimitSwitch == 1) stepper->move(100000);
+    else if(positiveToLimitSwitch == 0) stepper->move(-100000);
+    else{
+      Serial.println(InvalidLimitSwitchConversion);
+      return;
+    }
 
     while (digitalRead(limitPin) == HIGH) {
         stepper->run();
