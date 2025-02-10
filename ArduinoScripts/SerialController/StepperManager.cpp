@@ -16,6 +16,9 @@ const int enablePins[6] = { J1enablePin, J2enablePin, J3enablePin, J4enablePin, 
 // Limit switch pins for each motor
 const int limitPins[6] = { J1limitPin, J2limitPin, J3limitPin, J4limitPin, J5limitPin, J6limitPin };
 
+// Track if joints have been calibrated
+bool isCalibrated[6] = {false, false, false, false, false, false};
+
 void initializeSteppers() {
   for (int i = 0; i < 6; i++) {
     // Set max speed and acceleration
@@ -119,6 +122,7 @@ void moveStepper(int stepperNum, int steps) {
         Serial.println(stepperNum);
         stepper->stop();                 // Stop movement
         stepper->setCurrentPosition(0);  // Optionally reset position
+        isCalibrated[stepperNum - 1] = true; // Set as calibrated since we have reached home position
         break;
       }
     }
@@ -161,6 +165,7 @@ void calibrateStepper(int stepperNum) {
 
   // Set the current position as zero (home position)
   stepper->setCurrentPosition(0);
+  isCalibrated[stepperNum - 1] = true; //Set stepper as calibrated
 
   Serial.print(CalibrationResponse);
   Serial.print("Stepper J");
@@ -187,41 +192,36 @@ void setVelocity(int velocity) {
   Serial.println(velocity);
 }
 
-//TODO: update to show unknown position if no calibration done before or steppers disabled at some point
-//TODO: probably change J1 to have inverse disabled/enabled behaviour
 void getSteppersState() {
-  String steppersState = SteppersStateResponse;  // Start with the constant response header
+  String steppersState = SteppersStateResponse;
 
-  // First, display all the steppers' states (enabled/disabled)
   for (int i = 0; i < 6; i++) {
-    // Get the enable pin for the current stepper
     int enablePin = enablePins[i];
+    bool isEnabled = (digitalRead(enablePin) == LOW);
 
-    // Read the state of the enable pin (LOW means enabled, HIGH means disabled)
-    bool isEnabled = (digitalRead(enablePin) == LOW);  // LOW means enabled for most stepper drivers, except J1
+    if (i == 0)
+      steppersState += "J" + String(i + 1) + (isEnabled ? "_DISABLED" : "_ENABLED");
+    else
+      steppersState += "J" + String(i + 1) + (isEnabled ? "_ENABLED" : "_DISABLED");
 
-    // Append the state to the string
-    steppersState += "J" + String(i + 1) + (isEnabled ? "_ENABLED" : "_DISABLED");
-
-    // Append a separator unless it's the last stepper
     if (i < 5) steppersState += ";";
   }
 
-  steppersState += " ";  // Add a space to separate state and position sections
+  steppersState += " ";
 
-  // Then, display the current positions of all steppers
   for (int i = 0; i < 6; i++) {
-    // Get the current position of the stepper
     AccelStepper* stepper = &steppers[i];
     long currentPosition = stepper->currentPosition();
 
-    // Append the position to the string
-    steppersState += "J" + String(i + 1) + "_" + String(currentPosition);
+    if (!isCalibrated[i]) {
+      steppersState += "J" + String(i + 1) + "_UNKNOWN";
+    } else {
+      steppersState += "J" + String(i + 1) + "_" + String(currentPosition);
+    }
 
-    // Append a separator unless it's the last stepper
     if (i < 5) steppersState += ";";
   }
 
-  // Print the final compact string
   Serial.println(steppersState);
 }
+

@@ -23,7 +23,8 @@ pub fn run() {
             commands::get_ports, 
             commands::toggle_stepper,
             commands::calibrate_steppers, 
-            commands::drive_steppers_to_angles
+            commands::drive_steppers_to_angles,
+            commands::check_steppers,
             ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -11,6 +11,7 @@ impl CommandCodes {
     pub const SETACC: &'static str = "SETACC>";
     pub const TOGGLE: &'static str = "TOGGLE>";
     pub const CALIBRATE: &'static str = "CALIBRATE>";
+    pub const STATE: &'static str = "STATE>";
 }
 
 // Response Codes
@@ -19,6 +20,7 @@ pub struct ResponseCodes;
 impl ResponseCodes {
     pub const CONNECTED_RESPONSE: &'static str = "CONNECTED";
     pub const CALIBRATION_RESPONSE: &'static str = "[CALIBRATION];";
+    pub const STATE_RESPONSE: &'static str = "[STATE];";
 }
 
 // Error Codes (as a HashMap for easy lookup by code)
@@ -41,12 +43,12 @@ pub fn get_error_message(code: &str) -> Option<&'static str> {
 // Joint Reduction Ratios (as a HashMap where key = Joint ID, value = reduction ratio as a float)
 pub static JOINT_REDUCTIONS: Lazy<HashMap<u8, f32>> = Lazy::new(|| {
     let mut m = HashMap::new();
-    m.insert(1, 1.0 / 20.0); // J1 -> 1:20
-    m.insert(2, 12.0 / 35.0); // J2 -> 12:35
-    m.insert(3, 1.0 / 15.0); // Example for J3
-    m.insert(4, 10.0 / 30.0); // Example for J4
-    m.insert(5, 1.0 / 25.0); // Example for J5
-    m.insert(6, 14.0 / 40.0); // Example for J6
+    m.insert(1, 100.0 / 16.0); // J1 -> 1:20
+    m.insert(2, 80.0 / 16.0); // J2 -> 12:35
+    m.insert(3, 100.0 / 16.0); // Example for J3
+    m.insert(4, 60.0 / 16.0); // Example for J4
+    m.insert(5, 16.0 / 32.0); // Example for J5
+    m.insert(6, 1.0 / 1.0); // Example for J6
     m
 });
 
@@ -69,4 +71,19 @@ pub static MAX_ANGLES: Lazy<HashMap<u8, f32>> = Lazy::new(|| {
 
 pub fn get_max_angle(joint_id: u8) -> Option<f32> {
     MAX_ANGLES.get(&joint_id).copied()
+}
+
+pub static DEGREES_PER_STEP: Lazy<HashMap<u8, f32>> = Lazy::new(|| {
+    let mut m = HashMap::new();
+    m.insert(1, 1.8); 
+    m.insert(2, 0.35); 
+    m.insert(3, 1.8); 
+    m.insert(4, 1.8); 
+    m.insert(5, 0.9); 
+    m.insert(6, 1.8); 
+    m
+});
+
+pub fn get_degrees_per_step(joint_id: u8) -> Option<f32> {
+    DEGREES_PER_STEP.get(&joint_id).copied()
 }

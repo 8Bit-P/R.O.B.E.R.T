@@ -42,6 +42,7 @@ const Calibration = () => {
       //Add 1 to each index
       calibrationIndexArray = calibrationIndexArray.map((idx) => idx + 1);
 
+      //TODO: make this properly
       calibrateStepper(calibrationIndexArray)
         .then((res) => {
           //If no error response assume joint is calibrated

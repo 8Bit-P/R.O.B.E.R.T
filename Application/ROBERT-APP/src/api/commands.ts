@@ -50,9 +50,9 @@ export const toggleStepperState = async (jointIndex: number | null | undefined, 
   return invoke<string[]>("toggle_stepper", { jointIndex, enabled });
 };
 
-//TODO: implement
 //Returns a string indicating which steppers are enabled or disabled
 export const checkSteppersState = async (): Promise<string[]> => {
+  
   return invoke<string[]>("check_steppers");
 };
 

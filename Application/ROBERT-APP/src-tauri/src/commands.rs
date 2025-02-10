@@ -6,7 +6,7 @@ use std::sync::Arc;
 use tauri::State;
 use crate::state::SharedAppState;
 use crate::utils::send_and_receive_from_shared_state;
-use crate::constants;
+use crate::constants::{self, get_degrees_per_step, get_reduction_ratio};
 
 #[tauri::command]
 pub async fn connect_to_port<'a>(
@@ -74,16 +74,17 @@ pub async fn disconnect_from_active_connection<'a>(
 #[tauri::command]
 pub async fn set_acceleration<'a>(
     acceleration: i8,
-    state: State<'a, SharedAppState>,  // Use shared state for connection
+    state: State<'a, SharedAppState>,
 ) -> Result<String, String> {
-    // Arduino command format: SETACC>ACCELERATION_VALUE;
+    // Convert to i16 to prevent overflow
+    let scaled_acceleration = (acceleration as i16) * 10;
+
     let set_acc_command = format!(
         "{}{}",
         constants::CommandCodes::SETACC,
-        (acceleration * 10)
+        scaled_acceleration
     );
 
-    // Send the command using the shared connection
     match send_and_receive_from_shared_state(&set_acc_command, state.inner().clone()).await {
         Ok(response) => Ok(format!("Successfully sent set_acc command. Response: {}", response)),
         Err(e) => Err(format!("Error: {}", e)),
@@ -93,16 +94,17 @@ pub async fn set_acceleration<'a>(
 #[tauri::command]
 pub async fn set_velocity<'a>(
     velocity: i8,
-    state: State<'a, SharedAppState>,  // Use shared state for connection
+    state: State<'a, SharedAppState>,
 ) -> Result<String, String> {
-    // Arduino command format: SETVEL>VELOCITY_VALUE;
+    // Convert to i16 to prevent overflow
+    let scaled_velocity = (velocity as i16) * 10;
+
     let set_vel_command = format!(
         "{}{}",
         constants::CommandCodes::SETVEL,
-        (velocity * 10)
+        scaled_velocity
     );
 
-    // Send the command using the shared connection
     match send_and_receive_from_shared_state(&set_vel_command, state.inner().clone()).await {
         Ok(response) => Ok(format!("Successfully sent set_vel command. Response: {}", response)),
         Err(e) => Err(format!("Error: {}", e)),
@@ -178,22 +180,86 @@ pub async fn calibrate_steppers<'a>(
 #[tauri::command]
 pub async fn drive_steppers_to_angles<'a>(
     joints_angles: Vec<(i8, f32)>,
-    state: State<'a, SharedAppState>,  // Use shared state for connection
+    state: State<'a, SharedAppState>,
 ) -> Result<String, String> {
-    // TODO: Create MOVE> command to send to arduino that maps angles to moving steps for each stepper
+    let mut move_command = String::from(constants::CommandCodes::MOVE);
+    
+    for (joint_id, target_angle) in joints_angles {
+        if let (Some(reduction_ratio), Some(degrees_per_step)) = (get_reduction_ratio(joint_id as u8), get_degrees_per_step(joint_id as u8)) {
+            // Calculate steps using the formula
+            let steps = (target_angle * (1.0 / degrees_per_step) * reduction_ratio).round() as i32;
+            move_command.push_str(&format!("J{}_{};", joint_id, steps));
+        } else {
+            return Err(format!("Invalid joint ID: {}", joint_id));
+        }
+    }
+
+    println!("{}", move_command);
+
+    //TODO: 
     // 1. Get current angle of the motors (or number of steps from home position most likely)
     // 1.0 Implement getPosition command in arduino
     // 1.1 Convert steps into angles for each motor
     // 2. Get difference between desired angle and current angle for each motor that provided in joints_angles
     // 3. Compute amount of steps for each motor to reach desired angle knowing its reductions
-
-    let move_step_command = "TODO"; // Placeholder for actual implementation
-
-    // Send the command using the shared connection
-    match send_and_receive_from_shared_state(move_step_command, state.inner().clone()).await {
+    
+    //Send the command using the shared connection
+    match send_and_receive_from_shared_state(&move_command, state.inner().clone()).await {
         Ok(response) => Ok(format!("Successfully sent move command. Response: {}", response)),
         Err(e) => Err(format!("Error: {}", e)),
     }
+}
+
+//TODO: CHECK AND IMPLEMENT CORRECTLY
+#[tauri::command]
+pub async fn check_steppers<'a>(
+    state: State<'a, SharedAppState>
+) -> Result<String, String> {
+    // Send the command using the shared connection
+    match send_and_receive_from_shared_state(constants::CommandCodes::STATE, state.inner().clone()).await {
+        Ok(response) => {
+            // Parse the response and convert steps to angles
+            let response_parts: Vec<&str> = response.split(';').collect();
+            let mut result = String::from("[STATE];");
+
+            for part in response_parts {
+                // Example response: J1_ENABLED, J2_ENABLED, J1_UNKNOWN, etc.
+                if part.starts_with("J") {
+                    let parts: Vec<&str> = part.split('_').collect();
+                    if parts.len() == 2 {
+                        let joint_id = parts[0].trim_start_matches('J').parse::<u8>().unwrap();
+                        let status = parts[1];
+
+                        // Check if the status is a stepper, for example: "J1_ENABLED"
+                        if status == "ENABLED" {
+                            // Get the current number of steps (from home or initial position)
+                            if let Some(degrees_per_step) = get_degrees_per_step(joint_id) {
+                                // Calculate the current angle from the stepper's step count
+                                let steps = get_steps_for_joint(joint_id); // Placeholder function to get the current steps
+                                let angle = (steps as f32) * degrees_per_step;
+                                
+                                result.push_str(&format!("J{}_{};", joint_id, angle));
+                            } else {
+                                result.push_str(&format!("J{}_UNKNOWN;", joint_id));
+                            }
+                        } else {
+                            result.push_str(&format!("J{}_UNKNOWN;", joint_id));
+                        }
+                    }
+                }
+            }
+
+            Ok(result)
+        },
+        Err(e) => Err(format!("Error: {}", e)),
+    }
+}
+
+// Placeholder function to get current steps for each joint (you will need to implement this based on your system)
+fn get_steps_for_joint(joint_id: u8) -> i32 {
+    // This would interact with your system to get the current step count.
+    // For now, returning a dummy value (e.g., 100 steps).
+    100
 }
 
 
