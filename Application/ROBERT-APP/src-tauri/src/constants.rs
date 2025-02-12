@@ -45,11 +45,11 @@ pub fn get_error_message(code: &str) -> Option<&'static str> {
 // Joint Reduction Ratios (as a HashMap where key = Joint ID, value = reduction ratio as a float)
 pub static JOINT_REDUCTIONS: Lazy<HashMap<u8, f32>> = Lazy::new(|| {
     let mut m = HashMap::new();
-    m.insert(1, 100.0 / 16.0); // J1 -> 1:20
-    m.insert(2, 80.0 / 16.0); // J2 -> 12:35
-    m.insert(3, 100.0 / 16.0); // Example for J3
-    m.insert(4, 60.0 / 16.0); // Example for J4
-    m.insert(5, 16.0 / 32.0); // Example for J5
+    m.insert(1, 100.0 / 16.0); 
+    m.insert(2, 80.0 / 16.0); 
+    m.insert(3, 100.0 / 16.0); 
+    m.insert(4, 60.0 / 16.0); 
+    m.insert(5, 32.0 / 16.0);
     m.insert(6, 1.0 / 1.0); // Example for J6
     m
 });
