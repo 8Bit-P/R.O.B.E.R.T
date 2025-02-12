@@ -57,16 +57,18 @@ export const StepperProvider: React.FC<StepperProviderProps> = ({
     setCalibrated((prev) => ({ ...prev, [jointId]: isCalibrated }));
   };
   
-  //TODO: implement
   // Function to fetch stepper data from backend
   const fetchSteppersState = async () => {
-    checkSteppersState()
-      .then((data) => {
-        console.log(data);
-      })
-      .catch((err) => {
-        console.error("Error fetching steppers state:", err);
-      });
+    //TODO: get steppers state 
+    // checkSteppersState()
+    //   .then((data) => {
+    //     console.log(data);
+    //   })
+    //   .catch((err) => {
+    //     console.error("Error fetching steppers state:", err);
+    //   });
+
+      //TODO: get steppers angles
   };
 
   // Reset all joint positions when connection is lost

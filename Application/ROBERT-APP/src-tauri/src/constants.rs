@@ -12,6 +12,7 @@ impl CommandCodes {
     pub const TOGGLE: &'static str = "TOGGLE>";
     pub const CALIBRATE: &'static str = "CALIBRATE>";
     pub const STATE: &'static str = "STATE>";
+    pub const STEPS: &'static str = "STEPS>";
 }
 
 // Response Codes
@@ -21,6 +22,7 @@ impl ResponseCodes {
     pub const CONNECTED_RESPONSE: &'static str = "CONNECTED";
     pub const CALIBRATION_RESPONSE: &'static str = "[CALIBRATION];";
     pub const STATE_RESPONSE: &'static str = "[STATE];";
+    pub const STEPS_RESPONSE: &'static str = "[STEPS];";
 }
 
 // Error Codes (as a HashMap for easy lookup by code)
@@ -60,7 +62,7 @@ pub fn get_reduction_ratio(joint_id: u8) -> Option<f32> {
 // Maximum angle data: A separate HashMap for storing max angle per joint
 pub static MAX_ANGLES: Lazy<HashMap<u8, f32>> = Lazy::new(|| {
     let mut m = HashMap::new();
-    m.insert(1, 180.0); // J1 max angle 180°
+    m.insert(1, 270.0); 
     m.insert(2, 150.0); // J2 max angle 150°
     m.insert(3, 270.0); // J3 max angle 270°
     m.insert(4, 160.0); // J4 max angle 160°

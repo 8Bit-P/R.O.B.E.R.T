@@ -1,5 +1,9 @@
+use crate::constants;
 use crate::state::SharedAppState;
-use tokio::{ time::{timeout, Duration}, io::{AsyncWriteExt,AsyncReadExt}};
+use tokio::{
+    io::{AsyncReadExt, AsyncWriteExt},
+    time::{timeout, Duration},
+};
 
 pub async fn send_and_receive_from_shared_state(
     data: &str,
@@ -23,7 +27,7 @@ pub async fn send_and_receive_from_shared_state(
 
     // Correctly handle the lock on the serial connection
     let mut port = connection.lock().await;
-    
+
     // Write the data to the port
     port.write_all(data_to_send.as_bytes())
         .await
@@ -42,7 +46,6 @@ pub async fn send_and_receive_from_shared_state(
             match port.read(&mut buffer).await {
                 Ok(bytes_read) => {
                     response.extend_from_slice(&buffer[..bytes_read]);
-                    println!("###DEBUG### - Read {} bytes", bytes_read);
 
                     // Check if we have received a complete response
                     if response.ends_with(b"\n") || response.ends_with(b"~") {
@@ -65,5 +68,137 @@ pub async fn send_and_receive_from_shared_state(
         }
         Ok(Err(e)) => Err(e),
         Err(_) => Err("Timeout while waiting for response".to_string()),
+    }
+}
+
+//Sends state command to arduino and returns an array of bools representing the state of the steppers
+pub async fn get_steppers_state(state: SharedAppState) -> Result<[bool; 6], String> {
+
+    let data = constants::CommandCodes::STATE;
+    let response = send_and_receive_from_shared_state(data, state).await?;
+
+    // Parse the response
+    let state_str = response
+        .trim_start_matches(constants::ResponseCodes::STATE_RESPONSE)
+        .trim_end_matches("~");
+
+    // Split the response into parts
+    let parts: Vec<&str> = state_str.split(';').collect();
+
+    let mut stepper_states = [false; 6];
+
+    for part in parts.iter() {
+        // Strip any trailing newline or extra spaces from each part
+        let part = part.trim();
+
+        if let Some(index) = part
+            .strip_prefix("J")
+            .and_then(|s| s.chars().next())
+            .and_then(|c| c.to_digit(10))
+        {
+            let idx = (index as usize).saturating_sub(1);
+            if idx < 6 {
+                stepper_states[idx] = part.ends_with("ENABLED");
+            }
+        }
+    }
+
+    Ok(stepper_states)
+}
+
+//Sends state command to arduino and returns an array of steps representing the steps of the steppers
+pub async fn get_steppers_steps(state: SharedAppState) -> Result<[Option<f32>; 6], String> {
+    let data = constants::CommandCodes::STEPS;
+    let response = send_and_receive_from_shared_state(data, state).await?;
+
+    // Parse the response
+    let state_str = response
+        .trim_start_matches(constants::ResponseCodes::STEPS_RESPONSE)
+        .trim_end_matches("~");
+
+    // Split the response into parts
+    let parts: Vec<&str> = state_str.split(';').collect();
+
+    let mut stepper_steps = [None; 6];
+
+    for part in parts.iter() {
+         // Strip any trailing newline or extra spaces from each part
+         let part = part.trim();
+
+        if let Some(index) = part
+            .strip_prefix("J")
+            .and_then(|s| s.chars().next())
+            .and_then(|c| c.to_digit(10))
+        {
+            let idx = (index as usize).saturating_sub(1);
+            if idx < 6 {
+                if part.ends_with("UNKNOWN") {
+                    stepper_steps[idx] = None;
+                } else if let Some(steps) = part
+                    .strip_prefix(&format!("J{}_", index))
+                    .and_then(|s| s.parse::<f32>().ok())
+                {
+                    stepper_steps[idx] = Some(steps);
+                }
+            }
+        }
+    }
+
+    Ok(stepper_steps)
+}
+
+pub async fn get_steppers_angles(state: SharedAppState) -> Result<[Option<f32>; 6], String> {
+    let steps = get_steppers_steps(state).await?;
+    let mut angles = [None; 6];
+
+    for (i, step) in steps.iter().enumerate() {
+        if let Some(steps) = step {
+            if let (Some(reduction_ratio), Some(degrees_per_step)) = (
+                constants::get_reduction_ratio((i + 1) as u8),
+                constants::get_degrees_per_step((i + 1) as u8),
+            ) {
+                angles[i] = Some(((*steps as f32) / reduction_ratio) * degrees_per_step);
+            }
+        }
+    }
+
+    Ok(angles)
+}
+
+pub async fn drive_steppers_to_angles(
+    joints_angles: Vec<(i8, f32)>,
+    state: SharedAppState,
+) -> Result<String, String> {
+    let mut move_command = String::from(constants::CommandCodes::MOVE);
+
+    for (joint_id, target_angle) in joints_angles {
+        if let (Some(reduction_ratio), Some(degrees_per_step)) = (
+            constants::get_reduction_ratio(joint_id as u8),
+            constants::get_degrees_per_step(joint_id as u8),
+        ) {
+            // Calculate steps using the formula
+            let steps = (target_angle * (1.0 / degrees_per_step) * reduction_ratio).round() as i32;
+            move_command.push_str(&format!("J{}_{};", joint_id, steps));
+        } else {
+            return Err(format!("Invalid joint ID: {}", joint_id));
+        }
+    }
+
+    println!("{}", move_command);
+
+    //TODO:
+    // 1. Get current angle of the motors (or number of steps from home position most likely)
+    // 1.0 Implement getPosition command in arduino
+    // 1.1 Convert steps into angles for each motor
+    // 2. Get difference between desired angle and current angle for each motor that provided in joints_angles
+    // 3. Compute amount of steps for each motor to reach desired angle knowing its reductions
+
+    //Send the command using the shared connection
+    match send_and_receive_from_shared_state(&move_command, state).await {
+        Ok(response) => Ok(format!(
+            "Successfully sent move command. Response: {}",
+            response
+        )),
+        Err(e) => Err(format!("Error: {}", e)),
     }
 }
