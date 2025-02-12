@@ -12,6 +12,7 @@ constexpr char SetAccelerationCommand[] = "SETACC";
 constexpr char ToggleStepperCommand[] = "TOGGLE";
 constexpr char CalibrateStepperCommand[] = "CALIBRATE";
 constexpr char SteppersStateCommand[] = "STATE";
+constexpr char SteppersStepsCommand[] = "STEPS";
 
 constexpr char Enabled[] = "ENABLED";
 constexpr char Disabled[] = "DISABLED";
@@ -20,6 +21,7 @@ constexpr char Disabled[] = "DISABLED";
 constexpr char ConnectedResponse[] = "CONNECTED";
 constexpr char CalibrationResponse[] = "[CALIBRATION];";
 constexpr char SteppersStateResponse[] = "[STATE];";
+constexpr char SteppersStepsResponse[] = "[STEPS];";
 constexpr char InfoResponse[] = "[INFO];";
 //Error codes
 #define CommandFormatError "C001" // Command was not properly formated
@@ -64,6 +66,7 @@ constexpr int VelocityUpperRange = 2000;     // TODO: check actual upper ranges
 #define J6limitPin 15 //Y-MAX    
 
 //Moving direction of each stepper
+//JXPositiveToLimit 1 means that it takes positive steps for the stepper to rotate to the limit switch
 #define J1PositiveToLimit 0
 #define J2PositiveToLimit 0
 #define J3PositiveToLimit 1

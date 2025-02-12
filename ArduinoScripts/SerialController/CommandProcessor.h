@@ -11,6 +11,7 @@ enum CommandCode {
     TOGGLE,
     CALIBRATE,
     STATE,
+    STEPS,
     UNKNOWN
 };
 
@@ -20,6 +21,5 @@ void processCommand(String command);
 void processToggleCommand(String actionString);
 void processMoveCommand(String actionString);
 void processCalibrateCommand(String actionString);
-void processStateCommand();
 
 #endif

@@ -13,6 +13,7 @@ int getLimitSwitchPin(int stepperIndex);
 void reportSteppersPositions();
 int moveStepperPositiveSteps(int stepperNum);
 void getSteppersState();
+void getSteppersSteps();
 
 AccelStepper* getStepperByIndex(int stepperIndex);
 

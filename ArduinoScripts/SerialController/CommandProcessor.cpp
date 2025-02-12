@@ -41,7 +41,11 @@ void processCommand(String command) {
         break;
 
       case STATE:
-        processStateCommand();
+        getSteppersState();
+        break;
+
+      case STEPS:
+        getSteppersSteps();
         break;
 
       default:
@@ -61,6 +65,7 @@ CommandCode getCommandCode(const String& command) {
   if (command == ToggleStepperCommand) return TOGGLE;
   if (command == CalibrateStepperCommand) return CALIBRATE;
   if (command == SteppersStateCommand) return STATE;
+  if (command == SteppersStepsCommand) return STEPS;
   return UNKNOWN;
 }
 
@@ -157,6 +162,3 @@ void processCalibrateCommand(String actionString) {
   }
 }
 
-void processStateCommand() {
-  getSteppersState();
-}

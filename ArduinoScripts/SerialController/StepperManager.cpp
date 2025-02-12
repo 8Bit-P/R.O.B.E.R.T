@@ -207,21 +207,26 @@ void getSteppersState() {
     if (i < 5) steppersState += ";";
   }
 
-  steppersState += " ";
+  Serial.println(steppersState);
+}
+
+void getSteppersSteps(){
+
+  String steppersSteps = SteppersStepsResponse;
 
   for (int i = 0; i < 6; i++) {
     AccelStepper* stepper = &steppers[i];
     long currentPosition = stepper->currentPosition();
 
     if (!isCalibrated[i]) {
-      steppersState += "J" + String(i + 1) + "_UNKNOWN";
+      steppersSteps += "J" + String(i + 1) + "_UNKNOWN";
     } else {
-      steppersState += "J" + String(i + 1) + "_" + String(currentPosition);
+      steppersSteps += "J" + String(i + 1) + "_" + String(currentPosition);
     }
 
-    if (i < 5) steppersState += ";";
+    if (i < 5) steppersSteps += ";";
   }
 
-  Serial.println(steppersState);
+  Serial.println(steppersSteps);
 }
 
