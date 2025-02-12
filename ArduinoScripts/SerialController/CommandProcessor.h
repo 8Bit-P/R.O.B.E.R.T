@@ -10,6 +10,8 @@ enum CommandCode {
     SETACC,
     TOGGLE,
     CALIBRATE,
+    STATE,
+    STEPS,
     UNKNOWN
 };
 

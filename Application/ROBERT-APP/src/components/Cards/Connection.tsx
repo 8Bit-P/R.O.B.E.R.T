@@ -3,6 +3,7 @@ import { useConnection } from "../../context/ConnectionContext";
 import { getPorts, connectToPortAPI } from "../../api/commands";
 import { ConnectionStates, DEFAULT_PORT_LABEL } from "../../constants/connectionConstants";
 
+
 import toast from 'react-hot-toast';
 import ToggleInput from "../ToggleInput";
 

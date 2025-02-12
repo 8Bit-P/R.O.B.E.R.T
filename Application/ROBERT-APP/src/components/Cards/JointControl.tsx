@@ -1,11 +1,12 @@
 import { useConnection } from "../../context/ConnectionContext";
-import { moveStep } from "../../api/commands";
+import { driveStepperToAngle, moveStep } from "../../api/commands";
 import { useState } from "react";
 
 import toast from "react-hot-toast";
+import { DEFAULT_INCREMENT_STEPS } from "../../constants/connectionConstants";
 
 const JointControl = () => {
-  const { port, isConnected } = useConnection();
+  const { isConnected } = useConnection();
   const [jointValues, setJointValues] = useState<(number | string)[]>(Array(6).fill(""));
 
   
@@ -14,11 +15,23 @@ const JointControl = () => {
     newValues[index] = value === "" ? "" : parseInt(value) || 0;
     setJointValues(newValues);
   };
+
+  const driveToCustomAngle = () => {
+    const jointAngles = new Map<number, number>();
+  
+    jointValues.forEach((value, index) => {
+      if (value !== "") {
+        jointAngles.set(index + 1, Number(value)); // Joint numbers are 1-based
+      }
+    });
+  
+    driveStepperToAngle(jointAngles);
+  };
   
   //Individual increase of joint angle
   const handleJointIncrement = (jointIndex: number) => {
     if (isConnected) {
-      moveStep(port, jointIndex, +1)
+      moveStep(jointIndex, +DEFAULT_INCREMENT_STEPS)
         .then((res) => console.log(res))
         .catch((err) => toast.error(err));
     }
@@ -27,7 +40,9 @@ const JointControl = () => {
   //Individual decrease of joint angle
   const handleJointDecrement = (jointIndex: number) => {
     if (isConnected) {
-      moveStep(port, jointIndex, +1).then((res) => console.log(res));
+      moveStep(jointIndex, -DEFAULT_INCREMENT_STEPS)
+        .then((res) => console.log(res))
+        .catch((err) => toast.error(err));
     }
   };
 
@@ -95,7 +110,7 @@ const JointControl = () => {
 
           <button
             className="bg-gray-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-gray-600"
-            onClick={() => console.log("Run command for custom angles")}
+            onClick={driveToCustomAngle}
           >
             Run
           </button>

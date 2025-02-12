@@ -1,33 +1,38 @@
 #ifndef CONSTANTS_H
 #define CONSTANTS_H
 
-#define motorInterfaceType 1 // Motor interface type must be set to 1 when using a driver
+// Motor interface type must be set to 1 when using a driver
+constexpr int motorInterfaceType = 1;
 
-//Command codes
-#define MoveCommand "MOVE"
-#define CheckCommand "CHECK"
-#define SetVelocityCommand "SETVEL"
-#define SetAccelerationCommand "SETACC"
-#define ToggleStepperCommand "TOGGLE"
-#define CalibrateStepperCommand "CALIBRATE"
-#define GetStepperStepPositionCommand "GETSTEPPOS"
+// Command codes
+constexpr char MoveCommand[] = "MOVE";
+constexpr char CheckCommand[] = "CHECK";
+constexpr char SetVelocityCommand[] = "SETVEL";
+constexpr char SetAccelerationCommand[] = "SETACC";
+constexpr char ToggleStepperCommand[] = "TOGGLE";
+constexpr char CalibrateStepperCommand[] = "CALIBRATE";
+constexpr char SteppersStateCommand[] = "STATE";
+constexpr char SteppersStepsCommand[] = "STEPS";
 
-#define Enabled "ENABLED"
-#define Disabled "DISABLED"
-//Response codes
-#define ConnectedResponse "CONNECTED"
-#define CalibrationResponse "[CALIBRATION];"
-#define StepsPositionResponse "[STEPS_POSITION];"
+constexpr char Enabled[] = "ENABLED";
+constexpr char Disabled[] = "DISABLED";
 
+// Response codes
+constexpr char ConnectedResponse[] = "CONNECTED";
+constexpr char CalibrationResponse[] = "[CALIBRATION];";
+constexpr char SteppersStateResponse[] = "[STATE];";
+constexpr char SteppersStepsResponse[] = "[STEPS];";
+constexpr char InfoResponse[] = "[INFO];";
 //Error codes
 #define CommandFormatError "C001" // Command was not properly formated
 #define CommandNotDefined "C002" // Given command is not defined
 #define InvalidStepper "I001" // Invalid stepper selected
 #define InvalidState "I002" //Invalid state for stepper
+#define InvalidLimitSwitchConversion "I003" //Invalid limit switch conversion
 
-//Ranges
-#define AccelerationUpperRange = 1000 //TODO: check actual upper ranges
-#define VelocityUpperRange = 2000     //TODO: check actual upper ranges
+// Ranges
+constexpr int AccelerationUpperRange = 1000; // TODO: check actual upper ranges
+constexpr int VelocityUpperRange = 2000;     // TODO: check actual upper ranges
 
 // Define stepper motor connections and motor interface type. 
 #define J1stepPin 45 //TB6600 STEP
@@ -48,7 +53,7 @@
 #define J4stepPin 54 //X-STEP
 #define J4dirPin 55 //X-DIR
 #define J4enablePin 38 //X-EN
-#define J4limitPin 5 //X-MIN 
+#define J4limitPin 3 //X-MIN 
 
 #define J5stepPin 60 //Y-STEP
 #define J5dirPin 61 //Y-DIR
@@ -59,5 +64,14 @@
 #define J6dirPin 13 //Z-DIR
 #define J6enablePin 24 //Z-EN
 #define J6limitPin 15 //Y-MAX    
+
+//Moving direction of each stepper
+//JXPositiveToLimit 1 means that it takes positive steps for the stepper to rotate to the limit switch
+#define J1PositiveToLimit 0
+#define J2PositiveToLimit 0
+#define J3PositiveToLimit 1
+#define J4PositiveToLimit 1
+#define J5PositiveToLimit 0 //TODO: set when joints developed
+#define J6PositiveToLimit 0
 
 #endif

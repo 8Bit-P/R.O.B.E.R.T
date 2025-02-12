@@ -1,6 +1,6 @@
-#include "AccelStepper.h"
 #include "StepperManager.h"
 #include "CommandProcessor.h"
+#include "Constants.h"
 
 void setup() {
   Serial.begin(115200);
@@ -11,10 +11,9 @@ void setup() {
 void loop() {
   while(Serial.available()) {
     String command = Serial.readStringUntil('~');
+    //TODO: remove comments
     // Serial.print("Commmand received: ");
     // Serial.println(command);
     processCommand(command);
-
-    //TODO: periodically report position of steppers back
   }
 }
