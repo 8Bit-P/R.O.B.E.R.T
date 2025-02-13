@@ -55,9 +55,9 @@ export const checkSteppersState = async (): Promise<boolean[]> => {
   return invoke<boolean[]>("check_steppers_state");
 };
 
-export const getSteppersAngles = async (): Promise<string[]> => {
+export const getSteppersAngles = async (): Promise<number[]> => {
   
-  return invoke<string[]>("get_steppers_angles");
+  return invoke<number[]>("get_steppers_angles");
 };
 
 export const calibrateStepper = async (jointsIndexes: number[] | null | undefined): Promise<string[]> => {

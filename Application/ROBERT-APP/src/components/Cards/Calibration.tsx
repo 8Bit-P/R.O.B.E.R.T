@@ -22,12 +22,6 @@ const Calibration = () => {
     CalibrationStates.NOT_CALIBRATED,
   ]);
 
-  useEffect(() => {
-    if (isConnected) {
-      //TODO: send command to check for stepper state and update them accordingly
-    }
-  }, [isConnected]);
-
   const handleCalibrate = (index: number) => {
     if (isConnected) {
       //Set state as calibrating

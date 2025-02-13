@@ -4,10 +4,12 @@ import { toggleStepperState } from "../../api/commands";
 
 import ToggleInput from "../ToggleInput";
 import toast from "react-hot-toast";
+import { useStepperContext } from "../../context/StepperContext";
 
-const SteppersState = () => {
+const EnableSteppers = () => {
 
   const { isConnected } = useConnection();
+  const { states } = useStepperContext();
   // Initialize state as an array of booleans
   const [toggleStates, setToggleStates] = useState([true, true, true, true, true, true]);
 
@@ -44,4 +46,4 @@ const SteppersState = () => {
   );
 };
 
-export default SteppersState;
+export default EnableSteppers;
