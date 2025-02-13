@@ -15,52 +15,80 @@ pub async fn connect_to_port<'a>(
 ) -> Result<String, String> {
     let baud_rate = 115200;
     let timeout_duration = Duration::from_secs(3);
+    let max_retries = 3;
 
-    {
-        // Lock the state and clear any existing connection
-        let mut app_state = state.write().await;
-        if app_state.serial_connection.is_some() {
-            println!("###DEBUG### - Closing existing connection before reconnecting.");
-            app_state.serial_connection = None; // Drop the previous connection
-        }
-    }
-
-    println!("###DEBUG### - Connecting to port: {}", port);
-
-    let serial_connection = tokio_serial::new(port.clone(), baud_rate)
-        .timeout(timeout_duration)
-        .data_bits(DataBits::Eight)
-        .parity(Parity::None)
-        .stop_bits(StopBits::One)
-        .open_native_async()
-        .map_err(|e| format!("Failed to open serial port: {}", e))?;
-
-    let shared_connection = Arc::new(Mutex::new(serial_connection));
-
-    {
-        let mut app_state = state.write().await;
-        app_state.set_connection(shared_connection.clone());
-    }
-
-    match send_and_receive_from_shared_state(
-        crate::constants::CommandCodes::CHECK,
-        state.inner().clone(),
-    )
-    .await
-    {
-        Ok(response) => {
-            if response.trim() == crate::constants::ResponseCodes::CONNECTED_RESPONSE {
-                Ok(format!("Successfully connected to port: {}.", port))
-            } else {
-                Err(format!(
-                    "Failed to connect to port: {}. Unexpected response: {}",
-                    port, response
-                ))
+    for attempt in 1..=max_retries {
+        {
+            // Lock the state and clear any existing connection before trying again
+            let mut app_state = state.write().await;
+            if app_state.serial_connection.is_some() {
+                println!(
+                    "###DEBUG### - Attempt {}/{}: Closing existing connection before reconnecting.",
+                    attempt, max_retries
+                );
+                app_state.serial_connection = None;
             }
         }
-        Err(e) => Err(format!("Failed to verify connection: {}", e)),
+
+        println!(
+            "###DEBUG### - Attempt {}/{}: Connecting to port: {}",
+            attempt, max_retries, port
+        );
+
+        match tokio_serial::new(port.clone(), baud_rate)
+            .timeout(timeout_duration)
+            .data_bits(DataBits::Eight)
+            .parity(Parity::None)
+            .stop_bits(StopBits::One)
+            .open_native_async()
+        {
+            Ok(serial_connection) => {
+                let shared_connection = Arc::new(Mutex::new(serial_connection));
+
+                {
+                    let mut app_state = state.write().await;
+                    app_state.set_connection(shared_connection.clone());
+                }
+
+                match send_and_receive_from_shared_state(
+                    crate::constants::CommandCodes::CHECK,
+                    state.inner().clone(),
+                )
+                .await
+                {
+                    Ok(response) => {
+                        if response.trim() == crate::constants::ResponseCodes::CONNECTED_RESPONSE {
+                            return Ok(format!("Successfully connected to port: {}.", port));
+                        } else {
+                            println!(
+                                "###DEBUG### - Attempt {}/{}: Unexpected response: {}",
+                                attempt, max_retries, response
+                            );
+                        }
+                    }
+                    Err(e) => {
+                        println!(
+                            "###DEBUG### - Attempt {}/{}: Failed to verify connection: {}",
+                            attempt, max_retries, e
+                        );
+                    }
+                }
+            }
+            Err(e) => {
+                println!(
+                    "###DEBUG### - Attempt {}/{}: Failed to open serial port: {}",
+                    attempt, max_retries, e
+                );
+            }
+        }
+
+        // Wait before retrying
+        tokio::time::sleep(Duration::from_millis(500)).await;
     }
+
+    Err(format!("Failed to connect to port: {} after {} attempts.", port, max_retries))
 }
+
 
 
 #[tauri::command]
