@@ -1,59 +1,27 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useConnection } from "../../context/ConnectionContext";
-import { getPorts, connectToPortAPI } from "../../api/commands";
-import { ConnectionStates, DEFAULT_PORT_LABEL } from "../../constants/connectionConstants";
-
-
-import toast from 'react-hot-toast';
+import { DEFAULT_PORT_LABEL } from "../../constants/connectionConstants";
 import ToggleInput from "../ToggleInput";
 
 const Connection = () => {
-  const [ports, setPorts] = useState<string[]>([]); // Available ports
-  
-  const { port, setIsConnected, isConnected,connectionState, setConnectionState, connectToPort, disconnectPort } = useConnection();
+  const {
+    port,
+    setPort,
+    isConnected,
+    connectionState,
+    availablePorts,
+    refreshPorts,
+    connectToPort,
+    disconnectPort
+  } = useConnection();
 
-  // Retrieve available ports on start
   useEffect(() => {
     refreshPorts();
   }, []);
 
-  const refreshPorts = async () => {
-    try {
-      const response = await getPorts();
-      setPorts(response);
-    } catch (error) {
-      toast.error(`Failed to get ports: ${error}`);
-    }
-  };
-
   const handleChangePort = (e: React.ChangeEvent<HTMLSelectElement>) => {
     disconnectPort();
-    setConnectionState(ConnectionStates.NOT_PROBED);
-    connectToPort(e.target.value);
-  };
-
-  const handleToggleConnection = async () => {
-
-    if(port === "default") return;
-
-    setIsConnected(!isConnected);
-
-    if (!isConnected) {
-      try {
-        setConnectionState(ConnectionStates.PROBING);
-
-        const response = await connectToPortAPI(port!);
-
-        toast.success(response.toString());
-        setConnectionState(ConnectionStates.ACCEPTED_CONNECTION);
-      } catch (error) {
-        toast.error(`Error trying to connect to port: ${error}`);
-        setConnectionState(ConnectionStates.REFUSED_CONNECTION);
-        setIsConnected(false);
-      }
-    } else {
-      setConnectionState(ConnectionStates.NOT_PROBED);
-    }
+    setPort(e.target.value);
   };
 
   return (
@@ -63,12 +31,12 @@ const Connection = () => {
           <select
             onClick={refreshPorts}
             onChange={handleChangePort}
-            defaultValue={"default"}
-            id="countries"
+            defaultValue={port || "default"}
+            id="ports"
             className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-100px p-2.5 select-none"
           >
             <option value="default">{DEFAULT_PORT_LABEL}</option>
-            {ports.map((portItem) => (
+            {availablePorts.map((portItem) => (
               <option key={portItem} value={portItem}>
                 {portItem}
               </option>
@@ -77,22 +45,16 @@ const Connection = () => {
         </form>
 
         {/* Status indicator dot */}
-        <div
-          className="w-2 h-2 bg-gray-500 rounded-full"
-          style={{ backgroundColor: connectionState }}
-        />
+        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: connectionState }} />
       </div>
 
       <div className="inline-flex items-center">
         <ToggleInput
           isActive={true}
           isChecked={isConnected}
-          handleToggleInput={handleToggleConnection}
+          handleToggleInput={() => (isConnected ? disconnectPort() : connectToPort(port!))}
         />
-        <span
-          className="ms-3 text-sm font-medium"
-          style={{ userSelect: "none" }}
-        >
+        <span className="ms-3 text-sm font-medium" style={{ userSelect: "none" }}>
           {isConnected ? "Connected" : "Disconnected"}
         </span>
       </div>

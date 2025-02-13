@@ -22,10 +22,10 @@ interface StepperState {
 const StepperContext = createContext<StepperState | undefined>(undefined);
 
 // Custom hook for using StepperContext
-export const useStepper = (): StepperState => {
+export const useStepperContext = (): StepperState => {
   const context = useContext(StepperContext);
   if (!context) {
-    throw new Error("useStepper must be used within a StepperProvider");
+    throw new Error("useStepperContext must be used within a StepperProvider");
   }
   return context;
 };
@@ -77,24 +77,6 @@ export const StepperProvider: React.FC<StepperProviderProps> = ({
     setAngles({});
     setCalibrated({});
   };
-
-  // Monitor connection state
-  useEffect(() => {
-    let timeoutId;
-  
-    if (isConnected) {
-      timeoutId = setTimeout(() => {
-        fetchSteppersState(); // ✅ Fetch stepper state after a delay
-      }, 1000); // Adjust the delay as needed (1000ms = 1 second)
-    } else {
-      timeoutId = setTimeout(() => {
-        resetStepperState(); // ❌ Reset stepper state after a delay
-      }, 500); // Adjust delay for reset if needed
-    }
-  
-    return () => clearTimeout(timeoutId); // Cleanup timeout when effect re-runs
-  }, [isConnected]);
-  
 
   return (
     <StepperContext.Provider
