@@ -11,17 +11,23 @@ use tokio_serial::{DataBits, Parity, SerialPortBuilderExt, StopBits};
 #[tauri::command]
 pub async fn connect_to_port<'a>(
     port: String,
-    state: State<'a, SharedAppState>, // State from Tauri
+    state: State<'a, SharedAppState>,
 ) -> Result<String, String> {
     let baud_rate = 115200;
     let timeout_duration = Duration::from_secs(3);
 
-    let port_cloned = port.clone(); // Clone the port to use it later
+    {
+        // Lock the state and clear any existing connection
+        let mut app_state = state.write().await;
+        if app_state.serial_connection.is_some() {
+            println!("###DEBUG### - Closing existing connection before reconnecting.");
+            app_state.serial_connection = None; // Drop the previous connection
+        }
+    }
 
-    println!("###DEBUG### - Connecting to port: {}", port_cloned);
+    println!("###DEBUG### - Connecting to port: {}", port);
 
-    // Create and configure the serial connection
-    let serial_connection = tokio_serial::new(port, baud_rate)
+    let serial_connection = tokio_serial::new(port.clone(), baud_rate)
         .timeout(timeout_duration)
         .data_bits(DataBits::Eight)
         .parity(Parity::None)
@@ -29,16 +35,13 @@ pub async fn connect_to_port<'a>(
         .open_native_async()
         .map_err(|e| format!("Failed to open serial port: {}", e))?;
 
-    // Wrap the connection in a Mutex and Arc (tokio::sync::Mutex now)
     let shared_connection = Arc::new(Mutex::new(serial_connection));
 
-    // Store the connection in the shared state
     {
         let mut app_state = state.write().await;
         app_state.set_connection(shared_connection.clone());
     }
 
-    // Extract the shared state (Arc<RwLock<AppState>>) and call the function
     match send_and_receive_from_shared_state(
         crate::constants::CommandCodes::CHECK,
         state.inner().clone(),
@@ -47,11 +50,11 @@ pub async fn connect_to_port<'a>(
     {
         Ok(response) => {
             if response.trim() == crate::constants::ResponseCodes::CONNECTED_RESPONSE {
-                Ok(format!("Successfully connected to port: {}.", port_cloned))
+                Ok(format!("Successfully connected to port: {}.", port))
             } else {
                 Err(format!(
                     "Failed to connect to port: {}. Unexpected response: {}",
-                    port_cloned, response
+                    port, response
                 ))
             }
         }
@@ -59,18 +62,30 @@ pub async fn connect_to_port<'a>(
     }
 }
 
+
 #[tauri::command]
 pub async fn disconnect_from_active_connection<'a>(
-    state: State<'a, SharedAppState>, // State from Tauri
+    state: State<'a, SharedAppState>, 
 ) -> Result<String, String> {
     // Lock the shared app state
     let mut app_state = state.write().await;
 
-    // Clear the connection using the clear_connection method
-    app_state.clear_connection();
+    if app_state.serial_connection.is_some() {
+        println!("###DEBUG### - Disconnecting from serial port.");
 
-    Ok("Successfully disconnected from the port.".to_string())
+        // Explicitly drop the connection
+        app_state.serial_connection = None;
+        
+        // Give the OS time to release the port
+        tokio::time::sleep(Duration::from_millis(200)).await;
+        
+        println!("###DEBUG### - Serial port disconnected.");
+        Ok("Successfully disconnected from the port.".to_string())
+    } else {
+        Err("No active serial connection.".to_string())
+    }
 }
+
 
 #[tauri::command]
 pub async fn set_acceleration<'a>(

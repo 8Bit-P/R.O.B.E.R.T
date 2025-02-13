@@ -166,34 +166,43 @@ pub async fn get_steppers_angles(state: SharedAppState) -> Result<[Option<f32>; 
 }
 
 pub async fn drive_steppers_to_angles(
-    joints_angles: Vec<(i8, f32)>,
+    joints_angles: Vec<(i8, f32)>, // Desired angles to move each joint
     state: SharedAppState,
 ) -> Result<String, String> {
+    // Get the current angles of the steppers
+    let current_angles = get_steppers_angles(state.clone()).await?;
+
     let mut move_command = String::from(constants::CommandCodes::MOVE);
 
     for (joint_id, target_angle) in joints_angles {
+        let joint_index = (joint_id - 1) as usize; // Convert joint ID to array index (1-based to 0-based)
+
+        if joint_index >= 6 {
+            return Err(format!("Invalid joint ID: {}", joint_id));
+        }
+
+        // Ensure we have a known current angle
+        let current_angle = match current_angles[joint_index] {
+            Some(angle) => angle,
+            None => return Err(format!("Current angle for joint {} is unknown", joint_id)),
+        };
+
+        // Compute the difference between the target and current angles
+        let angle_difference = target_angle - current_angle;
+
+        // Convert angle difference to steps
         if let (Some(reduction_ratio), Some(degrees_per_step)) = (
             constants::get_reduction_ratio(joint_id as u8),
             constants::get_degrees_per_step(joint_id as u8),
         ) {
-            // Calculate steps using the formula
-            let steps = (target_angle * (1.0 / degrees_per_step) * reduction_ratio).round() as i32;
+            let steps = (angle_difference * (1.0 / degrees_per_step) * reduction_ratio).round() as i32;
             move_command.push_str(&format!("J{}_{};", joint_id, steps));
         } else {
             return Err(format!("Invalid joint ID: {}", joint_id));
         }
     }
 
-    println!("{}", move_command);
-
-    //TODO:
-    // 1. Get current angle of the motors (or number of steps from home position most likely)
-    // 1.0 Implement getPosition command in arduino
-    // 1.1 Convert steps into angles for each motor
-    // 2. Get difference between desired angle and current angle for each motor that provided in joints_angles
-    // 3. Compute amount of steps for each motor to reach desired angle knowing its reductions
-
-    //Send the command using the shared connection
+    // Send the command using the shared connection
     match send_and_receive_from_shared_state(&move_command, state).await {
         Ok(response) => Ok(format!(
             "Successfully sent move command. Response: {}",
@@ -202,3 +211,5 @@ pub async fn drive_steppers_to_angles(
         Err(e) => Err(format!("Error: {}", e)),
     }
 }
+
+

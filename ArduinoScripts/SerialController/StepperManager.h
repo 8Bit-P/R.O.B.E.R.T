@@ -8,7 +8,7 @@ void toggleStepper(int stepperNum, bool enabled);
 void moveStepper(int stepperNum, int steps);
 void setVelocity(int velocity);
 void setAcceleration(int acceleration);
-void calibrateStepper(int stepper);
+bool calibrateStepper(int stepper);
 int getLimitSwitchPin(int stepperIndex);
 void reportSteppersPositions();
 int moveStepperPositiveSteps(int stepperNum);

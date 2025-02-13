@@ -34,6 +34,8 @@ constexpr char InfoResponse[] = "[INFO];";
 constexpr int AccelerationUpperRange = 1000; // TODO: check actual upper ranges
 constexpr int VelocityUpperRange = 2000;     // TODO: check actual upper ranges
 
+constexpr int CalibrationTimeout = 5000; //In milliseconds
+
 // Define stepper motor connections and motor interface type. 
 #define J1stepPin 45 //TB6600 STEP
 #define J1dirPin 47 //TB6600 DIR

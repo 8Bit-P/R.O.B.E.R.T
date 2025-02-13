@@ -100,6 +100,10 @@ void processToggleCommand(String actionString) {
   //Toggle command actions should have the format -> TOGGLE>JOINT_STATE;
   String actionLeft = actionString;
 
+  if (actionString.indexOf(";") == -1) {
+    Serial.println(CommandFormatError);
+  }
+
   //Iterate through the provided steppers
   while (actionLeft.indexOf(";") != -1) {
     int delimiterIndex = actionLeft.indexOf(";");
@@ -137,6 +141,8 @@ void processToggleCommand(String actionString) {
 
 void processCalibrateCommand(String actionString) {
   String actionLeft = actionString;
+  String failedJoints = "";   // Track joints that failed calibration
+  bool allSuccessful = true;  // Track overall success
 
   // Check if the action string contains semicolons
   if (actionLeft.indexOf(";") == -1) {
@@ -154,11 +160,21 @@ void processCalibrateCommand(String actionString) {
     // Convert the joint to an integer, skipping the "J" character
     int stepperNumber = atoi(joint.substring(1).c_str());
 
-    // Calibrate the stepper
-    calibrateStepper(stepperNumber);
+    // Calibrate the stepper and check the result
+    bool result = calibrateStepper(stepperNumber);
+    if (!result) {
+      failedJoints += joint + ";";  // Append failed joint
+      allSuccessful = false;        // Mark that at least one failed
+    }
 
     // Update actionLeft string to remove processed joint
     actionLeft = actionLeft.substring(delimiterIndex + 1);
   }
-}
 
+  Serial.print(CalibrationResponse);
+  if (allSuccessful) {
+    Serial.println("OK");
+  } else {
+    Serial.println(failedJoints);  // Return list of failed joints
+  }
+}

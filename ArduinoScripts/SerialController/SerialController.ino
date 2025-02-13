@@ -11,9 +11,6 @@ void setup() {
 void loop() {
   while(Serial.available()) {
     String command = Serial.readStringUntil('~');
-    //TODO: remove comments
-    // Serial.print("Commmand received: ");
-    // Serial.println(command);
     processCommand(command);
   }
 }
