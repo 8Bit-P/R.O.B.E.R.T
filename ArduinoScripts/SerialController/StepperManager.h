@@ -14,6 +14,8 @@ void reportSteppersPositions();
 int moveStepperPositiveSteps(int stepperNum);
 void getSteppersState();
 void getSteppersSteps();
+void getStepperParameters();
+void getSteppersCalibration();
 
 AccelStepper* getStepperByIndex(int stepperIndex);
 

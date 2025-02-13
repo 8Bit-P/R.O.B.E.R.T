@@ -12,6 +12,8 @@ enum CommandCode {
     CALIBRATE,
     STATE,
     STEPS,
+    PARAMS,
+    CALSTATE,
     UNKNOWN
 };
 

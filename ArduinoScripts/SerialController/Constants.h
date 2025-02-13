@@ -9,10 +9,12 @@ constexpr char MoveCommand[] = "MOVE";
 constexpr char CheckCommand[] = "CHECK";
 constexpr char SetVelocityCommand[] = "SETVEL";
 constexpr char SetAccelerationCommand[] = "SETACC";
+constexpr char GetParamsCommand[] = "PARAMS";
 constexpr char ToggleStepperCommand[] = "TOGGLE";
 constexpr char CalibrateStepperCommand[] = "CALIBRATE";
 constexpr char SteppersStateCommand[] = "STATE";
 constexpr char SteppersStepsCommand[] = "STEPS";
+constexpr char GetCalibrationStateCommand[] = "CALSTATE";
 
 constexpr char Enabled[] = "ENABLED";
 constexpr char Disabled[] = "DISABLED";
@@ -22,17 +24,15 @@ constexpr char ConnectedResponse[] = "CONNECTED";
 constexpr char CalibrationResponse[] = "[CALIBRATION];";
 constexpr char SteppersStateResponse[] = "[STATE];";
 constexpr char SteppersStepsResponse[] = "[STEPS];";
+constexpr char SteppersParamsResponse[] = "[PARAMS];";
 constexpr char InfoResponse[] = "[INFO];";
+
 //Error codes
 #define CommandFormatError "C001" // Command was not properly formated
 #define CommandNotDefined "C002" // Given command is not defined
 #define InvalidStepper "I001" // Invalid stepper selected
 #define InvalidState "I002" //Invalid state for stepper
 #define InvalidLimitSwitchConversion "I003" //Invalid limit switch conversion
-
-// Ranges
-constexpr int AccelerationUpperRange = 1000; // TODO: check actual upper ranges
-constexpr int VelocityUpperRange = 2000;     // TODO: check actual upper ranges
 
 constexpr int CalibrationTimeout = 5000; //In milliseconds
 
@@ -74,6 +74,6 @@ constexpr int CalibrationTimeout = 5000; //In milliseconds
 #define J3PositiveToLimit 1
 #define J4PositiveToLimit 1
 #define J5PositiveToLimit 0 //TODO: set when joints developed
-#define J6PositiveToLimit 0
+#define J6PositiveToLimit 0 //TODO: set when joints developed
 
 #endif

@@ -229,3 +229,34 @@ void getSteppersSteps() {
 
   Serial.println(steppersSteps);
 }
+
+void getStepperParameters() {
+  String steppersState = SteppersParamsResponse;
+
+  // Assuming all steppers share the same velocity and acceleration, we can use any stepper to fetch these values
+  // Here we use the first stepper to fetch the velocity and acceleration
+  int velocity = steppers[0].maxSpeed();
+  int acceleration = steppers[0].acceleration();
+
+  // Format the response with the current velocity and acceleration
+  steppersState += "VEL_" + String(velocity) + ";";
+  steppersState += "ACC_" + String(acceleration) + ";";
+
+  // Print the response
+  Serial.println(steppersState);
+}
+
+void getSteppersCalibration() {
+  String steppersState = CalibrationResponse;
+
+  // Loop through the isCalibrated array and append calibration status to the response string
+  for (int i = 0; i < 6; i++) {
+    steppersState += "J" + String(i + 1) + "_" + String(isCalibrated[i] ? 1 : 0) + ";";
+  }
+
+  // Print the final response string
+  Serial.println(steppersState);
+}
+
+
+

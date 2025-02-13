@@ -47,6 +47,14 @@ void processCommand(String command) {
       case STEPS:
         getSteppersSteps();
         break;
+      
+      case PARAMS:
+        getStepperParameters();
+        break;
+
+      case CALSTATE:
+        getSteppersCalibration();
+        break;
 
       default:
         Serial.println(CommandNotDefined);
@@ -66,6 +74,8 @@ CommandCode getCommandCode(const String& command) {
   if (command == CalibrateStepperCommand) return CALIBRATE;
   if (command == SteppersStateCommand) return STATE;
   if (command == SteppersStepsCommand) return STEPS;
+  if (command == GetParamsCommand) return PARAMS;
+  if (command == GetCalibrationStateCommand) return CALSTATE;
   return UNKNOWN;
 }
 
