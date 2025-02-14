@@ -2,11 +2,8 @@ use crate::constants;
 use crate::state::SharedAppState;
 use crate::utils::{self, send_and_receive_from_shared_state};
 use serialport::available_ports;
-use std::sync::Arc;
 use tauri::State;
-use tokio::sync::Mutex;
 use tokio::time::Duration;
-use tokio_serial::{DataBits, Parity, SerialPortBuilderExt, StopBits};
 
 #[tauri::command]
 pub async fn connect_to_port<'a>(
@@ -80,11 +77,21 @@ pub async fn set_velocity<'a>(
 
 #[tauri::command]
 pub async fn move_step<'a>(
-    joint_index: i8,
-    n_steps: i16,
+    joint_index: i8, 
+    mut n_steps: i16, 
     state: State<'a, SharedAppState>,
 ) -> Result<String, String> {
-    // Arduino command format: MOVE>JOINT_NSTEPS;
+    if joint_index <= 0 || joint_index as usize >= constants::STEPPER_POSITIVE_TO_LIMIT.len() {
+        return Err("Invalid joint index".to_string());
+    }
+
+    // Convert `joint_index` to `usize` for array indexing
+    let joint_index_usize = joint_index as u8;
+
+    if constants::STEPPER_POSITIVE_TO_LIMIT[&joint_index_usize] {
+        n_steps = -n_steps;
+    }
+
     let move_step_command = format!(
         "{}J{}_{};",
         constants::CommandCodes::MOVE,
@@ -92,7 +99,6 @@ pub async fn move_step<'a>(
         n_steps
     );
 
-    // Send the command using the shared connection
     match send_and_receive_from_shared_state(&move_step_command, state.inner().clone()).await {
         Ok(response) => Ok(format!(
             "Successfully sent move_step command. Response: {}",
@@ -101,6 +107,8 @@ pub async fn move_step<'a>(
         Err(e) => Err(format!("Error: {}", e)),
     }
 }
+
+
 
 #[tauri::command]
 pub async fn toggle_stepper<'a>(
@@ -155,11 +163,27 @@ pub async fn calibrate_steppers<'a>(
 
 #[tauri::command]
 pub async fn drive_steppers_to_angles<'a>(
-    joints_angles: Vec<(i8, f32)>,
+    joints_angles: Vec<(i8, f32)>, 
     state: State<'a, SharedAppState>,
 ) -> Result<String, String> {
-    utils::drive_steppers_to_angles(joints_angles, state.inner().clone()).await
+
+    // Adjust angles based on the joint's positive limit switch
+    let adjusted_angles: Vec<(i8, f32)> = joints_angles
+        .into_iter()
+        .map(|(joint_index, angle)| {
+            let joint_index_u8 = joint_index as u8; // Convert to u8 for HashMap lookup
+        
+            if constants::STEPPER_POSITIVE_TO_LIMIT.get(&joint_index_u8).copied().unwrap_or(false) {
+                (joint_index, -angle) // Negate if true
+            } else {
+                (joint_index, angle) // Keep as is
+            }
+        })
+        .collect();
+
+    utils::drive_steppers_to_angles(adjusted_angles, state.inner().clone()).await
 }
+
 
 #[tauri::command]
 pub async fn check_steppers_state<'a>(

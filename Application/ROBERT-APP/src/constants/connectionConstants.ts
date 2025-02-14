@@ -6,4 +6,3 @@ export enum ConnectionStates {
 }
 
 export const DEFAULT_PORT_LABEL = "Select a port";
-export const DEFAULT_INCREMENT_STEPS = 10;

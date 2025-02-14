@@ -4,7 +4,6 @@ use tokio::{
     io::{AsyncReadExt, AsyncWriteExt},
     time::{timeout, Duration},
 };
-use serialport::available_ports;
 use std::sync::Arc;
 use tauri::State;
 use tokio::sync::Mutex;
@@ -274,6 +273,11 @@ pub async fn drive_steppers_to_angles(
 
         // Compute the difference between the target and current angles
         let angle_difference = target_angle - current_angle;
+
+        //target_angle > max_angle then throw error saying that operation exceeds joint limits
+        if target_angle > constants::get_max_angle(joint_id as u8).unwrap(){
+            return Err(format!("Target angle exceeds joint limits for joint {}", joint_id));
+        }
 
         // Convert angle difference to steps
         if let (Some(reduction_ratio), Some(degrees_per_step)) = (

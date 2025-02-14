@@ -1,76 +1,74 @@
-import { useConnection } from "../../context/ConnectionContext";
-import { driveStepperToAngle, moveStep } from "../../api/commands";
-import { useState } from "react";
+import { useConnection } from '../../context/ConnectionContext';
+import { driveStepperToAngle, moveStep } from '../../api/commands';
+import { useState } from 'react';
 
-import toast from "react-hot-toast";
-import { DEFAULT_INCREMENT_STEPS } from "../../constants/connectionConstants";
+import toast from 'react-hot-toast';
+import { DEFAULT_INCREMENT_STEPS, STEPPER_LIMITS } from '../../constants/steppersContants';
 
 const JointControl = () => {
   const { isConnected } = useConnection();
-  const [jointValues, setJointValues] = useState<(number | string)[]>(Array(6).fill(""));
+  const [jointValues, setJointValues] = useState<(number | string)[]>(Array(6).fill(''));
 
-  
   const handleInputChange = (index: number, value: string) => {
     const newValues = [...jointValues];
-    newValues[index] = value === "" ? "" : parseInt(value) || 0;
+    newValues[index] = value === '' ? '' : parseInt(value) || 0;
     setJointValues(newValues);
   };
 
   const driveToCustomAngle = () => {
+    if (!isConnected) return;
+
     const jointAngles = new Map<number, number>();
-  
+
     jointValues.forEach((value, index) => {
-      if (value !== "") {
+      if (value !== '') {
         jointAngles.set(index + 1, Number(value)); // Joint numbers are 1-based
       }
     });
-  
-    driveStepperToAngle(jointAngles);
+
+    driveStepperToAngle(jointAngles)
+      .then((res) => {
+        console.log(res);
+      })
+      .catch((err) => toast.error(err));
   };
-  
+
   //Individual increase of joint angle
   const handleJointIncrement = (jointIndex: number) => {
-    if (isConnected) {
-      moveStep(jointIndex, +DEFAULT_INCREMENT_STEPS)
-        .then((res) => console.log(res))
-        .catch((err) => toast.error(err));
-    }
+    if (!isConnected) return;
+
+    moveStep(jointIndex, DEFAULT_INCREMENT_STEPS)
+      .then((res) => console.log(res))
+      .catch((err) => toast.error(err));
   };
 
   //Individual decrease of joint angle
   const handleJointDecrement = (jointIndex: number) => {
-    if (isConnected) {
-      moveStep(jointIndex, -DEFAULT_INCREMENT_STEPS)
-        .then((res) => console.log(res))
-        .catch((err) => toast.error(err));
-    }
+    if (!isConnected) return;
+
+    moveStep(jointIndex, DEFAULT_INCREMENT_STEPS)
+      .then((res) => console.log(res))
+      .catch((err) => toast.error(err));
   };
 
   return (
-    <div style={{ fontFamily: "nothing" }} className="h-full w-full flex">
+    <div style={{ fontFamily: 'nothing' }} className="h-full w-full flex">
       <div className="w-2/5 p-4 border-r border-gray-300">
-        <h2 className="text-lg font-semibold mb-4">
-          Increment / Decrement Angle
-        </h2>
+        <h2 className="text-lg font-semibold mb-4">Increment / Decrement Angle</h2>
 
         <div className="space-y-3">
           {[...Array(6)].map((_, index) => (
-            <div
-              key={index}
-              className="flex items-center space-x-3 justify-center"
-            >
+            <div key={index} className="flex items-center space-x-3 justify-center">
               <button
                 className="bg-red-500 text-white text-xl rounded-lg px-3 py-1 w-10 h-10 select-none hover:bg-red-600"
-                onClick={() => handleJointDecrement(index+1)} 
+                onClick={() => handleJointDecrement(index + 1)}
               >
                 -
               </button>
-              <span className="text-lg font-medium w-5 text-center">
-                J{index + 1}
-              </span>
+              <span className="text-lg font-medium w-5 text-center">J{index + 1}</span>
               <button
                 className="bg-red-500 text-xl text-white rounded-lg px-3 py-1 w-10 h-10 select-none hover:bg-red-600"
-                onClick={() => handleJointIncrement(index+1)}
+                onClick={() => handleJointIncrement(index + 1)}
               >
                 +
               </button>
@@ -90,28 +88,22 @@ const JointControl = () => {
               <input
                 type="number"
                 min="0"
-                max="360"
+                max={STEPPER_LIMITS[index + 1]}
                 value={jointValues[index]} // Controlled input
                 onChange={(e) => handleInputChange(index, e.target.value)}
                 className="w-full p-2 border border-gray-300 rounded-md text-center hover:border-blue-400 hover:bg-blue-50"
-                placeholder="0-360"
+                placeholder={"0-" + STEPPER_LIMITS[index + 1]}
               />
             </div>
           ))}
         </div>
 
         <div className="flex float-right space-x-4 mt-4">
-          <button
-            className="border-2 border-gray-500 font-semibold px-4 py-2 rounded-lg hover:bg-gray-200"
-            onClick={() => setJointValues(Array(6).fill(""))}
-          >
+          <button className="border-2 border-gray-500 font-semibold px-4 py-2 rounded-lg hover:bg-gray-200" onClick={() => setJointValues(Array(6).fill(''))}>
             Clear
           </button>
 
-          <button
-            className="bg-gray-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-gray-600"
-            onClick={driveToCustomAngle}
-          >
+          <button className="bg-gray-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-gray-600" onClick={driveToCustomAngle}>
             Run
           </button>
         </div>

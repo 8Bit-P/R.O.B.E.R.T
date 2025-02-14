@@ -63,11 +63,11 @@ pub fn get_reduction_ratio(joint_id: u8) -> Option<f32> {
 pub static MAX_ANGLES: Lazy<HashMap<u8, f32>> = Lazy::new(|| {
     let mut m = HashMap::new();
     m.insert(1, 270.0); 
-    m.insert(2, 150.0); // J2 max angle 150°
-    m.insert(3, 270.0); // J3 max angle 270°
-    m.insert(4, 160.0); // J4 max angle 160°
-    m.insert(5, 360.0); // J5 max angle 360°
-    m.insert(6, 120.0); // J6 max angle 120°
+    m.insert(2, 100.0); 
+    m.insert(3, 120.0); 
+    m.insert(4, 270.0); 
+    m.insert(5, 45.0); // J5 max angle 360°
+    m.insert(6, 360.0); // J6 max angle 120°
     m
 });
 
@@ -88,4 +88,17 @@ pub static DEGREES_PER_STEP: Lazy<HashMap<u8, f32>> = Lazy::new(|| {
 
 pub fn get_degrees_per_step(joint_id: u8) -> Option<f32> {
     DEGREES_PER_STEP.get(&joint_id).copied()
+}
+
+lazy_static::lazy_static! {
+    pub static ref STEPPER_POSITIVE_TO_LIMIT: HashMap<u8, bool> = {
+        let mut map = HashMap::new();
+        map.insert(1, false);
+        map.insert(2, false);
+        map.insert(3, true);
+        map.insert(4, true);
+        map.insert(5, false); // TODO: Set when joints developed
+        map.insert(6, false); // TODO: Set when joints developed
+        map
+    };
 }
