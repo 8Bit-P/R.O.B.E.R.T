@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext, ReactNode } from "react";
-import { checkSteppersState, getSteppersAngles, toggleStepperState } from "../api/commands";
+import { checkSteppersState, getAcceleration, getSteppersAngles, getVelocity, toggleStepperState } from "../api/commands";
 import toast from "react-hot-toast";
 
 interface StepperState {
@@ -44,6 +44,10 @@ export const StepperProvider: React.FC<StepperProviderProps> = ({ children }) =>
     Object.fromEntries([...Array(6)].map((_, i) => [i, false]))
   );
 
+  const [acceleration, setAcceleration] = useState(50);
+  const [velocity, setVelocity] = useState(50);
+
+
   const updateAngles = (jointId: number, newAngle: number | null) => {
     setAngles((prev) => ({ ...prev, [jointId]: newAngle }));
   };
@@ -76,9 +80,29 @@ export const StepperProvider: React.FC<StepperProviderProps> = ({ children }) =>
     }
   };
 
+  const fetchVelocity = async () => {
+    try {
+      const vel: number = await getVelocity();
+      setVelocity(vel);
+    } catch (error) {
+      toast.error("Error fetching velocity");
+    }
+  };
+
+  const fetchAcceleration = async () => {
+    try {
+      const acc: number = await getAcceleration();
+      setAcceleration(acc);
+    } catch (error) {
+      toast.error("Error fetching acceleration");
+    }
+  };
+
   const initializeSteppersInfo = async () => {
     await fetchSteppersState();
     await fetchSteppersAngles();
+    await fetchVelocity();
+    await fetchAcceleration();
   };
 
   const toggleStepper = async (jointId: number) => {

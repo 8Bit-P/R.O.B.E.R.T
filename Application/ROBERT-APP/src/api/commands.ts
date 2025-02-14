@@ -60,6 +60,16 @@ export const getSteppersAngles = async (): Promise<number[]> => {
   return invoke<number[]>("get_steppers_angles");
 };
 
+export const getAcceleration = async (): Promise<number> => {
+  
+  return invoke<number>("get_acceleration");
+};
+
+export const getVelocity = async (): Promise<number> => {
+  
+  return invoke<number>("get_velocity");
+};
+
 export const calibrateStepper = async (jointsIndexes: number[] | null | undefined): Promise<string[]> => {
 
   if (jointsIndexes == null) {
