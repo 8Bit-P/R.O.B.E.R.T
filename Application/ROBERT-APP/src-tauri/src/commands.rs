@@ -200,12 +200,12 @@ pub async fn get_parameters<'a>(
                 
                 for part in parts {
                     if part.starts_with("VEL_") {
-                        vel = part[4..].parse().unwrap_or(0)/constants::PARAMETERS_MULTIPLIER;
+                        vel = (part[4..].parse::<f32>().unwrap_or(0.0) / constants::PARAMETERS_MULTIPLIER as f32) as u8;
                     } else if part.starts_with("ACC_") {
-                        acc = part[4..].parse().unwrap_or(0)/constants::PARAMETERS_MULTIPLIER;
+                        acc = (part[4..].parse::<f32>().unwrap_or(0.0) / constants::PARAMETERS_MULTIPLIER as f32) as u8;
                     }
                 }
-                
+
                 Ok([vel, acc])
             } else {
                 Err("Invalid response format".to_string())
