@@ -1,124 +1,109 @@
 import { useEffect, useState } from 'react';
 import { useConnection } from '../../context/ConnectionContext';
-import { ConnectionStates } from '../../constants/connectionConstants';
-import { setAcceleration as setAPIacceleration, setVelocity as setAPIVelocity } from "../../api/commands";
+import { useStepperContext } from '../../context/StepperContext';
 
 const Parameters = () => {
-  const [acceleration, setAcceleration] = useState(50);
-  const [velocity, setVelocity] = useState(50);
+  const { acceleration, velocity, setVelocity, setAcceleration } = useStepperContext();
+  const { isConnected } = useConnection();
 
+  // **Local state for sliders (prevents direct API calls)**
+  const [sliderVelocity, setSliderVelocity] = useState(velocity);
+  const [sliderAcceleration, setSliderAcceleration] = useState(acceleration);
 
-  const { isConnected, connectionState } = useConnection();
+  // Track if sliders have been modified
+  const [isModified, setIsModified] = useState(false);
 
-  // State to track the timeout for debouncing
+  // Track when the animation is complete (to trigger the API call)
+  const [isAnimating, setIsAnimating] = useState(false);
+
+  // Debounce timeout variables
+  const [velocityTimeout, setVelocityTimeout] = useState<number | null>(null);
   const [accelerationTimeout, setAccelerationTimeout] = useState<number | null>(null);
-  const [velocityTimeout, setVelocityTimeout] = useState<number| null>(null);
 
-  // Initial animation
+  // Function to handle debounced API calls
+  const debouncedApiCall = (value: number, type: 'velocity' | 'acceleration') => {
+    const timeout = setTimeout(() => {
+      if (type === 'velocity') {
+        setVelocity(value); // Trigger velocity API call
+      } else {
+        setAcceleration(value); // Trigger acceleration API call
+      }
+    }, 500); // Wait 500ms after the user stops changing the slider value
+
+    if (type === 'velocity') {
+      setVelocityTimeout(timeout);
+    } else {
+      setAccelerationTimeout(timeout);
+    }
+  };
+
+  // Animation function to gradually change the value
+  const animateSlider = (targetValue: number, setter: React.Dispatch<React.SetStateAction<number>>, currentValue: number, onComplete: () => void) => {
+    const step = targetValue > currentValue ? 1 : -1; // Determine direction of change
+    const interval = setInterval(() => {
+      if ((step > 0 && currentValue >= targetValue) || (step < 0 && currentValue <= targetValue)) {
+        clearInterval(interval); // Stop the interval once we reach the target value
+        onComplete(); // Notify that the animation is complete
+      } else {
+        currentValue += step;
+        setter(currentValue); // Update the slider value
+      }
+    }, 10); // Update every 10ms for smooth animation
+  };
+
+  //Trigger animations on connect
   useEffect(() => {
-    if (isConnected && connectionState === ConnectionStates.ACCEPTED_CONNECTION) {
-
-      let tempVelocity = 50;
-      let tempAcceleration = 50;
-
-      const upInterval = setInterval(() => {
-        tempVelocity += 1;
-        tempAcceleration += 1;
-
-        setVelocity(tempVelocity);
-        setAcceleration(tempAcceleration);
-
-        if (tempVelocity >= 100 && tempAcceleration >= 100) {
-          clearInterval(upInterval);
-
-          const downInterval = setInterval(() => {
-            tempVelocity -= 1;
-            tempAcceleration -= 1;
-
-            setVelocity(tempVelocity);
-            setAcceleration(tempAcceleration);
-
-            if (tempVelocity <= 50 && tempAcceleration <= 50) {
-              clearInterval(downInterval);
-
-              const toZeroInterval = setInterval(() => {
-                tempVelocity -= 1;
-                tempAcceleration -= 1;
-
-                setVelocity(tempVelocity);
-                setAcceleration(tempAcceleration);
-
-                if (tempVelocity <= 0 && tempAcceleration <= 0) {
-                  clearInterval(toZeroInterval);
-
-                  const toFiftyInterval = setInterval(() => {
-                    tempVelocity += 1;
-                    tempAcceleration += 1;
-
-                    setVelocity(tempVelocity);
-                    setAcceleration(tempAcceleration);
-
-                    if (tempVelocity >= 50 && tempAcceleration >= 50) {
-                      clearInterval(toFiftyInterval);
-                    }
-                  }, 5);
-                }
-              }, 5);
-            }
-          }, 5);
-        }
-      }, 5);
+    // Animate the sliders to the retrieved values (velocity and acceleration)
+    if (isConnected) {
+      setIsAnimating(true); // Start the animation
+      animateSlider(velocity, setSliderVelocity, sliderVelocity, () => {
+        setIsAnimating(false); // Set animation complete when finished
+      });
+      animateSlider(acceleration, setSliderAcceleration, sliderAcceleration, () => {
+        setIsAnimating(false); // Set animation complete when finished
+      });
     }
-  }, [isConnected, connectionState]);
+  }, [velocity, acceleration, isConnected]); // Runs when the velocity or acceleration values are updated
 
-  // Debounced change handler for velocity
-  const handleVelocityChange = (newVelocity: number) => {
-    if (velocityTimeout) {
-      clearTimeout(velocityTimeout); // Clear previous timeout if any
-    }
+  // Sync local state with context
+  useEffect(() => {
+    setSliderVelocity(velocity); 
+    setSliderAcceleration(acceleration);
+  }, [velocity, acceleration]);
 
-    setVelocity(newVelocity); // Set new velocity state
-
-    // Set a timeout to send the command after a delay (300ms here)
-    const timeout = setTimeout(() => {
-      if (isConnected) {
-        setAPIVelocity(newVelocity); // Send velocity command
+  // **Velocity effect with debouncing**
+  useEffect(() => {
+    if (isConnected && isModified && !isAnimating) {
+      if (velocityTimeout) {
+        clearTimeout(velocityTimeout); // Clear previous timeout
       }
-    }, 300); // Adjust delay as needed
-    setVelocityTimeout(timeout); // Store the timeout ID to clear it if needed
-  };
-
-  // Debounced change handler for acceleration
-  const handleAccelerationChange = (newAcceleration: number) => {
-    if (accelerationTimeout) {
-      clearTimeout(accelerationTimeout); // Clear previous timeout if any
+      debouncedApiCall(sliderVelocity, 'velocity');
     }
+  }, [sliderVelocity, isConnected, isModified, isAnimating]);
 
-    setAcceleration(newAcceleration); // Set new acceleration state
-
-    // Set a timeout to send the command after a delay (300ms here)
-    const timeout = setTimeout(() => {
-      if (isConnected) {
-        setAPIacceleration(newAcceleration); // Send acceleration command
+  // **Acceleration effect with debouncing**
+  useEffect(() => {
+    if (isConnected && isModified && !isAnimating) {
+      if (accelerationTimeout) {
+        clearTimeout(accelerationTimeout); // Clear previous timeout
       }
-    }, 300); // Adjust delay as needed
-    setAccelerationTimeout(timeout); // Store the timeout ID to clear it if needed
+      debouncedApiCall(sliderAcceleration, 'acceleration');
+    }
+  }, [sliderAcceleration, isConnected, isModified, isAnimating]);
+
+  // Handlers for UI updates
+  const handleVelocityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSliderVelocity(Number(e.target.value));
+    setIsModified(true); // Mark as modified when slider is changed
   };
 
-  // Velocity slider change handler
-  const handleVelocitySliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newVelocity = Number(e.target.value);
-    handleVelocityChange(newVelocity);
-  };
-
-  // Acceleration slider change handler
-  const handleAccelerationSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newAcceleration = Number(e.target.value);
-    handleAccelerationChange(newAcceleration);
+  const handleAccelerationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSliderAcceleration(Number(e.target.value));
+    setIsModified(true); // Mark as modified when slider is changed
   };
 
   return (
-    <div style={{ fontFamily: 'nothing' }} className="space-y-4 p-4 pl-2">
+    <div className="space-y-4 p-4 pl-2">
       <div className="flex flex-col space-y-4">
         {/* Acceleration Slider */}
         <div className="flex items-center">
@@ -127,16 +112,15 @@ const Parameters = () => {
             type="range"
             min="0"
             max="100"
-            value={acceleration}
-            onChange={handleAccelerationSliderChange} // Call the debounced change handler
+            value={sliderAcceleration}
+            onChange={handleAccelerationChange}
             className="w-[150px] h-1 ml-2 appearance-none bg-gray-300 bg-dotted-slider rounded-md"
             style={{
-              backgroundImage:
-                'repeating-linear-gradient(90deg, #E5E7EB, #E5E7EB 2px, transparent 2px, transparent 5px)',
+              backgroundImage: 'repeating-linear-gradient(90deg, #E5E7EB, #E5E7EB 2px, transparent 2px, transparent 5px)',
               outline: 'none',
             }}
           />
-          <span className="ml-2 w-8 text-center">{acceleration}</span>
+          <span className="ml-2 w-8 text-center">{sliderAcceleration}</span>
         </div>
 
         {/* Velocity Slider */}
@@ -146,16 +130,15 @@ const Parameters = () => {
             type="range"
             min="0"
             max="100"
-            value={velocity}
-            onChange={handleVelocitySliderChange} // Call the debounced change handler
+            value={sliderVelocity}
+            onChange={handleVelocityChange}
             className="w-[150px] h-1 ml-11 appearance-none bg-gray-300 bg-dotted-slider rounded-md"
             style={{
-              backgroundImage:
-                'repeating-linear-gradient(90deg, #E5E7EB, #E5E7EB 2px, transparent 2px, transparent 5px)',
+              backgroundImage: 'repeating-linear-gradient(90deg, #E5E7EB, #E5E7EB 2px, transparent 2px, transparent 5px)',
               outline: 'none',
             }}
           />
-          <span className="ml-2 w-8 text-center">{velocity}</span>
+          <span className="ml-2 w-8 text-center">{sliderVelocity}</span>
         </div>
       </div>
     </div>

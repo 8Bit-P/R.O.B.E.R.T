@@ -15,7 +15,7 @@ export const disconnectFromActiveConnectionAPI = async (): Promise<string[]> => 
   return invoke<string[]>("disconnect_from_active_connection");
 };
 
-export const setAcceleration = async (acceleration: number | null | undefined): Promise<string[]> => {
+export const setAPIAcceleration = async (acceleration: number | null | undefined): Promise<string[]> => {
 
   if (acceleration == null) {
     throw new Error("acceleration must be provided and cannot be null or undefined");
@@ -23,7 +23,7 @@ export const setAcceleration = async (acceleration: number | null | undefined): 
   return invoke<string[]>("set_acceleration", {acceleration });
 };
 
-export const setVelocity = async (velocity: number | null | undefined): Promise<string[]> => {
+export const setAPIVelocity = async (velocity: number | null | undefined): Promise<string[]> => {
 
   if (velocity == null) {
     throw new Error("velocity must be provided and cannot be null or undefined");

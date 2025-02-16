@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext, ReactNode } from 'react';
-import { checkSteppersState, getParameters, getSteppersAngles, toggleStepperState } from '../api/commands';
+import { checkSteppersState, getParameters, getSteppersAngles, toggleStepperState, setAPIAcceleration, setAPIVelocity } from '../api/commands';
 import toast from 'react-hot-toast';
 
 interface StepperState {
@@ -92,6 +92,24 @@ export const StepperProvider: React.FC<StepperProviderProps> = ({ children }) =>
     await fetchParameters();
   };
 
+  const updateVelocity = async (vel: number) => {
+    try {
+      setAPIVelocity(vel);
+      setVelocity(vel);
+    } catch (error) {
+      toast.error('Error updating velocity');
+    }
+  }
+
+  const updateAcceleration = async (acc: number) => {
+    try {
+      setAPIAcceleration(acc);
+      setAcceleration(acc);
+    } catch (error) {
+      toast.error('Error updating acceleration');
+    }
+  }
+
   const toggleStepper = async (jointId: number) => {
     try {
       const newState = !states[jointId]; // Toggle current state
@@ -120,8 +138,8 @@ export const StepperProvider: React.FC<StepperProviderProps> = ({ children }) =>
         setAngles: updateAngles,
         setCalibrated: updateCalibrated,
         setStates: updateStates,
-        setVelocity,
-        setAcceleration,
+        setVelocity: updateVelocity,
+        setAcceleration: updateAcceleration,
         fetchSteppersState,
         fetchSteppersAngles,
         resetStepperState,
