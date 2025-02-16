@@ -79,7 +79,7 @@ export const ConnectionProvider: React.FC<ConnectionProviderProps> = ({
 
   // Function to handle connecting to a port
   const connectToPort = async (newPort: string) => {
-    if (newPort === "default") return;
+    if (newPort === "default" || newPort === "Select a port") return;
 
     setPort(newPort);
     setConnectionState(ConnectionStates.PROBING);
