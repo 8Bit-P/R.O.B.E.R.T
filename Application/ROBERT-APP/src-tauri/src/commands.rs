@@ -43,7 +43,8 @@ pub async fn set_acceleration<'a>(
     state: State<'a, SharedAppState>,
 ) -> Result<String, String> {
     // Convert to i16 to prevent overflow
-    let scaled_acceleration = (acceleration as i16) * 10;
+    let scaled_acceleration = (acceleration as i16) * constants::PARAMETERS_MULTIPLIER as i16
+    ;
 
     let set_acc_command = format!("{}{}", constants::CommandCodes::SETACC, scaled_acceleration);
 
@@ -62,7 +63,7 @@ pub async fn set_velocity<'a>(
     state: State<'a, SharedAppState>,
 ) -> Result<String, String> {
     // Convert to i16 to prevent overflow
-    let scaled_velocity = (velocity as i16) * 10;
+    let scaled_velocity = (velocity as i16) * constants::PARAMETERS_MULTIPLIER as i16;
 
     let set_vel_command = format!("{}{}", constants::CommandCodes::SETVEL, scaled_velocity);
 
@@ -183,6 +184,38 @@ pub async fn drive_steppers_to_angles<'a>(
 
     utils::drive_steppers_to_angles(adjusted_angles, state.inner().clone()).await
 }
+
+#[tauri::command]
+pub async fn get_parameters<'a>(
+    state: State<'a, SharedAppState>,
+) -> Result<[u8; 2], String> {
+    // Send the command using the shared connection
+    match send_and_receive_from_shared_state(constants::CommandCodes::PARAMS, state.inner().clone()).await {
+        Ok(response) => {
+            // Expected response format: "[PARAMS];VEL_20;ACC_40;"
+            if response.starts_with(constants::ResponseCodes::PARAMS_RESPONSE) {
+                let parts: Vec<&str> = response.split(';').collect();
+                let mut vel: u8 = 0;
+                let mut acc: u8 = 0;
+                
+                for part in parts {
+                    if part.starts_with("VEL_") {
+                        vel = part[4..].parse().unwrap_or(0)/constants::PARAMETERS_MULTIPLIER;
+                    } else if part.starts_with("ACC_") {
+                        acc = part[4..].parse().unwrap_or(0)/constants::PARAMETERS_MULTIPLIER;
+                    }
+                }
+                
+                Ok([vel, acc])
+            } else {
+                Err("Invalid response format".to_string())
+            }
+        }
+        Err(e) => Err(format!("Error: {}", e)),
+    }
+}
+
+
 
 
 #[tauri::command]

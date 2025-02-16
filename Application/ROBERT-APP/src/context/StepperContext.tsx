@@ -1,14 +1,18 @@
-import React, { createContext, useState, useContext, ReactNode } from "react";
-import { checkSteppersState, getAcceleration, getSteppersAngles, getVelocity, toggleStepperState } from "../api/commands";
-import toast from "react-hot-toast";
+import React, { createContext, useState, useContext, ReactNode } from 'react';
+import { checkSteppersState, getParameters, getSteppersAngles, toggleStepperState } from '../api/commands';
+import toast from 'react-hot-toast';
 
 interface StepperState {
   states: Record<number, boolean>; // Maps joint ID to state
   angles: Record<number, number | null>; // Maps joint ID to angles
   calibrated: Record<number, boolean>; // Tracks if stepper is calibrated
+  velocity: number;
+  acceleration: number;
   setCalibrated: (jointId: number, calibrated: boolean) => void;
   setAngles: (jointId: number, angle: number | null) => void;
   setStates: (jointId: number, state: boolean) => void;
+  setVelocity: (velocity: number) => void;
+  setAcceleration: (acceleration: number) => void;
   fetchSteppersState: () => Promise<void>;
   fetchSteppersAngles: () => Promise<void>;
   resetStepperState: () => void;
@@ -21,7 +25,7 @@ const StepperContext = createContext<StepperState | undefined>(undefined);
 export const useStepperContext = (): StepperState => {
   const context = useContext(StepperContext);
   if (!context) {
-    throw new Error("useStepperContext must be used within a StepperProvider");
+    throw new Error('useStepperContext must be used within a StepperProvider');
   }
   return context;
 };
@@ -31,22 +35,14 @@ interface StepperProviderProps {
 }
 
 export const StepperProvider: React.FC<StepperProviderProps> = ({ children }) => {
+  const [angles, setAngles] = useState<Record<number, number | null>>(Object.fromEntries([...Array(6)].map((_, i) => [i, null])));
 
-  const [angles, setAngles] = useState<Record<number, number | null>>(
-    Object.fromEntries([...Array(6)].map((_, i) => [i, null]))
-  );
+  const [calibrated, setCalibrated] = useState<Record<number, boolean>>(Object.fromEntries([...Array(6)].map((_, i) => [i, false])));
 
-  const [calibrated, setCalibrated] = useState<Record<number, boolean>>(
-    Object.fromEntries([...Array(6)].map((_, i) => [i, false]))
-  );
-
-  const [states, setStates] = useState<Record<number, boolean>>(
-    Object.fromEntries([...Array(6)].map((_, i) => [i, false]))
-  );
+  const [states, setStates] = useState<Record<number, boolean>>(Object.fromEntries([...Array(6)].map((_, i) => [i, false])));
 
   const [acceleration, setAcceleration] = useState(50);
   const [velocity, setVelocity] = useState(50);
-
 
   const updateAngles = (jointId: number, newAngle: number | null) => {
     setAngles((prev) => ({ ...prev, [jointId]: newAngle }));
@@ -66,7 +62,7 @@ export const StepperProvider: React.FC<StepperProviderProps> = ({ children }) =>
       const stateRecord = Object.fromEntries(data.map((state, index) => [index, state]));
       setStates(stateRecord);
     } catch (error) {
-      toast.error("Error fetching steppers state");
+      toast.error('Error fetching steppers state');
     }
   };
 
@@ -76,33 +72,24 @@ export const StepperProvider: React.FC<StepperProviderProps> = ({ children }) =>
       const anglesRecord = Object.fromEntries(data.map((angle, index) => [index, angle]));
       setAngles(anglesRecord);
     } catch (error) {
-      toast.error("Error fetching steppers angles");
+      toast.error('Error fetching steppers angles');
     }
   };
 
-  const fetchVelocity = async () => {
+  const fetchParameters = async () => {
     try {
-      const vel: number = await getVelocity();
-      setVelocity(vel);
+      const params: number[] = await getParameters();
+      setVelocity(params[0]);
+      setAcceleration(params[1]);
     } catch (error) {
-      toast.error("Error fetching velocity");
-    }
-  };
-
-  const fetchAcceleration = async () => {
-    try {
-      const acc: number = await getAcceleration();
-      setAcceleration(acc);
-    } catch (error) {
-      toast.error("Error fetching acceleration");
+      toast.error('Error fetching parameters');
     }
   };
 
   const initializeSteppersInfo = async () => {
     await fetchSteppersState();
     await fetchSteppersAngles();
-    await fetchVelocity();
-    await fetchAcceleration();
+    await fetchParameters();
   };
 
   const toggleStepper = async (jointId: number) => {
@@ -110,7 +97,7 @@ export const StepperProvider: React.FC<StepperProviderProps> = ({ children }) =>
       const newState = !states[jointId]; // Toggle current state
       setStates((prev) => ({ ...prev, [jointId]: newState })); // Optimistic UI update
 
-      await toggleStepperState(jointId + 1, newState ? "ENABLED" : "DISABLED");
+      await toggleStepperState(jointId + 1, newState ? 'ENABLED' : 'DISABLED');
     } catch (error) {
       toast.error(`Failed to toggle stepper ${jointId + 1}`);
     }
@@ -128,9 +115,13 @@ export const StepperProvider: React.FC<StepperProviderProps> = ({ children }) =>
         angles,
         calibrated,
         states,
+        velocity,
+        acceleration,
         setAngles: updateAngles,
         setCalibrated: updateCalibrated,
         setStates: updateStates,
+        setVelocity,
+        setAcceleration,
         fetchSteppersState,
         fetchSteppersAngles,
         resetStepperState,

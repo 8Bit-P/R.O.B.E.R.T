@@ -1,3 +1,4 @@
+// @ts-ignore
 export const invoke = window.__TAURI__.core.invoke;
 
 // Fetch available ports
@@ -19,7 +20,6 @@ export const setAcceleration = async (acceleration: number | null | undefined): 
   if (acceleration == null) {
     throw new Error("acceleration must be provided and cannot be null or undefined");
   }
-
   return invoke<string[]>("set_acceleration", {acceleration });
 };
 
@@ -60,14 +60,9 @@ export const getSteppersAngles = async (): Promise<number[]> => {
   return invoke<number[]>("get_steppers_angles");
 };
 
-export const getAcceleration = async (): Promise<number> => {
+export const getParameters = async (): Promise<number[]> => {
   
-  return invoke<number>("get_acceleration");
-};
-
-export const getVelocity = async (): Promise<number> => {
-  
-  return invoke<number>("get_velocity");
+  return invoke<number[]>("get_parameters");
 };
 
 export const calibrateStepper = async (jointsIndexes: number[] | null | undefined): Promise<string[]> => {
