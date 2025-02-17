@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useConnection } from "../../context/ConnectionContext";
-import { DEFAULT_PORT_LABEL } from "../../constants/connectionConstants";
+import { ConnectionStates, DEFAULT_PORT_LABEL } from "../../constants/connectionConstants";
 import ToggleInput from "../ToggleInput";
 
 const Connection = () => {
@@ -50,7 +50,7 @@ const Connection = () => {
 
       <div className="inline-flex items-center">
         <ToggleInput
-          isActive={true}
+          isActive={connectionState !== ConnectionStates.PROBING}
           isChecked={isConnected}
           handleToggleInput={() => (isConnected ? disconnectPort() : connectToPort(port!))}
         />

@@ -139,6 +139,7 @@ void processToggleCommand(String actionString) {
 
     toggleStepper(stepperNumber, state);
 
+    //TODO: take a look at this, maybe should be printed after the while
     Serial.print("Stepper: J");
     Serial.print(stepperNumber);
     Serial.print(" ");

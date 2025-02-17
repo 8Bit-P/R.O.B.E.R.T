@@ -120,7 +120,7 @@ const Parameters = () => {
               outline: 'none',
             }}
           />
-          <span className="ml-2 w-8 text-center">{sliderAcceleration}</span>
+          <span className="ml-2 w-8 text-center">{sliderAcceleration}%</span>
         </div>
 
         {/* Velocity Slider */}
@@ -138,7 +138,7 @@ const Parameters = () => {
               outline: 'none',
             }}
           />
-          <span className="ml-2 w-8 text-center">{sliderVelocity}</span>
+          <span className="ml-2 w-8 text-center">{sliderVelocity}%</span>
         </div>
       </div>
     </div>
