@@ -80,32 +80,40 @@ CommandCode getCommandCode(const String& command) {
 }
 
 void processMoveCommand(String actionString) {
-
   String actionLeft = actionString;
-
+  
   if (actionString.indexOf(";") == -1) {
     Serial.println(CommandFormatError);
+    return;
   }
 
-  //Move Command actions should have the format -> MOVE>JOINT_NSTEPS;
+  const int MAX_STEPPERS = 6;  
+  int steps[MAX_STEPPERS] = {0}; // Array to store step values for each stepper
+
+  // Move Command actions should have the format -> MOVE>J1_-200;J2_300;
   while (actionLeft.indexOf(";") != -1) {
     int delimiterIndex = actionLeft.indexOf(";");
-
     String currentAction = actionLeft.substring(0, delimiterIndex);
 
-    //Get joint
     int jointDelimiter = currentAction.indexOf("_");
+    if (jointDelimiter == -1) continue;
+
     String joint = currentAction.substring(0, jointDelimiter);
     int stepperNumber = atoi(joint.substring(1).c_str());
-    //Get number of steps
-    int steps = atoi(currentAction.substring(jointDelimiter + 1).c_str());
 
-    moveStepper(stepperNumber, steps);
-    //Update String
+    int stepCount = atoi(currentAction.substring(jointDelimiter + 1).c_str());
+
+    if (stepperNumber >= 1 && stepperNumber <= MAX_STEPPERS) {
+      steps[stepperNumber - 1] = stepCount;  // Store step count for each stepper
+    }
+
+    // Update String
     actionLeft = actionLeft.substring(delimiterIndex + 1);
   }
-}
 
+  // Move all steppers simultaneously
+  moveSteppers(steps);
+}
 void processToggleCommand(String actionString) {
   //Toggle command actions should have the format -> TOGGLE>JOINT_STATE;
   String actionLeft = actionString;

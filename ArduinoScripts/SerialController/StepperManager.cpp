@@ -35,7 +35,6 @@ void initializeSteppers() {
 
   //Stepper controlled by TB6600 has inverse behaviour on enable pin
   digitalWrite(enablePins[0], HIGH);
-
 }
 
 AccelStepper* getStepperByIndex(int stepperIndex) {
@@ -125,6 +124,54 @@ void moveStepper(int stepperNum, int steps) {
   }
 }
 
+void moveSteppers(int steps[]) {
+  const int MAX_STEPPERS = 6;  // Number of steppers
+  AccelStepper* steppers[MAX_STEPPERS];
+
+  // Assign each stepper pointer
+  for (int i = 0; i < MAX_STEPPERS; i++) {
+    steppers[i] = getStepperByIndex(i + 1);
+    if (steppers[i] != nullptr && steps[i] != 0) {
+      steppers[i]->move(steps[i]);  // Set movement target
+    }
+  }
+
+  String moveSteppersResponse = String(InfoResponse) + "MOVING_STEPS:";
+
+  for (int s = 0; s < MAX_STEPPERS; s++) {
+    if (steps[s] != 0) {
+      moveSteppersResponse += "J" + String(s + 1) + "_" + String(steps[s]) + " ";
+    }
+  }
+
+  Serial.println(moveSteppersResponse);
+
+  bool anyStepperMoving;
+  do {
+    anyStepperMoving = false;
+    for (int i = 0; i < MAX_STEPPERS; i++) {
+      if (steppers[i] != nullptr && steppers[i]->distanceToGo() != 0) {
+        int limitPin = getLimitSwitchPin(i + 1);
+        int positiveToLimitSwitch = moveStepperPositiveSteps(i + 1);
+
+        // Check for limit switch
+        if (limitPin != -1 && ((positiveToLimitSwitch == 1 && steps[i] > 0) || (positiveToLimitSwitch == 0 && steps[i] < 0))) {
+
+          if (digitalRead(limitPin) == LOW) {
+            steppers[i]->stop();
+            steppers[i]->setCurrentPosition(0);
+            isCalibrated[i] = true;
+            continue;
+          }
+        }
+
+        steppers[i]->run();
+        anyStepperMoving = true;
+      }
+    }
+  } while (anyStepperMoving);  // Continue running until all steppers finish
+}
+
 bool calibrateStepper(int stepperNum) {
   int limitPin = getLimitSwitchPin(stepperNum);
   if (limitPin == -1) {
@@ -135,7 +182,7 @@ bool calibrateStepper(int stepperNum) {
   AccelStepper* stepper = getStepperByIndex(stepperNum);
 
   // Move the stepper slowly towards the limit switch
-  stepper->setMaxSpeed(200);  
+  stepper->setMaxSpeed(200);
   stepper->setAcceleration(100);
 
   int positiveToLimitSwitch = moveStepperPositiveSteps(stepperNum);
@@ -147,7 +194,7 @@ bool calibrateStepper(int stepperNum) {
   }
 
   unsigned long startTime = millis();  // Start time for timeout
-  const unsigned long timeout = CalibrationTimeout;  
+  const unsigned long timeout = CalibrationTimeout;
 
   while (digitalRead(limitPin) == HIGH) {
     stepper->run();
@@ -255,6 +302,3 @@ void getSteppersCalibration() {
   // Print the final response string
   Serial.println(steppersState);
 }
-
-
-

@@ -6,6 +6,7 @@
 void initializeSteppers();
 void toggleStepper(int stepperNum, bool enabled);
 void moveStepper(int stepperNum, int steps);
+void moveSteppers(int steps[]);
 void setVelocity(int velocity);
 void setAcceleration(int acceleration);
 bool calibrateStepper(int stepper);
