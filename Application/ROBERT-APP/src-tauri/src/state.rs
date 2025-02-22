@@ -21,10 +21,6 @@ impl AppState {
     pub fn set_connection(&mut self, connection: SharedSerialConnection) {
         self.serial_connection = Some(connection);
     }
-
-    pub fn clear_connection(&mut self) {
-        self.serial_connection = None;
-    }
 }
 
 // Shared state type for your application

@@ -1,5 +1,7 @@
 import React, { createContext, useState, useContext, ReactNode } from 'react';
 import { checkSteppersState, getParameters, getSteppersAngles, toggleStepperState, setAPIAcceleration, setAPIVelocity } from '../api/commands';
+import { listen } from '@tauri-apps/api/event';
+import { SteppersAngles } from '../interfaces/SteppersAngles';
 import toast from 'react-hot-toast';
 
 interface StepperState {
@@ -99,7 +101,7 @@ export const StepperProvider: React.FC<StepperProviderProps> = ({ children }) =>
     } catch (error) {
       toast.error('Error updating velocity');
     }
-  }
+  };
 
   const updateAcceleration = async (acc: number) => {
     try {
@@ -108,7 +110,7 @@ export const StepperProvider: React.FC<StepperProviderProps> = ({ children }) =>
     } catch (error) {
       toast.error('Error updating acceleration');
     }
-  }
+  };
 
   const toggleStepper = async (jointId: number) => {
     try {
@@ -126,6 +128,22 @@ export const StepperProvider: React.FC<StepperProviderProps> = ({ children }) =>
     setAngles(Object.fromEntries([...Array(6)].map((_, i) => [i, null])));
     setCalibrated(Object.fromEntries([...Array(6)].map((_, i) => [i, false])));
   };
+
+  // Listen for stepper angles update event
+  listen<SteppersAngles>('report-steppers-angles', (event) => {
+    const { j1, j2, j3, j4, j5, j6 } = event.payload;
+
+    setAngles({
+      0: j1,
+      1: j2,
+      2: j3,
+      3: j4,
+      4: j5,
+      5: j6,
+    });
+
+    console.log(`Updated angles -> J1: ${j1}, J2: ${j2}, J3: ${j3}, J4: ${j4}, J5: ${j5}, J6: ${j6}`);
+  });
 
   return (
     <StepperContext.Provider

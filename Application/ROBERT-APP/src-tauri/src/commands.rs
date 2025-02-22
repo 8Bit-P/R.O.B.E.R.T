@@ -4,6 +4,7 @@ use crate::utils::{self, send_and_receive_from_shared_state};
 use serialport::available_ports;
 use tauri::State;
 use tokio::time::Duration;
+use tauri::{AppHandle, Emitter};
 
 #[tauri::command]
 pub async fn connect_to_port<'a>(
@@ -117,6 +118,7 @@ pub async fn toggle_stepper<'a>(
     enabled: &str,
     state: State<'a, SharedAppState>,
 ) -> Result<String, String> {
+
     // Arduino command format: TOGGLE>JOINT_STATE;
     let toggle_command = format!(
         "{}J{}_{};",

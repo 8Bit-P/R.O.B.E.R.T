@@ -76,8 +76,6 @@ export const calibrateStepper = async (jointsIndexes: number[] | null | undefine
 
 export const driveStepperToAngle = async (jointsAngles: Map<number,number> | null | undefined): Promise<string[]> => {
 
-  console.log(jointsAngles);
-
   if (jointsAngles == null) {
     throw new Error("port and jointAngles must be provided and cannot be null or undefined");
   }
