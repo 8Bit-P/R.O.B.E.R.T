@@ -46,7 +46,7 @@ const JointControl = () => {
   const handleJointDecrement = (jointIndex: number) => {
     if (!isConnected) return;
 
-    moveStep(jointIndex, DEFAULT_INCREMENT_STEPS)
+    moveStep(jointIndex, -DEFAULT_INCREMENT_STEPS)
       .then((res) => console.log(res))
       .catch((err) => toast.error(err));
   };
