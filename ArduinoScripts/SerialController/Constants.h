@@ -34,7 +34,7 @@ constexpr char InfoResponse[] = "[INFO];";
 #define InvalidState "I002" //Invalid state for stepper
 #define InvalidLimitSwitchConversion "I003" //Invalid limit switch conversion
 
-constexpr int CalibrationTimeout = 5000; //In milliseconds
+constexpr int CalibrationTimeout = 10000; //In milliseconds
 
 // Define stepper motor connections and motor interface type. 
 #define J1stepPin 45 //TB6600 STEP

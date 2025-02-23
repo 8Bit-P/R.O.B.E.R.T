@@ -49,7 +49,7 @@ pub async fn set_acceleration<'a>(
 
     let set_acc_command = format!("{}{}", constants::CommandCodes::SETACC, scaled_acceleration);
 
-    match send_and_receive_from_shared_state(&set_acc_command, state.inner().clone()).await {
+    match send_and_receive_from_shared_state(&set_acc_command, state.inner().clone(), None).await {
         Ok(response) => Ok(format!(
             "Successfully sent set_acc command. Response: {}",
             response
@@ -68,7 +68,7 @@ pub async fn set_velocity<'a>(
 
     let set_vel_command = format!("{}{}", constants::CommandCodes::SETVEL, scaled_velocity);
 
-    match send_and_receive_from_shared_state(&set_vel_command, state.inner().clone()).await {
+    match send_and_receive_from_shared_state(&set_vel_command, state.inner().clone(), None).await {
         Ok(response) => Ok(format!(
             "Successfully sent set_vel command. Response: {}",
             response
@@ -101,7 +101,7 @@ pub async fn move_step<'a>(
         n_steps
     );
 
-    match send_and_receive_from_shared_state(&move_step_command, state.inner().clone()).await {
+    match send_and_receive_from_shared_state(&move_step_command, state.inner().clone(), None).await {
         Ok(response) => Ok(format!(
             "Successfully sent move_step command. Response: {}",
             response
@@ -128,7 +128,7 @@ pub async fn toggle_stepper<'a>(
     );
 
     // Send the command using the shared connection
-    match send_and_receive_from_shared_state(&toggle_command, state.inner().clone()).await {
+    match send_and_receive_from_shared_state(&toggle_command, state.inner().clone(), None).await {
         Ok(response) => Ok(format!(
             "Successfully sent toggle_step command. Response: {}",
             response
@@ -155,7 +155,7 @@ pub async fn calibrate_steppers<'a>(
     );
 
     // Send the command using the shared connection
-    match send_and_receive_from_shared_state(&calibrate_command, state.inner().clone()).await {
+    match send_and_receive_from_shared_state(&calibrate_command, state.inner().clone(), Some(Duration::from_secs(35))).await {
         Ok(response) => Ok(format!(
             "Successfully sent calibrate command. Response: {}",
             response
@@ -192,7 +192,7 @@ pub async fn get_parameters<'a>(
     state: State<'a, SharedAppState>,
 ) -> Result<[u8; 2], String> {
     // Send the command using the shared connection
-    match send_and_receive_from_shared_state(constants::CommandCodes::PARAMS, state.inner().clone()).await {
+    match send_and_receive_from_shared_state(constants::CommandCodes::PARAMS, state.inner().clone(), None).await {
         Ok(response) => {
             // Expected response format: "[PARAMS];VEL_20;ACC_40;"
             if response.starts_with(constants::ResponseCodes::PARAMS_RESPONSE) {

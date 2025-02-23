@@ -16,7 +16,7 @@ function App() {
   return (
     <StepperProvider>
       <ConnectionProvider>
-        <Toaster position="bottom-right" reverseOrder={false}/>
+        <Toaster position="top-right" reverseOrder={false}/>
         
         <main className="flex flex-col items-center justify-center ">
           <div className="w-[1060px]">
