@@ -55,9 +55,7 @@ export const ConnectionProvider: React.FC<ConnectionProviderProps> = ({
 }) => {
   const [port, setPort] = useState<string | null>(DEFAULT_PORT_LABEL);
   const [isConnected, setIsConnected] = useState<boolean>(false);
-  const [connectionState, setConnectionState] = useState(
-    ConnectionStates.NOT_PROBED
-  );
+  const [connectionState, setConnectionState] = useState(ConnectionStates.NOT_PROBED);
   const [availablePorts, setAvailablePorts] = useState<string[]>([]);
 
   const { initializeSteppersInfo, resetStepperState } = useStepperContext();

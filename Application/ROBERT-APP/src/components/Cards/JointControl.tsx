@@ -92,7 +92,7 @@ const JointControl = () => {
                 value={jointValues[index]} // Controlled input
                 onChange={(e) => handleInputChange(index, e.target.value)}
                 className="w-full p-2 border border-gray-300 rounded-md text-center hover:border-blue-400 hover:bg-blue-50"
-                placeholder={"0-" + STEPPER_LIMITS[index + 1]}
+                placeholder={'0-' + STEPPER_LIMITS[index + 1]}
               />
             </div>
           ))}
