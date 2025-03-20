@@ -111,10 +111,10 @@ pub const PARAMETERS_MULTIPLIER: u8 = 10;
 #[derive(Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SteppersAngles {
-  pub j1: f32,
-  pub j2: f32,
-  pub j3: f32,
-  pub j4: f32,
-  pub j5: f32,
-  pub j6: f32,
+    pub j1: Option<f32>,
+    pub j2: Option<f32>,
+    pub j3: Option<f32>,
+    pub j4: Option<f32>,
+    pub j5: Option<f32>,
+    pub j6: Option<f32>,
 }

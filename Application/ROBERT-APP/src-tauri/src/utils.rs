@@ -1,12 +1,13 @@
 use crate::constants;
 use crate::state::SharedAppState;
+use std::sync::Arc;
+use tauri::State;
+use tauri::{AppHandle, Emitter};
+use tokio::sync::Mutex;
 use tokio::{
     io::{AsyncReadExt, AsyncWriteExt},
     time::{timeout, Duration},
 };
-use std::sync::Arc;
-use tauri::State;
-use tokio::sync::Mutex;
 use tokio_serial::{DataBits, Parity, SerialPortBuilderExt, StopBits};
 
 pub async fn send_and_receive_from_shared_state(
@@ -120,7 +121,7 @@ pub async fn connect_to_port<'a>(
                 match send_and_receive_from_shared_state(
                     crate::constants::CommandCodes::CHECK,
                     state.inner().clone(),
-                    None
+                    None,
                 )
                 .await
                 {
@@ -154,12 +155,14 @@ pub async fn connect_to_port<'a>(
         tokio::time::sleep(Duration::from_millis(500)).await;
     }
 
-    Err(format!("Failed to connect to port: {} after {} attempts.", port, max_retries))
+    Err(format!(
+        "Failed to connect to port: {} after {} attempts.",
+        port, max_retries
+    ))
 }
 
 //Sends state command to arduino and returns an array of bools representing the state of the steppers
 pub async fn get_steppers_state(state: SharedAppState) -> Result<[bool; 6], String> {
-
     let data = constants::CommandCodes::STATE;
     let response = send_and_receive_from_shared_state(data, state, None).await?;
 
@@ -208,8 +211,8 @@ pub async fn get_steppers_steps(state: SharedAppState) -> Result<[Option<f32>; 6
     let mut stepper_steps = [None; 6];
 
     for part in parts.iter() {
-         // Strip any trailing newline or extra spaces from each part
-         let part = part.trim();
+        // Strip any trailing newline or extra spaces from each part
+        let part = part.trim();
 
         if let Some(index) = part
             .strip_prefix("J")
@@ -233,7 +236,10 @@ pub async fn get_steppers_steps(state: SharedAppState) -> Result<[Option<f32>; 6
     Ok(stepper_steps)
 }
 
-pub async fn get_steppers_angles(state: SharedAppState) -> Result<[Option<f32>; 6], String> {
+pub async fn get_steppers_angles(
+    app: &AppHandle,
+    state: SharedAppState,
+) -> Result<[Option<f32>; 6], String> {
     let steps = get_steppers_steps(state).await?;
     let mut angles = [None; 6];
 
@@ -248,18 +254,33 @@ pub async fn get_steppers_angles(state: SharedAppState) -> Result<[Option<f32>; 
         }
     }
 
+    // Convert `angles` array into `SteppersAngles` struct
+    let steppers_angles = constants::SteppersAngles {
+        j1: angles[0],
+        j2: angles[1],
+        j3: angles[2],
+        j4: angles[3],
+        j5: angles[4],
+        j6: angles[5],
+    };
+
+    // Emit calculated angles to the frontend
+    app.emit("report-steppers-angles", steppers_angles).unwrap();
+
     Ok(angles)
 }
 
 pub async fn drive_steppers_to_angles(
-    joints_angles: Vec<(i8, f32)>, // Desired angles to move each joint
+    app: &AppHandle, // Pass by reference
+    joints_angles: Vec<(i8, f32)>, 
     state: SharedAppState,
 ) -> Result<String, String> {
     // Get the current angles of the steppers
-    let current_angles = get_steppers_angles(state.clone()).await?;
+    let current_angles = get_steppers_angles(app, state.clone()).await?;
 
     let mut move_command = String::from(constants::CommandCodes::MOVE);
 
+    // Build move command for each stepper taking into account current and max angles
     for (joint_id, target_angle) in joints_angles {
         let joint_index = (joint_id - 1) as usize; // Convert joint ID to array index (1-based to 0-based)
 
@@ -273,12 +294,12 @@ pub async fn drive_steppers_to_angles(
             None => return Err(format!("Current angle for J{} is unknown", joint_id)),
         };
 
-        // Compute the difference between the target and current angles
-        let angle_difference = target_angle - current_angle;
-
-        //target_angle > max_angle then throw error saying that operation exceeds joint limits
-        if target_angle > constants::get_max_angle(joint_id as u8).unwrap(){
-            return Err(format!("Target angle exceeds joint limits for J{}", joint_id));
+        // Check if the target angle exceeds joint limits
+        if target_angle > constants::get_max_angle(joint_id as u8).unwrap() {
+            return Err(format!(
+                "Target angle exceeds joint limits for J{}",
+                joint_id
+            ));
         }
 
         // Convert angle difference to steps
@@ -286,21 +307,29 @@ pub async fn drive_steppers_to_angles(
             constants::get_reduction_ratio(joint_id as u8),
             constants::get_degrees_per_step(joint_id as u8),
         ) {
-            let steps = (angle_difference * (1.0 / degrees_per_step) * reduction_ratio).round() as i32;
+            let steps =
+                ((target_angle - current_angle) * (1.0 / degrees_per_step) * reduction_ratio).round() as i32;
             move_command.push_str(&format!("J{}_{};", joint_id, steps));
         } else {
             return Err(format!("Invalid Joint: {}", joint_id));
         }
     }
 
+    let response = send_and_receive_from_shared_state(&move_command, state.clone(),  Some(Duration::from_secs(20))).await;
+
     // Send the command using the shared connection
-    match send_and_receive_from_shared_state(&move_command, state, None).await {
-        Ok(response) => Ok(format!(
-            "Successfully sent move command. Response: {}",
-            response
-        )),
+    match response {
+        Ok(response) => {
+            // Call `get_steppers_angles` again to retrieve updated angles
+            if let Err(e) = get_steppers_angles(app, state).await {
+                return Err(format!("Error retrieving stepper angles: {}", e));
+            }
+
+            Ok(format!(
+                "Successfully sent move command. Response: {}",
+                response
+            ))
+        }
         Err(e) => Err(format!("Error: {}", e)),
     }
 }
-
-

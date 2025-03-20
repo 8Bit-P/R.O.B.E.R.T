@@ -22,7 +22,7 @@ const Joints = () => {
       <div className="flex flex-col space-y-2">
         <h2 className="text-lg mb-2">Degree</h2>
         {Object.entries(angles).map(([jointId, angle]) => (
-          <h3 key={jointId}>{angle !== null ? `${angle}°` : "N/A"}</h3>
+          <h3 key={jointId}>{angle !== null ? `${Math.abs(parseFloat(angle.toFixed(2)))}°` : "N/A"}</h3>
         ))}
       </div>
     </div>

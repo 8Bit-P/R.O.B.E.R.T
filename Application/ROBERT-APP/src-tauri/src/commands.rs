@@ -2,9 +2,8 @@ use crate::constants;
 use crate::state::SharedAppState;
 use crate::utils::{self, send_and_receive_from_shared_state};
 use serialport::available_ports;
-use tauri::State;
+use tauri::{AppHandle, State};
 use tokio::time::Duration;
-use tauri::{AppHandle, Emitter};
 
 #[tauri::command]
 pub async fn connect_to_port<'a>(
@@ -79,6 +78,7 @@ pub async fn set_velocity<'a>(
 
 #[tauri::command]
 pub async fn move_step<'a>(
+    app: AppHandle,
     joint_index: i8, 
     mut n_steps: i16, 
     state: State<'a, SharedAppState>,
@@ -101,14 +101,26 @@ pub async fn move_step<'a>(
         n_steps
     );
 
-    match send_and_receive_from_shared_state(&move_step_command, state.inner().clone(), None).await {
-        Ok(response) => Ok(format!(
-            "Successfully sent move_step command. Response: {}",
-            response
-        )),
+    // Send movement command
+    let response = send_and_receive_from_shared_state(&move_step_command, state.inner().clone(), None).await;
+
+    // If the command is successful, get updated stepper angles
+    match response {
+        Ok(resp) => {
+            // Call `get_steppers_angles` to retrieve updated angles
+            if let Err(e) = utils::get_steppers_angles(&app, state.inner().clone()).await {
+                return Err(format!("Error retrieving stepper angles: {}", e));
+            }
+
+            Ok(format!(
+                "Successfully sent move_step command. Response: {}",
+                resp
+            ))
+        }
         Err(e) => Err(format!("Error: {}", e)),
     }
 }
+
 
 
 
@@ -155,6 +167,7 @@ pub async fn calibrate_steppers<'a>(
     );
 
     // Send the command using the shared connection
+    //Use a high timeout duration for calibration
     match send_and_receive_from_shared_state(&calibrate_command, state.inner().clone(), Some(Duration::from_secs(35))).await {
         Ok(response) => Ok(format!(
             "Successfully sent calibrate command. Response: {}",
@@ -166,6 +179,7 @@ pub async fn calibrate_steppers<'a>(
 
 #[tauri::command]
 pub async fn drive_steppers_to_angles<'a>(
+    app: AppHandle,
     joints_angles: Vec<(i8, f32)>, 
     state: State<'a, SharedAppState>,
 ) -> Result<String, String> {
@@ -184,7 +198,7 @@ pub async fn drive_steppers_to_angles<'a>(
         })
         .collect();
 
-    utils::drive_steppers_to_angles(adjusted_angles, state.inner().clone()).await
+    utils::drive_steppers_to_angles(&app,adjusted_angles, state.inner().clone()).await
 }
 
 #[tauri::command]
@@ -217,9 +231,6 @@ pub async fn get_parameters<'a>(
     }
 }
 
-
-
-
 #[tauri::command]
 pub async fn check_steppers_state<'a>(
     state: State<'a, SharedAppState>,
@@ -229,9 +240,10 @@ pub async fn check_steppers_state<'a>(
 
 #[tauri::command]
 pub async fn get_steppers_angles<'a>(
+    app: AppHandle,
     state: State<'a, SharedAppState>,
 ) -> Result<[Option<f32>; 6], String> {
-    return utils::get_steppers_angles(state.inner().clone()).await;
+    return utils::get_steppers_angles(&app,state.inner().clone()).await;
 }
 
 #[tauri::command]
