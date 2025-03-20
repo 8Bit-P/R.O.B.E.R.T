@@ -13,7 +13,6 @@ import { SteppersAngles } from '../interfaces/SteppersAngles';
 import toast from 'react-hot-toast';
 import { CalibrationStates } from '../constants/steppersContants';
 
-//TODO: expose handleCalibrate and handleCalibrateAll to the context
 interface StepperState {
   states: Record<number, boolean>; // Maps joint ID to state
   angles: Record<number, number | null>; // Maps joint ID to angles
@@ -102,12 +101,13 @@ export const StepperProvider: React.FC<StepperProviderProps> = ({ children }) =>
     }
   };
 
+  // @index: is the number of the joint (from 1 to 6)
   const handleCalibrate = (index: number) => {
+    
     //Set state as calibrating
     updateCalibrationState(index, CalibrationStates.CALIBRATING);
-
     //Create array to call rust function
-    var calibrationIndexArray: number[] = [index];
+    var calibrationIndexArray: number[] = [index+1];
 
     calibrateStepper(calibrationIndexArray)
       .then((res) => {
@@ -134,14 +134,14 @@ export const StepperProvider: React.FC<StepperProviderProps> = ({ children }) =>
         //If no error response assume joints are calibrated
         console.log(res);
         for(let stepperIdx of calibrationIndexArray) {
-          updateCalibrationState(stepperIdx, CalibrationStates.CALIBRATED);
+          updateCalibrationState(stepperIdx-1, CalibrationStates.CALIBRATED);
         }
 
         fetchSteppersAngles();
       })
       .catch((err) => {
         toast.error(err);
-        setCalibrationStates(new Array(4).fill(CalibrationStates.NOT_CALIBRATED));
+        setCalibrationStates(new Array(6).fill(CalibrationStates.NOT_CALIBRATED));
       });
   };
 
