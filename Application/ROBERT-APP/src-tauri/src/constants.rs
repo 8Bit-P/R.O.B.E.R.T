@@ -1,4 +1,5 @@
 use once_cell::sync::Lazy;
+use serde::Serialize;
 use std::collections::HashMap;
 
 // Command Codes
@@ -13,6 +14,7 @@ impl CommandCodes {
     pub const CALIBRATE: &'static str = "CALIBRATE>";
     pub const STATE: &'static str = "STATE>";
     pub const STEPS: &'static str = "STEPS>";
+    pub const PARAMS: &'static str = "PARAMS>";
 }
 
 // Response Codes
@@ -23,6 +25,7 @@ impl ResponseCodes {
     pub const CALIBRATION_RESPONSE: &'static str = "[CALIBRATION];";
     pub const STATE_RESPONSE: &'static str = "[STATE];";
     pub const STEPS_RESPONSE: &'static str = "[STEPS];";
+    pub const PARAMS_RESPONSE: &'static str = "[PARAMS];";
 }
 
 // Error Codes (as a HashMap for easy lookup by code)
@@ -41,7 +44,7 @@ pub fn get_error_message(code: &str) -> Option<&'static str> {
     ERROR_CODES.get(code).copied()
 }
 
-//TODO: register actual reductions
+
 // Joint Reduction Ratios (as a HashMap where key = Joint ID, value = reduction ratio as a float)
 pub static JOINT_REDUCTIONS: Lazy<HashMap<u8, f32>> = Lazy::new(|| {
     let mut m = HashMap::new();
@@ -50,7 +53,7 @@ pub static JOINT_REDUCTIONS: Lazy<HashMap<u8, f32>> = Lazy::new(|| {
     m.insert(3, 100.0 / 16.0); 
     m.insert(4, 60.0 / 16.0); 
     m.insert(5, 32.0 / 16.0);
-    m.insert(6, 1.0 / 1.0); // Example for J6
+    m.insert(6, 1.0 / 1.0); //TODO: register actual reduction
     m
 });
 
@@ -58,16 +61,15 @@ pub fn get_reduction_ratio(joint_id: u8) -> Option<f32> {
     JOINT_REDUCTIONS.get(&joint_id).copied()
 }
 
-//TODO: register actual angles
 // Maximum angle data: A separate HashMap for storing max angle per joint
 pub static MAX_ANGLES: Lazy<HashMap<u8, f32>> = Lazy::new(|| {
     let mut m = HashMap::new();
     m.insert(1, 270.0); 
-    m.insert(2, 150.0); // J2 max angle 150°
-    m.insert(3, 270.0); // J3 max angle 270°
-    m.insert(4, 160.0); // J4 max angle 160°
-    m.insert(5, 360.0); // J5 max angle 360°
-    m.insert(6, 120.0); // J6 max angle 120°
+    m.insert(2, 100.0); 
+    m.insert(3, 120.0); 
+    m.insert(4, 270.0); 
+    m.insert(5, 45.0);
+    m.insert(6, 360.0); // J6 max angle 120°
     m
 });
 
@@ -88,4 +90,31 @@ pub static DEGREES_PER_STEP: Lazy<HashMap<u8, f32>> = Lazy::new(|| {
 
 pub fn get_degrees_per_step(joint_id: u8) -> Option<f32> {
     DEGREES_PER_STEP.get(&joint_id).copied()
+}
+
+lazy_static::lazy_static! {
+    pub static ref STEPPER_POSITIVE_TO_LIMIT: HashMap<u8, bool> = {
+        let mut map = HashMap::new();
+        map.insert(1, false);
+        map.insert(2, false);
+        map.insert(3, true);
+        map.insert(4, true);
+        map.insert(5, false); // TODO: Set when joints build
+        map.insert(6, false); // TODO: Set when joints build
+        map
+    };
+}
+
+pub const PARAMETERS_MULTIPLIER: u8 = 10;
+
+
+#[derive(Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SteppersAngles {
+    pub j1: Option<f32>,
+    pub j2: Option<f32>,
+    pub j3: Option<f32>,
+    pub j4: Option<f32>,
+    pub j5: Option<f32>,
+    pub j6: Option<f32>,
 }

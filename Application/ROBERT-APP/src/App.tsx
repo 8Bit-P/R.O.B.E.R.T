@@ -6,7 +6,7 @@ import JointControl from "./components/Cards/JointControl";
 import Joints from "./components/Cards/Joints";
 import Parameters from "./components/Cards/Parameters";
 import RecordPositions from "./components/Cards/RecordPositions";
-import SteppersState from "./components/Cards/SteppersState";
+import EnableSteppers from "./components/Cards/EnableSteppers";
 
 import { ConnectionProvider } from "./context/ConnectionContext";
 import { Toaster } from "react-hot-toast";
@@ -14,9 +14,9 @@ import { StepperProvider } from "./context/StepperContext";
 
 function App() {
   return (
-    <ConnectionProvider>
-      <StepperProvider>
-        <Toaster position="bottom-right" reverseOrder={false}/>
+    <StepperProvider>
+      <ConnectionProvider>
+        <Toaster position="top-right" reverseOrder={false}/>
         
         <main className="flex flex-col items-center justify-center ">
           <div className="w-[1060px]">
@@ -42,7 +42,7 @@ function App() {
               />
             </div>
             <div className="col-span-4 row-span-4">
-              <Card width={200} height={200} title={"Enable Steppers"} children={<SteppersState />}
+              <Card width={200} height={200} title={"Enable Steppers"} children={<EnableSteppers />}
               />
             </div>
             <div className="col-span-10 row-span-9 mt-2">
@@ -59,8 +59,8 @@ function App() {
             </div>
           </div>
         </main>
-      </StepperProvider>
-    </ConnectionProvider>
+      </ConnectionProvider>
+    </StepperProvider>
   );
 }
 

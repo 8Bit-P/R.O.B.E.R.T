@@ -25,7 +25,8 @@ pub fn run() {
             commands::calibrate_steppers, 
             commands::drive_steppers_to_angles,
             commands::check_steppers_state,
-            commands::get_steppers_angles
+            commands::get_steppers_angles,
+            commands::get_parameters,
             ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

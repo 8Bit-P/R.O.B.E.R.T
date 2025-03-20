@@ -1,17 +1,33 @@
-import React, { createContext, useState, useContext, ReactNode } from "react";
-import { ConnectionStates } from "../constants/connectionConstants";
-import { disconnectFromActiveConnectionAPI } from "../api/commands";
+import React, {
+  createContext,
+  useState,
+  useContext,
+  ReactNode,
+  useEffect,
+} from "react";
+import {
+  ConnectionStates,
+  DEFAULT_PORT_LABEL,
+} from "../constants/connectionConstants";
+import {
+  getPorts,
+  connectToPortAPI,
+  disconnectFromActiveConnectionAPI,
+} from "../api/commands";
 import toast from "react-hot-toast";
+import { useStepperContext } from "./StepperContext";
 
 // Define the types for the context value
 interface ConnectionContextType {
   port: string | null;
   isConnected: boolean;
   connectionState: ConnectionStates;
+  availablePorts: string[];
   setConnectionState: (status: ConnectionStates) => void;
-  connectToPort: (port: string) => void;
+  refreshPorts: () => Promise<void>;
+  connectToPort: (port: string) => Promise<void>;
   disconnectPort: () => void;
-  setIsConnected: (value: boolean) => void;
+  setPort: (port: string | null) => void;
 }
 
 // Initialize the context with default values
@@ -37,23 +53,64 @@ interface ConnectionProviderProps {
 export const ConnectionProvider: React.FC<ConnectionProviderProps> = ({
   children,
 }) => {
-  const [port, setPort] = useState<string | null>("Select a port");
+  const [port, setPort] = useState<string | null>(DEFAULT_PORT_LABEL);
   const [isConnected, setIsConnected] = useState<boolean>(false);
-  const [connectionState, setConnectionState] = useState(
-    ConnectionStates.NOT_PROBED
-  );
+  const [connectionState, setConnectionState] = useState(ConnectionStates.NOT_PROBED);
+  const [availablePorts, setAvailablePorts] = useState<string[]>([]);
 
-  const connectToPort = (newPort: string) => {
-    setPort(newPort);
+  const { initializeSteppersInfo, resetStepperState } = useStepperContext();
+
+  // Fetch ports on mount
+  useEffect(() => {
+    refreshPorts();
+  }, []);
+
+  // Function to refresh available ports
+  const refreshPorts = async () => {
+    try {
+      const response = await getPorts();
+      setAvailablePorts(response);
+    } catch (error) {
+      toast.error(`Failed to get ports: ${error}`);
+    }
   };
 
-  const disconnectPort = () => {
-    disconnectFromActiveConnectionAPI()
-      .then((res) => console.log(res))
-      .catch((err) => toast.error(err));
+  // Function to handle connecting to a port
+  const connectToPort = async (newPort: string) => {
+    if (newPort === "default" || newPort === "Select a port") return;
 
-    setPort(null);
-    setIsConnected(false);
+    setPort(newPort);
+    setConnectionState(ConnectionStates.PROBING);
+
+    try {
+      const response = await connectToPortAPI(newPort);
+      toast.success(response.toString());
+      setIsConnected(true);
+      setConnectionState(ConnectionStates.ACCEPTED_CONNECTION);
+
+      // Fetch stepper state
+      initializeSteppersInfo();
+    } catch (error) {
+      toast.error(`Error trying to connect to port: ${error}`);
+      setIsConnected(false);
+      setConnectionState(ConnectionStates.REFUSED_CONNECTION);
+    }
+  };
+
+  // Function to disconnect from the port
+  const disconnectPort = () => {
+    if (port === null || !isConnected) return;
+
+    disconnectFromActiveConnectionAPI()
+      .then(() => {
+        toast.success("Disconnected successfully");
+        setIsConnected(false);
+        setConnectionState(ConnectionStates.NOT_PROBED);
+      })
+      .catch((err) => toast.error(`Error disconnecting: ${err}`))
+      .finally(() => {
+        resetStepperState();
+      });
   };
 
   return (
@@ -62,10 +119,12 @@ export const ConnectionProvider: React.FC<ConnectionProviderProps> = ({
         port,
         isConnected,
         connectionState,
+        availablePorts,
         setConnectionState,
+        refreshPorts,
+        setPort,
         connectToPort,
         disconnectPort,
-        setIsConnected,
       }}
     >
       {children}

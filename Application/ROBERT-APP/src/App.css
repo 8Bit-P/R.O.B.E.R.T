@@ -46,6 +46,7 @@ input[type='range']::-webkit-slider-thumb {
   background-color: #374151; /* Dark gray color */
   border-radius: 2px;
   cursor: pointer;
+  transition: all 0.5s ease-in-out;
 }
 
 input[type='range']::-moz-range-thumb {
@@ -54,4 +55,5 @@ input[type='range']::-moz-range-thumb {
   background-color: #374151; /* Dark gray color */
   border-radius: 2px;
   cursor: pointer;
+  transition: all 0.5s ease-in-out;
 }

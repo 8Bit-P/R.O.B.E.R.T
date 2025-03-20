@@ -1,110 +1,229 @@
-import React, {
-  createContext,
-  useState,
-  useContext,
-  ReactNode,
-  useEffect,
-} from "react";
-import { checkSteppersState } from "../api/commands";
-import { useConnection } from "./ConnectionContext";
+import React, { createContext, useState, useContext, ReactNode } from 'react';
+import {
+  checkSteppersState,
+  getParameters,
+  getSteppersAngles,
+  toggleStepperState,
+  setAPIAcceleration,
+  setAPIVelocity,
+  calibrateStepper,
+} from '../api/commands';
+import { listen } from '@tauri-apps/api/event';
+import { SteppersAngles } from '../interfaces/SteppersAngles';
+import toast from 'react-hot-toast';
+import { CalibrationStates } from '../constants/steppersContants';
 
-// Define types for stepper tracking
 interface StepperState {
-  steps: Record<number, number>; // Maps joint ID to step count
-  angles: Record<number, number>; // Maps joint ID to angles
-  calibrated: Record<number, boolean>; // Tracks if stepper is calibrated
-  setSteps: (jointId: number, steps: number) => void;
-  setAngles: (jointId: number, angle: number) => void;
-  setCalibrated: (jointId: number, isCalibrated: boolean) => void;
+  states: Record<number, boolean>; // Maps joint ID to state
+  angles: Record<number, number | null>; // Maps joint ID to angles
+  calibrationStates: Record<number, CalibrationStates>; // Tracks if stepper is calibrated
+  velocity: number;
+  acceleration: number;
+  setCalibrationState: (jointId: number, calState: CalibrationStates) => void;
+  setAngles: (jointId: number, angle: number | null) => void;
+  setStates: (jointId: number, state: boolean) => void;
+  setVelocity: (velocity: number) => void;
+  setAcceleration: (acceleration: number) => void;
+  fetchSteppersState: () => Promise<void>;
+  fetchSteppersAngles: () => Promise<void>;
+  resetStepperState: () => void;
+  initializeSteppersInfo: () => Promise<void>;
+  toggleStepper: (jointId: number) => Promise<void>;
+  handleCalibrate: (index: number) => void;
+  handleCalibrateAll: () => void;
 }
 
-// Create context with undefined default
 const StepperContext = createContext<StepperState | undefined>(undefined);
 
-// Custom hook for using StepperContext
-export const useStepper = (): StepperState => {
+export const useStepperContext = (): StepperState => {
   const context = useContext(StepperContext);
   if (!context) {
-    throw new Error("useStepper must be used within a StepperProvider");
+    throw new Error('useStepperContext must be used within a StepperProvider');
   }
   return context;
 };
 
-// Define props for the provider
 interface StepperProviderProps {
   children: ReactNode;
 }
 
-// Provider Component
-export const StepperProvider: React.FC<StepperProviderProps> = ({
-  children,
-}) => {
-  const [steps, setSteps] = useState<Record<number, number>>({});
-  const [angles, setAngles] = useState<Record<number, number>>({});
-  const [calibrated, setCalibrated] = useState<Record<number, boolean>>({});
+export const StepperProvider: React.FC<StepperProviderProps> = ({ children }) => {
+  const [angles, setAngles] = useState<Record<number, number | null>>(Object.fromEntries([...Array(6)].map((_, i) => [i, null])));
 
-  const { isConnected } = useConnection(); 
+  const [states, setStates] = useState<Record<number, boolean>>(Object.fromEntries([...Array(6)].map((_, i) => [i, false])));
 
-  const updateSteps = (jointId: number, newSteps: number) => {
-    setSteps((prev) => ({ ...prev, [jointId]: newSteps }));
-  };
+  const [acceleration, setAcceleration] = useState(50);
+  const [velocity, setVelocity] = useState(50);
 
-  const updateAngles = (jointId: number, newAngle: number) => {
+  const [calibrationStates, setCalibrationStates] = useState<Record<number, CalibrationStates>>(
+    Object.fromEntries([...Array(6)].map((_, i) => [i, CalibrationStates.NOT_CALIBRATED]))
+  );
+
+  const updateAngles = (jointId: number, newAngle: number | null) => {
     setAngles((prev) => ({ ...prev, [jointId]: newAngle }));
   };
 
-  const updateCalibrated = (jointId: number, isCalibrated: boolean) => {
-    setCalibrated((prev) => ({ ...prev, [jointId]: isCalibrated }));
+  const updateCalibrationState = (jointId: number, calState: CalibrationStates) => {
+    setCalibrationStates((prev) => ({ ...prev, [jointId]: calState }));
   };
-  
-  // Function to fetch stepper data from backend
+
+  const updateStates = (jointId: number, state: boolean) => {
+    setStates((prev) => ({ ...prev, [jointId]: state }));
+  };
+
   const fetchSteppersState = async () => {
-    //TODO: get steppers state 
-    // checkSteppersState()
-    //   .then((data) => {
-    //     console.log(data);
-    //   })
-    //   .catch((err) => {
-    //     console.error("Error fetching steppers state:", err);
-    //   });
-
-      //TODO: get steppers angles
-  };
-
-  // Reset all joint positions when connection is lost
-  const resetStepperState = () => {
-    setSteps({});
-    setAngles({});
-    setCalibrated({});
-  };
-
-  // Monitor connection state
-  useEffect(() => {
-    let timeoutId;
-  
-    if (isConnected) {
-      timeoutId = setTimeout(() => {
-        fetchSteppersState(); // ✅ Fetch stepper state after a delay
-      }, 1000); // Adjust the delay as needed (1000ms = 1 second)
-    } else {
-      timeoutId = setTimeout(() => {
-        resetStepperState(); // ❌ Reset stepper state after a delay
-      }, 500); // Adjust delay for reset if needed
+    try {
+      const data: boolean[] = await checkSteppersState();
+      const stateRecord = Object.fromEntries(data.map((state, index) => [index, state]));
+      setStates(stateRecord);
+    } catch (error) {
+      toast.error('Error fetching steppers state');
     }
-  
-    return () => clearTimeout(timeoutId); // Cleanup timeout when effect re-runs
-  }, [isConnected]);
-  
+  };
+
+  const fetchSteppersAngles = async () => {
+    try {
+      const data: (number | null)[] = await getSteppersAngles();
+      const anglesRecord = Object.fromEntries(data.map((angle, index) => [index, angle]));
+      setAngles(anglesRecord);
+    } catch (error) {
+      toast.error('Error fetching steppers angles');
+    }
+  };
+
+  const fetchParameters = async () => {
+    try {
+      const params: number[] = await getParameters();
+      setVelocity(params[0]);
+      setAcceleration(params[1]);
+    } catch (error) {
+      toast.error('Error fetching parameters');
+    }
+  };
+
+  // @index: is the number of the joint (from 1 to 6)
+  const handleCalibrate = (index: number) => {
+    
+    //Set state as calibrating
+    updateCalibrationState(index, CalibrationStates.CALIBRATING);
+    //Create array to call rust function
+    var calibrationIndexArray: number[] = [index+1];
+
+    calibrateStepper(calibrationIndexArray)
+      .then((res) => {
+        //If no error response assume joint is calibrated
+        console.log(res);
+        updateCalibrationState(index, CalibrationStates.CALIBRATED);
+
+        fetchSteppersAngles();
+      })
+      .catch((err) => {
+        toast.error(err);
+        updateCalibrationState(index, CalibrationStates.NOT_CALIBRATED);
+      });
+  };
+
+  const handleCalibrateAll = () => {
+    setCalibrationStates(new Array(6).fill(CalibrationStates.CALIBRATING));
+
+    var calibrationIndexArray: number[] = Array.from({ length: 4 }, (_, index) => index+1);
+
+    //TODO: logic to see if any calibration went wrong
+    calibrateStepper(calibrationIndexArray)
+      .then((res) => {
+        //If no error response assume joints are calibrated
+        console.log(res);
+        for(let stepperIdx of calibrationIndexArray) {
+          updateCalibrationState(stepperIdx-1, CalibrationStates.CALIBRATED);
+        }
+
+        fetchSteppersAngles();
+      })
+      .catch((err) => {
+        toast.error(err);
+        setCalibrationStates(new Array(6).fill(CalibrationStates.NOT_CALIBRATED));
+      });
+  };
+
+  const initializeSteppersInfo = async () => {
+    await fetchSteppersState();
+    await fetchSteppersAngles();
+    await fetchParameters();
+  };
+
+  const updateVelocity = async (vel: number) => {
+    try {
+      setAPIVelocity(vel);
+      setVelocity(vel);
+    } catch (error) {
+      toast.error('Error updating velocity');
+    }
+  };
+
+  const updateAcceleration = async (acc: number) => {
+    try {
+      setAPIAcceleration(acc);
+      setAcceleration(acc);
+    } catch (error) {
+      toast.error('Error updating acceleration');
+    }
+  };
+
+  const toggleStepper = async (jointId: number) => {
+    try {
+      const newState = !states[jointId]; // Toggle current state
+      setStates((prev) => ({ ...prev, [jointId]: newState })); // Optimistic UI update
+
+      await toggleStepperState(jointId + 1, newState ? 'ENABLED' : 'DISABLED');
+      
+      fetchSteppersAngles();
+    } catch (error) {
+      toast.error(`Failed to toggle stepper ${jointId + 1}`);
+    }
+  };
+
+  const resetStepperState = () => {
+    setStates(Object.fromEntries([...Array(6)].map((_, i) => [i, false])));
+    setAngles(Object.fromEntries([...Array(6)].map((_, i) => [i, null])));
+    setCalibrationStates(Object.fromEntries([...Array(6)].map((_, i) => [i, CalibrationStates.NOT_CALIBRATED])));
+  };
+
+  // Listen for stepper angles update event
+  listen<SteppersAngles>('report-steppers-angles', (event) => {
+    const { j1, j2, j3, j4, j5, j6 } = event.payload;
+
+    setAngles({
+      0: j1,
+      1: j2,
+      2: j3,
+      3: j4,
+      4: j5,
+      5: j6,
+    });
+
+    console.log(`Updated angles -> J1: ${j1}, J2: ${j2}, J3: ${j3}, J4: ${j4}, J5: ${j5}, J6: ${j6}`);
+  });
 
   return (
     <StepperContext.Provider
       value={{
-        steps,
         angles,
-        calibrated,
-        setSteps: updateSteps,
+        calibrationStates,
+        states,
+        velocity,
+        acceleration,
         setAngles: updateAngles,
-        setCalibrated: updateCalibrated,
+        setCalibrationState: updateCalibrationState,
+        setStates: updateStates,
+        setVelocity: updateVelocity,
+        setAcceleration: updateAcceleration,
+        fetchSteppersState,
+        fetchSteppersAngles,
+        resetStepperState,
+        initializeSteppersInfo,
+        toggleStepper,
+        handleCalibrate,
+        handleCalibrateAll,
       }}
     >
       {children}

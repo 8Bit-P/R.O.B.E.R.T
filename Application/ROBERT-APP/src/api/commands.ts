@@ -1,3 +1,4 @@
+// @ts-ignore
 export const invoke = window.__TAURI__.core.invoke;
 
 // Fetch available ports
@@ -14,16 +15,15 @@ export const disconnectFromActiveConnectionAPI = async (): Promise<string[]> => 
   return invoke<string[]>("disconnect_from_active_connection");
 };
 
-export const setAcceleration = async (acceleration: number | null | undefined): Promise<string[]> => {
+export const setAPIAcceleration = async (acceleration: number | null | undefined): Promise<string[]> => {
 
   if (acceleration == null) {
     throw new Error("acceleration must be provided and cannot be null or undefined");
   }
-
   return invoke<string[]>("set_acceleration", {acceleration });
 };
 
-export const setVelocity = async (velocity: number | null | undefined): Promise<string[]> => {
+export const setAPIVelocity = async (velocity: number | null | undefined): Promise<string[]> => {
 
   if (velocity == null) {
     throw new Error("velocity must be provided and cannot be null or undefined");
@@ -55,9 +55,14 @@ export const checkSteppersState = async (): Promise<boolean[]> => {
   return invoke<boolean[]>("check_steppers_state");
 };
 
-export const getSteppersAngles = async (): Promise<string[]> => {
+export const getSteppersAngles = async (): Promise<number[]> => {
   
-  return invoke<string[]>("get_steppers_angles");
+  return invoke<number[]>("get_steppers_angles");
+};
+
+export const getParameters = async (): Promise<number[]> => {
+  
+  return invoke<number[]>("get_parameters");
 };
 
 export const calibrateStepper = async (jointsIndexes: number[] | null | undefined): Promise<string[]> => {
@@ -70,8 +75,6 @@ export const calibrateStepper = async (jointsIndexes: number[] | null | undefine
 };
 
 export const driveStepperToAngle = async (jointsAngles: Map<number,number> | null | undefined): Promise<string[]> => {
-
-  console.log(jointsAngles);
 
   if (jointsAngles == null) {
     throw new Error("port and jointAngles must be provided and cannot be null or undefined");

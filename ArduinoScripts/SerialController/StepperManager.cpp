@@ -17,7 +17,7 @@ const int enablePins[6] = { J1enablePin, J2enablePin, J3enablePin, J4enablePin, 
 const int limitPins[6] = { J1limitPin, J2limitPin, J3limitPin, J4limitPin, J5limitPin, J6limitPin };
 
 // Track if joints have been calibrated
-bool isCalibrated[6] = {false, false, false, false, false, false};
+bool isCalibrated[6] = { false, false, false, false, false, false };
 
 void initializeSteppers() {
   for (int i = 0; i < 6; i++) {
@@ -35,9 +35,6 @@ void initializeSteppers() {
 
   //Stepper controlled by TB6600 has inverse behaviour on enable pin
   digitalWrite(enablePins[0], HIGH);
-
-  //TODO: see if need to keep it
-  //Serial.print(InfoResponse);Serial.println("Steppers initialized.");
 }
 
 AccelStepper* getStepperByIndex(int stepperIndex) {
@@ -117,12 +114,9 @@ void moveStepper(int stepperNum, int steps) {
     //if going in limit switch direction
     if (positiveToLimitSwitch == 1 && steps > 0 || positiveToLimitSwitch == 0 && steps < 0) {
       if (digitalRead(limitPin) == LOW) {
-        Serial.print("Limit switch triggered! Stopping stepper ");
-        Serial.print("J");
-        Serial.println(stepperNum);
-        stepper->stop();                 // Stop movement
-        stepper->setCurrentPosition(0);  // Optionally reset position
-        isCalibrated[stepperNum - 1] = true; // Set as calibrated since we have reached home position
+        stepper->stop();                      // Stop movement
+        stepper->setCurrentPosition(0);       // Optionally reset position
+        isCalibrated[stepperNum - 1] = true;  // Set as calibrated since we have reached home position
         break;
       }
     }
@@ -130,8 +124,55 @@ void moveStepper(int stepperNum, int steps) {
   }
 }
 
-void calibrateStepper(int stepperNum) {
+void moveSteppers(int steps[]) {
+  const int MAX_STEPPERS = 6;  // Number of steppers
+  AccelStepper* steppers[MAX_STEPPERS];
 
+  // Assign each stepper pointer
+  for (int i = 0; i < MAX_STEPPERS; i++) {
+    steppers[i] = getStepperByIndex(i + 1);
+    if (steppers[i] != nullptr && steps[i] != 0) {
+      steppers[i]->move(steps[i]);  // Set movement target
+    }
+  }
+
+  String moveSteppersResponse = String(InfoResponse) + "MOVING_STEPS:";
+
+  for (int s = 0; s < MAX_STEPPERS; s++) {
+    if (steps[s] != 0) {
+      moveSteppersResponse += "J" + String(s + 1) + "_" + String(steps[s]) + " ";
+    }
+  }
+
+  Serial.println(moveSteppersResponse);
+
+  bool anyStepperMoving;
+  do {
+    anyStepperMoving = false;
+    for (int i = 0; i < MAX_STEPPERS; i++) {
+      if (steppers[i] != nullptr && steppers[i]->distanceToGo() != 0) {
+        int limitPin = getLimitSwitchPin(i + 1);
+        int positiveToLimitSwitch = moveStepperPositiveSteps(i + 1);
+
+        // Check for limit switch
+        if (limitPin != -1 && ((positiveToLimitSwitch == 1 && steps[i] > 0) || (positiveToLimitSwitch == 0 && steps[i] < 0))) {
+
+          if (digitalRead(limitPin) == LOW) {
+            steppers[i]->stop();
+            steppers[i]->setCurrentPosition(0);
+            isCalibrated[i] = true;
+            continue;
+          }
+        }
+
+        steppers[i]->run();
+        anyStepperMoving = true;
+      }
+    }
+  } while (anyStepperMoving);  // Continue running until all steppers finish
+}
+
+bool calibrateStepper(int stepperNum) {
   int limitPin = getLimitSwitchPin(stepperNum);
   if (limitPin == -1) {
     Serial.println(InvalidLimitSwitchConversion);
@@ -140,15 +181,11 @@ void calibrateStepper(int stepperNum) {
 
   AccelStepper* stepper = getStepperByIndex(stepperNum);
 
-  Serial.print("Calibrating Stepper J");
-  Serial.println(stepperNum);
-
   // Move the stepper slowly towards the limit switch
-  stepper->setMaxSpeed(200);  // Slow speed for calibration
+  stepper->setMaxSpeed(200);
   stepper->setAcceleration(100);
 
   int positiveToLimitSwitch = moveStepperPositiveSteps(stepperNum);
-  // Move a large positive distance TODO: check positive or negative direction
   if (positiveToLimitSwitch == 1) stepper->move(100000);
   else if (positiveToLimitSwitch == 0) stepper->move(-100000);
   else {
@@ -156,8 +193,18 @@ void calibrateStepper(int stepperNum) {
     return;
   }
 
+  unsigned long startTime = millis();  // Start time for timeout
+  const unsigned long timeout = CalibrationTimeout;
+
   while (digitalRead(limitPin) == HIGH) {
     stepper->run();
+
+    // Check if we've exceeded the timeout
+    if (millis() - startTime > timeout) {
+      stepper->stop();  // Stop the motor
+      Serial.println(CalibrationResponse);
+      return false;
+    }
   }
 
   // Stop the motor when the limit switch is reached
@@ -165,13 +212,11 @@ void calibrateStepper(int stepperNum) {
 
   // Set the current position as zero (home position)
   stepper->setCurrentPosition(0);
-  isCalibrated[stepperNum - 1] = true; //Set stepper as calibrated
+  isCalibrated[stepperNum - 1] = true;  // Set stepper as calibrated
 
-  Serial.print(CalibrationResponse);
-  Serial.print("Stepper J");
-  Serial.print(stepperNum);
-  Serial.println(" calibrated to home position.");
+  return true;
 }
+
 
 void setAcceleration(int acceleration) {
   //Set acceleration command should have the format -> SETACC>ACCELERATION_VALUE;
@@ -204,13 +249,13 @@ void getSteppersState() {
     else
       steppersState += "J" + String(i + 1) + (isEnabled ? "_ENABLED" : "_DISABLED");
 
-    if (i < 5) steppersState += ";";
+    steppersState += ";";
   }
 
   Serial.println(steppersState);
 }
 
-void getSteppersSteps(){
+void getSteppersSteps() {
 
   String steppersSteps = SteppersStepsResponse;
 
@@ -224,9 +269,36 @@ void getSteppersSteps(){
       steppersSteps += "J" + String(i + 1) + "_" + String(currentPosition);
     }
 
-    if (i < 5) steppersSteps += ";";
+    steppersSteps += ";";
   }
 
   Serial.println(steppersSteps);
 }
 
+void getStepperParameters() {
+  String steppersState = SteppersParamsResponse;
+
+  // Assuming all steppers share the same velocity and acceleration, we can use any stepper to fetch these values
+  // Here we use the first stepper to fetch the velocity and acceleration
+  int velocity = steppers[0].maxSpeed();
+  int acceleration = steppers[0].acceleration();
+
+  // Format the response with the current velocity and acceleration
+  steppersState += "VEL_" + String(velocity) + ";";
+  steppersState += "ACC_" + String(acceleration) + ";";
+
+  // Print the response
+  Serial.println(steppersState);
+}
+
+void getSteppersCalibration() {
+  String steppersState = CalibrationResponse;
+
+  // Loop through the isCalibrated array and append calibration status to the response string
+  for (int i = 0; i < 6; i++) {
+    steppersState += "J" + String(i + 1) + "_" + String(isCalibrated[i] ? 1 : 0) + ";";
+  }
+
+  // Print the final response string
+  Serial.println(steppersState);
+}
