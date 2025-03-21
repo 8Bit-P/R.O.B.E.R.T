@@ -26,11 +26,14 @@ const Calibration = () => {
           </div>
         );
       })}
-      
+
       <div className="flex items-center space-x-2 mt-4">
         <button
           onClick={handleCalibrateAll}
-          className="bg-white border border-gray-300 text-gray-700 px-2 py-1 rounded w-40 text-left hover:bg-gray-50 focus:outline-none"
+          className={`bg-white border border-gray-300 text-gray-700 px-2 py-1 rounded w-40 text-left hover:bg-gray-50 focus:outline-none" ${
+            !isConnected ? 'cursor-not-allowed opacity-50' : ''
+          }`}
+          disabled={!isConnected}
         >
           Calibrate All
         </button>
