@@ -15,9 +15,10 @@ const ScriptRunner = () => {
   };
 
   return (
-    <div className="flex items-start justify-center gap-4">
+    <div className="flex justify-between items-start w-full gap-8 h-[70px]">
 
       <UploadFile onFileUpload={onFileUpload} file={file}/>
+      {/* TODO: disable based on isConnected */}
       <PlayButton disabled={false} onClick={handleRunScript} />
     </div>
   );

@@ -6,7 +6,7 @@ interface PlayButtonProps {
 const PlayButton: React.FC<PlayButtonProps> = ({ disabled = false, onClick }) => {
   return (
     <button
-      className={`flex items-center justify-center w-11 h-11 rounded cursor-pointer mx-auto transition 
+      className={`flex items-center self-start justify-center w-11 h-11 rounded cursor-pointer mx-auto transition 
           ${disabled ? 'bg-red-400 cursor-not-allowed' : 'bg-red-500 hover:bg-red-700'}
         `}
       onClick={!disabled ? onClick : undefined}
