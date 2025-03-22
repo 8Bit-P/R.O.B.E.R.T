@@ -198,7 +198,7 @@ pub async fn get_steppers_state(state: SharedAppState) -> Result<[bool; 6], Stri
 //Sends state command to arduino and returns an array of steps representing the steps of the steppers
 pub async fn get_steppers_steps(state: SharedAppState) -> Result<[Option<f32>; 6], String> {
     let data = constants::CommandCodes::STEPS;
-    let response = send_and_receive_from_shared_state(data, state, None).await?;
+    let response = send_and_receive_from_shared_state(data, state, Some(Duration::from_secs(8))).await?;
 
     // Parse the response
     let state_str = response

@@ -19,8 +19,6 @@ interface StepperState {
   calibrationStates: Record<number, CalibrationStates>; // Tracks if stepper is calibrated
   velocity: number;
   acceleration: number;
-  setCalibrationState: (jointId: number, calState: CalibrationStates) => void;
-  setAngles: (jointId: number, angle: number | null) => void;
   setStates: (jointId: number, state: boolean) => void;
   setVelocity: (velocity: number) => void;
   setAcceleration: (acceleration: number) => void;
@@ -59,9 +57,6 @@ export const StepperProvider: React.FC<StepperProviderProps> = ({ children }) =>
     Object.fromEntries([...Array(6)].map((_, i) => [i, CalibrationStates.NOT_CALIBRATED]))
   );
 
-  const updateAngles = (jointId: number, newAngle: number | null) => {
-    setAngles((prev) => ({ ...prev, [jointId]: newAngle }));
-  };
 
   const updateCalibrationState = (jointId: number, calState: CalibrationStates) => {
     setCalibrationStates((prev) => ({ ...prev, [jointId]: calState }));
@@ -84,12 +79,18 @@ export const StepperProvider: React.FC<StepperProviderProps> = ({ children }) =>
   const fetchSteppersAngles = async () => {
     try {
       const data: (number | null)[] = await getSteppersAngles();
-      const anglesRecord = Object.fromEntries(data.map((angle, index) => [index, angle]));
-      setAngles(anglesRecord);
+      
+      // Create an angles record with absolute values (or null if the angle is null)
+      const anglesRecord = Object.fromEntries(
+        data.map((angle, index) => [index, angle !== null ? Math.abs(angle) : null])
+      );
+      
+      setAngles(anglesRecord); // Store the angles record
     } catch (error) {
       toast.error('Error fetching steppers angles');
     }
   };
+  
 
   const fetchParameters = async () => {
     try {
@@ -138,11 +139,13 @@ export const StepperProvider: React.FC<StepperProviderProps> = ({ children }) =>
         }
 
         fetchSteppersAngles();
+        
       })
       .catch((err) => {
         toast.error(err);
         setCalibrationStates(new Array(6).fill(CalibrationStates.NOT_CALIBRATED));
-      });
+      })
+      
   };
 
   const initializeSteppersInfo = async () => {
@@ -172,7 +175,7 @@ export const StepperProvider: React.FC<StepperProviderProps> = ({ children }) =>
   const toggleStepper = async (jointId: number) => {
     try {
       const newState = !states[jointId]; // Toggle current state
-      setStates((prev) => ({ ...prev, [jointId]: newState })); // Optimistic UI update
+      setStates((prev) => ({ ...prev, [jointId]: newState })); 
 
       await toggleStepperState(jointId + 1, newState ? 'ENABLED' : 'DISABLED');
       
@@ -191,18 +194,17 @@ export const StepperProvider: React.FC<StepperProviderProps> = ({ children }) =>
   // Listen for stepper angles update event
   listen<SteppersAngles>('report-steppers-angles', (event) => {
     const { j1, j2, j3, j4, j5, j6 } = event.payload;
-
+  
     setAngles({
-      0: j1,
-      1: j2,
-      2: j3,
-      3: j4,
-      4: j5,
-      5: j6,
+      0: j1 !== null ? Math.abs(j1) : null, 
+      1: j2 !== null ? Math.abs(j2) : null, 
+      2: j3 !== null ? Math.abs(j3) : null, 
+      3: j4 !== null ? Math.abs(j4) : null, 
+      4: j5 !== null ? Math.abs(j5) : null, 
+      5: j6 !== null ? Math.abs(j6) : null, 
     });
-
-    console.log(`Updated angles -> J1: ${j1}, J2: ${j2}, J3: ${j3}, J4: ${j4}, J5: ${j5}, J6: ${j6}`);
   });
+  
 
   return (
     <StepperContext.Provider
@@ -212,8 +214,6 @@ export const StepperProvider: React.FC<StepperProviderProps> = ({ children }) =>
         states,
         velocity,
         acceleration,
-        setAngles: updateAngles,
-        setCalibrationState: updateCalibrationState,
         setStates: updateStates,
         setVelocity: updateVelocity,
         setAcceleration: updateAcceleration,
