@@ -1,4 +1,3 @@
-import React from 'react';
 import { useState } from 'react';
 import PlayButton from './PlayButton';
 import UploadFile from './UploadFile';
@@ -31,7 +30,7 @@ const ScriptRunner = () => {
 
   return (
     <>
-      <ScriptRunnerModal modalIsOpen={isModalOpen} closeModal={handleCloseModal}/>
+      <ScriptRunnerModal modalIsOpen={isModalOpen} closeModal={handleCloseModal} file={file}/>
       <div className="flex justify-between items-start w-full gap-8 h-[70px]">
         <UploadFile onFileUpload={onFileUpload} file={file} />
         {/* TODO: disable based on isConnected */}

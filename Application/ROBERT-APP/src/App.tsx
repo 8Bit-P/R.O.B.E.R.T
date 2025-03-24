@@ -20,13 +20,9 @@ function App() {
 
         <main className="flex flex-col items-center justify-center ">
           <div className="w-[1060px]">
-            <div className="flex items-center justify-between mb-5 mt-10">
-              <h1 className="text-3xl font-bold" style={{ fontFamily: 'nothing' }}>
-                R.O.B.E.R.T - Dashboard
-              </h1>
-              <h1 className="text-3xl font-bold" style={{ fontFamily: 'nothing' }}>
-                8Bit-P
-              </h1>
+            <div className="flex items-center justify-between mb-5 mt-10" style={{ fontFamily: 'nothing' }}>
+              <h1 className="text-3xl font-bold">R.O.B.E.R.T - Dashboard</h1>
+              <h1 className="text-3xl font-bold">8Bit-P</h1>
             </div>
           </div>
 

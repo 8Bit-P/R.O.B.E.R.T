@@ -1,74 +1,65 @@
-import React from "react";
-import Modal from "react-modal";
-import { motion, AnimatePresence } from "framer-motion";
+import React from 'react';
+import Modal from 'react-modal';
+import { motion, AnimatePresence } from 'framer-motion';
+import { AiOutlineClose } from 'react-icons/ai'; // Import close icon
+import CodeViewer from './CodeViewer';
 
 interface ScriptRunnerModalProps {
   modalIsOpen: boolean;
   afterOpenModal?: () => void;
   closeModal: () => void;
+  file: File | null;
 }
 
 const customStyles: Modal.Styles = {
   overlay: {
-    backgroundColor: "transparent", // No backdrop
+    backgroundColor: 'transparent',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   content: {
-    inset: "unset", // Remove default positioning
-    border: "none", // We'll handle borders with Tailwind
-    background: "transparent", // Needed for animation
-    padding: 0, // Remove default padding
+    position: 'relative',
+    border: 'none',
+    background: 'transparent',
+    padding: 0,
+    width: '90%',
+    maxWidth: '600px',
+    inset: 'unset',
+    outline: 'none',
   },
 };
 
-const ScriptRunnerModal: React.FC<ScriptRunnerModalProps> = ({
-  modalIsOpen,
-  afterOpenModal,
-  closeModal,
-}) => {
+const ScriptRunnerModal: React.FC<ScriptRunnerModalProps> = ({ modalIsOpen, afterOpenModal, closeModal, file }) => {
   return (
     <Modal
       isOpen={modalIsOpen}
       onAfterOpen={afterOpenModal}
-      onRequestClose={closeModal}
+      onRequestClose={() => {}} // Disable clicking outside to close
       style={customStyles}
       contentLabel="Script Runner Modal"
-      ariaHideApp={false} // Remove warnings when testing
+      shouldCloseOnOverlayClick={false} // Prevents closing on overlay click
+      shouldCloseOnEsc={true} // Allow closing with ESC key
+      ariaHideApp={false}
     >
       <AnimatePresence>
         {modalIsOpen && (
           <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.8 }}
-            transition={{ duration: 0.3, ease: "easeOut" }}
-            className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 bg-white border-2 border-blue-500 rounded-lg p-6 shadow-lg"
+            initial={{ opacity: 0, scale: 0.9, y: -20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.9, y: -20 }} // Closing animation
+            transition={{ duration: 0.3, ease: 'easeOut' }}
+            className="relative bg-white border border-gray-200 rounded-2xl p-8 shadow-xl"
           >
-            <h2 className="text-lg font-semibold text-gray-800">Run Script</h2>
-
-            <form className="w-full mt-4 space-y-3">
-              <input
-                className="w-full border border-gray-300 p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
-                placeholder="Enter script name"
-              />
-              <div className="flex justify-between">
-                <button className="px-4 py-2 border border-gray-400 rounded-md hover:bg-gray-100">
-                  Tab Navigation
-                </button>
-                <button className="px-4 py-2 border border-gray-400 rounded-md hover:bg-gray-100">
-                  Stays
-                </button>
-                <button className="px-4 py-2 border border-gray-400 rounded-md hover:bg-gray-100">
-                  Inside
-                </button>
-              </div>
-            </form>
-
-            <button
-              onClick={closeModal}
-              className="mt-4 px-4 py-2 text-white bg-red-500 hover:bg-red-600 rounded-md"
-            >
-              Close
+            {/* Close Icon */}
+            <button onClick={closeModal} className="absolute top-4 right-4 text-gray-500 hover:text-gray-800 transition">
+              <AiOutlineClose size={24} />
             </button>
+
+            {/* Title */}
+            <h2 className="text-2xl font-semibold text-gray-800 mb-4" style={{ fontFamily: 'nothing' }}>Run Script</h2>
+
+            <CodeViewer file={file} />
           </motion.div>
         )}
       </AnimatePresence>
