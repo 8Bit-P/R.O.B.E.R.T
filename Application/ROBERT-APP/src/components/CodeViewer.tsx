@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { FaPlay, FaStepForward } from "react-icons/fa"; // Importing icons
+import { highlightKeywords } from "../Utils/ScriptParserUtils";
 
 interface CodeViewerProps {
   file: File | null; // Pass a File object
@@ -44,13 +45,12 @@ const CodeViewer: React.FC<CodeViewerProps> = ({ file }) => {
   };
 
   return (
-    <div className="w-full max-w-3xl bg-gray-900 text-white rounded-lg p-4 shadow-lg overflow-auto max-h-80hv border border-gray-700" >
+    <div className="w-full max-w-3xl bg-gray-900 text-white rounded-lg p-4 shadow-lg overflow-auto max-h-80vh border border-gray-700">
       {/* Buttons for running the script */}
       <div className="flex gap-4 mb-4">
         <button
           onClick={runAllScript}
           className="flex items-center px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-md"
-          style={{ fontFamily: 'nothing' }}
         >
           <FaPlay className="mr-2" />
           Run Script
@@ -58,7 +58,6 @@ const CodeViewer: React.FC<CodeViewerProps> = ({ file }) => {
         <button
           onClick={() => runLine(currentLine !== null ? currentLine : 0)} // Running the current line
           className="flex items-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md"
-          style={{ fontFamily: 'nothing' }}
         >
           <FaStepForward className="mr-2" />
           Run Current Line
@@ -73,8 +72,11 @@ const CodeViewer: React.FC<CodeViewerProps> = ({ file }) => {
           >
             {/* Line number */}
             <span className="text-gray-500 pr-4 w-10 text-right">{index + 1}</span>
-            {/* Code line */}
-            <span className="whitespace-pre-wrap">{line}</span>
+            {/* Code line with highlighted keywords */}
+            <span
+              className="whitespace-pre-wrap"
+              dangerouslySetInnerHTML={{ __html: highlightKeywords(line) }}
+            ></span>
           </div>
         ))}
       </pre>
