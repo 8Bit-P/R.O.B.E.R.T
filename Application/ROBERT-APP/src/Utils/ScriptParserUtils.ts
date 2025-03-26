@@ -1,6 +1,6 @@
 import { calibrateStepper, driveStepperToAngle, setAPIAcceleration, setAPIVelocity, toggleStepperState } from '../api/commands';
 
-interface ParsedInstruction {
+export interface ParsedInstruction {
   command: string;
   params: string[];
 }
@@ -33,11 +33,11 @@ export const parseFile = (file: File): Promise<ParsedInstruction[]> => {
         let match: RegExpExecArray | null;
 
         if ((match = moveRegex.exec(line))) {
-          instructions.push({ command: 'MOVE', params: match[1].split(';').map((param) => param.trim()) });
+          instructions.push({ command: 'MOVE', params: match[1].split(';').map((param) => param.trim()).filter(param => param.length > 0) });
         } else if ((match = toggleRegex.exec(line))) {
-          instructions.push({ command: 'TOGGLE', params: match[1].split(';').map((param) => param.trim()) });
+          instructions.push({ command: 'TOGGLE', params: match[1].split(';').map((param) => param.trim()).filter(param => param.length > 0) });
         } else if ((match = calibrateRegex.exec(line))) {
-          instructions.push({ command: 'CALIBRATE', params: match[1].split(';').map((param) => param.trim()) });
+          instructions.push({ command: 'CALIBRATE', params: match[1].split(';').map((param) => param.trim()).filter(param => param.length > 0) });
         } else if ((match = setVelRegex.exec(line))) {
           instructions.push({ command: 'SETVEL', params: [match[1].trim()] });
         } else if ((match = setAccRegex.exec(line))) {
@@ -60,7 +60,8 @@ export const parseFile = (file: File): Promise<ParsedInstruction[]> => {
   });
 };
 
-const executeInstruction = async (instruction: ParsedInstruction) => {
+export const executeInstruction = async (instruction: ParsedInstruction) => {
+  debugger;
   switch (instruction.command) {
     case 'MOVE':
       const jointsAngles = new Map<number, number>();
@@ -84,26 +85,16 @@ const executeInstruction = async (instruction: ParsedInstruction) => {
       break;
 
     case 'SETVEL':
-      await setAPIVelocity(Number(instruction.params[0]));
+      await setAPIVelocity(Number(instruction.params[0].replace(';','')));
       break;
 
     case 'SETACC':
-      await setAPIAcceleration(Number(instruction.params[0]));
+      await setAPIAcceleration(Number(instruction.params[0].replace(';','')));
       break;
 
     default:
       throw new Error(`Unknown command: ${instruction.command}`);
   }
-};
-
-export const generateFunctionStack = (instructions: ParsedInstruction[]) => {
-  const functionStack: (() => Promise<void>)[] = [];
-  instructions.forEach((instruction) => {
-    functionStack.push(async () => {
-      await executeInstruction(instruction);
-    });
-  });
-  return functionStack;
 };
 
 export const highlightKeywords = (line: string) => {
