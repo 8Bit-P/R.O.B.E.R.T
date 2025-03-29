@@ -25,7 +25,10 @@ const RecordPositions = () => {
 
   const handleStorePosition = () => {
     storePosition(angles).then((res) => {
-      if (res) updateStoredPositionsID();
+      if (res) {
+        toast.success('Position stored successfully!');
+        updateStoredPositionsID();
+      }
       else toast.error('Failed to store position');
     });
   };

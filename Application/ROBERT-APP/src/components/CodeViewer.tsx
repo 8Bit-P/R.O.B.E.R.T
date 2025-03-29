@@ -10,6 +10,7 @@ interface CodeViewerProps {
 const CodeViewer: React.FC<CodeViewerProps> = ({ file }) => {
   const [fileContent, setFileContent] = useState<string>(''); // State to store file content
   const [currentLine, setCurrentLine] = useState<number>(0); // Track the current line being executed
+  const [isRunningLine, setIsRunningLine] = useState<boolean>(false); // Track if the script is running
 
   const [parsedInstructionStack, setParsedInstructionStack] = useState<ParsedInstruction[]>([]);
 
@@ -40,6 +41,8 @@ const CodeViewer: React.FC<CodeViewerProps> = ({ file }) => {
   }, [file]);
 
   const runAllScript = async () => {
+    setCurrentLine(0); // Reset current line to 0
+
     for (let line = 0; line < parsedInstructionStack.length; line++) {
       try {
         await runLine(line); // Wait for each line to finish before proceeding
@@ -53,12 +56,14 @@ const CodeViewer: React.FC<CodeViewerProps> = ({ file }) => {
   };
 
   const runLine = async (lineNumber: number): Promise<void> => {
+    setIsRunningLine(true);
+
     if (lineNumber >= parsedInstructionStack.length) {
-      toast.success("Script finished!");
+      toast.success('Script finished!');
       setCurrentLine(0);
       return;
     }
-  
+
     try {
       await executeInstruction(parsedInstructionStack[lineNumber]); // Wait for execution to finish
       setCurrentLine((prevLineCount) => prevLineCount + 1);
@@ -66,21 +71,32 @@ const CodeViewer: React.FC<CodeViewerProps> = ({ file }) => {
       toast.error(String(error));
       setCurrentLine(0);
       throw error; // Rethrow error to stop execution in `runAllScript`
+    } finally {
+      setIsRunningLine(false);
     }
   };
-  
 
   return (
     <div className="w-full max-w-3xl bg-gray-900 text-white rounded-lg p-4 shadow-lg overflow-auto max-h-80vh border border-gray-700">
       {/* Buttons for running the script */}
       <div className="flex gap-4 mb-4">
-        <button onClick={runAllScript} className="flex items-center px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-md">
+        <button
+          onClick={runAllScript}
+          disabled={isRunningLine}
+          style={{ fontFamily: 'nothing' }}
+          className={`flex items-center px-4 py-2 rounded-md transition 
+                    ${isRunningLine ? 'bg-gray-500 text-gray-300 cursor-not-allowed' : 'bg-gray-600 hover:bg-gray-700 text-white'}`}
+        >
           <FaPlay className="mr-2" />
           Run Script
         </button>
+
         <button
-          onClick={() => runLine(currentLine)} // Running the current line
-          className="flex items-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md"
+          onClick={() => runLine(currentLine)}
+          disabled={isRunningLine}
+          style={{ fontFamily: 'nothing' }}
+          className={`flex items-center px-4 py-2 rounded-md transition 
+                      ${isRunningLine ? 'bg-red-500 text-gray-300 cursor-not-allowed' : 'bg-red-600 hover:bg-red-700 text-white'}`}
         >
           <FaStepForward className="mr-2" />
           Run Current Line

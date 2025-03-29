@@ -61,7 +61,6 @@ export const parseFile = (file: File): Promise<ParsedInstruction[]> => {
 };
 
 export const executeInstruction = async (instruction: ParsedInstruction) => {
-  debugger;
   switch (instruction.command) {
     case 'MOVE':
       const jointsAngles = new Map<number, number>();

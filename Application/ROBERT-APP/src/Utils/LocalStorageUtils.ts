@@ -1,12 +1,6 @@
 // Function to get stored positions (e.g., pos_0, pos_1, etc.)
 export const getStoredPositionsIDs = (): string[] => {
   const storedPositions = Object.keys(localStorage).filter((key) => key.startsWith('pos_'));
-  //TODO: remove
-  // Log stored positions and their corresponding angles to the console
-  storedPositions.forEach((position) => {
-    const storedAngle = localStorage.getItem(position);
-    console.log(`Position: ${position}, Angle: ${storedAngle}`);
-  });
   return storedPositions;
 };
 
