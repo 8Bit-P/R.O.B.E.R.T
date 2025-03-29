@@ -19,6 +19,9 @@ const int limitPins[6] = { J1limitPin, J2limitPin, J3limitPin, J4limitPin, J5lim
 // Track if joints have been calibrated
 bool isCalibrated[6] = { false, false, false, false, false, false };
 
+int lastAcceleration = 200;
+int lastVelocity = 200;
+
 void initializeSteppers() {
   for (int i = 0; i < 6; i++) {
     // Set max speed and acceleration
@@ -214,6 +217,10 @@ bool calibrateStepper(int stepperNum) {
   stepper->setCurrentPosition(0);
   isCalibrated[stepperNum - 1] = true;  // Set stepper as calibrated
 
+  // Restore previous speed and acceleration
+  stepper->setMaxSpeed(lastVelocity);
+  stepper->setAcceleration(lastAcceleration);
+
   return true;
 }
 
@@ -224,6 +231,8 @@ void setAcceleration(int acceleration) {
     steppers[i].setAcceleration(acceleration);
   }
 
+  lastAcceleration = acceleration;
+
   Serial.print("Acceleration Set to: ");
   Serial.println(acceleration);
 }
@@ -233,6 +242,9 @@ void setVelocity(int velocity) {
   for (int i = 0; i < 6; i++) {
     steppers[i].setMaxSpeed(velocity);
   }
+
+  lastVelocity = velocity;
+
   Serial.print("Velocity set to: ");
   Serial.println(velocity);
 }

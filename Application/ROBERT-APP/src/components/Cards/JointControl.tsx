@@ -60,15 +60,19 @@ const JointControl = () => {
           {[...Array(6)].map((_, index) => (
             <div key={index} className="flex items-center space-x-3 justify-center">
               <button
-                className="bg-red-500 text-white text-xl rounded-lg px-3 py-1 w-10 h-10 select-none hover:bg-red-600"
+                className={`bg-red-500 text-white text-xl rounded-lg px-3 py-1 w-10 h-10 select-none 
+                          ${isConnected ? 'hover:bg-red-600' : 'cursor-not-allowed opacity-50'}`}
                 onClick={() => handleJointDecrement(index + 1)}
+                disabled={!isConnected}
               >
                 -
               </button>
               <span className="text-lg font-medium w-5 text-center">J{index + 1}</span>
               <button
-                className="bg-red-500 text-xl text-white rounded-lg px-3 py-1 w-10 h-10 select-none hover:bg-red-600"
+                className={`bg-red-500 text-white text-xl rounded-lg px-3 py-1 w-10 h-10 select-none 
+                  ${isConnected ? 'hover:bg-red-600' : 'cursor-not-allowed opacity-50'}`}
                 onClick={() => handleJointIncrement(index + 1)}
+                disabled={!isConnected}
               >
                 +
               </button>
@@ -99,11 +103,23 @@ const JointControl = () => {
         </div>
 
         <div className="flex float-right space-x-4 mt-4">
-          <button className="border-2 border-gray-500 font-semibold px-4 py-2 rounded-lg hover:bg-gray-200" onClick={() => setJointValues(Array(6).fill(''))}>
+          {/* Clear Button */}
+          <button
+            className={`border-2 font-semibold px-4 py-2 rounded-lg 
+                      ${isConnected ? 'border-gray-500 hover:bg-gray-200' : 'border-gray-300 bg-gray-200 cursor-not-allowed opacity-50'}`}
+            onClick={() => setJointValues(Array(6).fill(''))}
+            disabled={!isConnected}
+          >
             Clear
           </button>
 
-          <button className="bg-gray-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-gray-600" onClick={driveToCustomAngle}>
+          {/* Run Button */}
+          <button
+            className={`text-white font-semibold px-4 py-2 rounded-lg 
+                      ${isConnected ? 'bg-gray-500 hover:bg-gray-600' : 'bg-gray-300 cursor-not-allowed opacity-70'}`}
+            onClick={driveToCustomAngle}
+            disabled={!isConnected}
+          >
             Run
           </button>
         </div>

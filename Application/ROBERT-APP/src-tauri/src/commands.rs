@@ -177,6 +177,7 @@ pub async fn calibrate_steppers<'a>(
     }
 }
 
+//Command assumes all joint angles are provided as positive numbers 
 #[tauri::command]
 pub async fn drive_steppers_to_angles<'a>(
     app: AppHandle,

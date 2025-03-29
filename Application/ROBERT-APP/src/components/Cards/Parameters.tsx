@@ -1,3 +1,4 @@
+import React from 'react';
 import { useEffect, useState } from 'react';
 import { useConnection } from '../../context/ConnectionContext';
 import { useStepperContext } from '../../context/StepperContext';
