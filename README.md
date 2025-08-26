@@ -204,4 +204,4 @@ SETACC>10; // 0-100 range
 
 ## 📜 License  
 
-MIT License – feel free to fork, adapt, and improve!  
+GNU License – feel free to fork, adapt, and improve!  

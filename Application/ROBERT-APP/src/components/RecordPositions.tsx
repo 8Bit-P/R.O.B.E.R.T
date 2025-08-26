@@ -3,7 +3,7 @@ import PlayButton from './PlayButton';
 import SelectComponent from './SelectComponent';
 import { useConnection } from '../context/ConnectionContext';
 import { useStepperContext } from '../context/StepperContext';
-import { driveStepperToAngle } from '../api/commands';
+import { driveAPIStepperToAngle } from '../api/commands';
 import toast from 'react-hot-toast';
 import { deletePosition, getStoredPositionsIDs, storePosition } from '../Utils/LocalStorageUtils';
 import DeleteButton from './DeleteButton';
@@ -62,7 +62,7 @@ const RecordPositions = () => {
           }
         });
 
-        driveStepperToAngle(jointAngles)
+        driveAPIStepperToAngle(jointAngles)
           .then((res) => {
             console.log(res);
           })

@@ -1,12 +1,12 @@
 import React, { createContext, useState, useContext, ReactNode } from 'react';
 import {
-  checkSteppersState,
-  getParameters,
-  getSteppersAngles,
-  toggleStepperState,
+  checkAPISteppersState,
+  getAPIParameters,
+  getAPISteppersAngles,
+  toggleAPIStepperState,
   setAPIAcceleration,
   setAPIVelocity,
-  calibrateStepper,
+  calibrateAPIStepper,
 } from '../api/commands';
 import { listen } from '@tauri-apps/api/event';
 import { SteppersAngles } from '../interfaces/SteppersAngles';
@@ -68,7 +68,7 @@ export const StepperProvider: React.FC<StepperProviderProps> = ({ children }) =>
 
   const fetchSteppersState = async () => {
     try {
-      const data: boolean[] = await checkSteppersState();
+      const data: boolean[] = await checkAPISteppersState();
       const stateRecord = Object.fromEntries(data.map((state, index) => [index, state]));
       setStates(stateRecord);
     } catch (error) {
@@ -78,7 +78,7 @@ export const StepperProvider: React.FC<StepperProviderProps> = ({ children }) =>
 
   const fetchSteppersAngles = async () => {
     try {
-      const data: (number | null)[] = await getSteppersAngles();
+      const data: (number | null)[] = await getAPISteppersAngles();
       
       // Create an angles record with absolute values (or null if the angle is null)
       const anglesRecord = Object.fromEntries(
@@ -94,7 +94,7 @@ export const StepperProvider: React.FC<StepperProviderProps> = ({ children }) =>
 
   const fetchParameters = async () => {
     try {
-      const params: number[] = await getParameters();
+      const params: number[] = await getAPIParameters();
       setVelocity(params[0]);
       setAcceleration(params[1]);
     } catch (error) {
@@ -110,7 +110,7 @@ export const StepperProvider: React.FC<StepperProviderProps> = ({ children }) =>
     //Create array to call rust function
     var calibrationIndexArray: number[] = [index+1];
 
-    calibrateStepper(calibrationIndexArray)
+    calibrateAPIStepper(calibrationIndexArray)
       .then((res) => {
         //If no error response assume joint is calibrated
         console.log(res);
@@ -130,7 +130,7 @@ export const StepperProvider: React.FC<StepperProviderProps> = ({ children }) =>
     var calibrationIndexArray: number[] = Array.from({ length: 4 }, (_, index) => index+1);
 
     //TODO: logic to see if any calibration went wrong
-    calibrateStepper(calibrationIndexArray)
+    calibrateAPIStepper(calibrationIndexArray)
       .then((res) => {
         //If no error response assume joints are calibrated
         console.log(res);
@@ -177,8 +177,11 @@ export const StepperProvider: React.FC<StepperProviderProps> = ({ children }) =>
       const newState = !states[jointId]; // Toggle current state
       setStates((prev) => ({ ...prev, [jointId]: newState })); 
 
-      await toggleStepperState(jointId + 1, newState ? 'ENABLED' : 'DISABLED');
+      await toggleAPIStepperState(jointId + 1, newState ? 'ENABLED' : 'DISABLED');
       
+      //Set stepper as not calibrated
+      updateCalibrationState(jointId, CalibrationStates.NOT_CALIBRATED);
+
       fetchSteppersAngles();
     } catch (error) {
       toast.error(`Failed to toggle stepper ${jointId + 1}`);

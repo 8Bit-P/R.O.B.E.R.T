@@ -10,7 +10,7 @@ import {
   DEFAULT_PORT_LABEL,
 } from "../constants/connectionConstants";
 import {
-  getPorts,
+  getAPIPorts,
   connectToPortAPI,
   disconnectFromActiveConnectionAPI,
 } from "../api/commands";
@@ -68,7 +68,7 @@ export const ConnectionProvider: React.FC<ConnectionProviderProps> = ({
   // Function to refresh available ports
   const refreshPorts = async () => {
     try {
-      const response = await getPorts();
+      const response = await getAPIPorts();
       setAvailablePorts(response);
     } catch (error) {
       toast.error(`Failed to get ports: ${error}`);

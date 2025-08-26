@@ -9,7 +9,6 @@ import { parseFile } from '../Utils/ScriptParserUtils';
 
 const ScriptRunner = () => {
   const { isConnected } = useConnection();
-
   const [file, setFile] = useState<File | null>(null);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
 
@@ -41,8 +40,7 @@ const ScriptRunner = () => {
       <ScriptRunnerModal modalIsOpen={isModalOpen} closeModal={handleCloseModal} file={file} />
       <div className="flex justify-between items-start w-full gap-8 h-[70px]">
         <UploadFile onFileUpload={onFileUpload} file={file} />
-        {/* TODO: disable based on isConnected */}
-        <PlayButton disabled={false} onClick={handleRunScript} />
+        <PlayButton disabled={!isConnected} onClick={handleRunScript} />
       </div>
     </>
   );

@@ -1,4 +1,4 @@
-import { calibrateStepper, driveStepperToAngle, setAPIAcceleration, setAPIVelocity, toggleStepperState } from '../api/commands';
+import { calibrateAPIStepper, driveAPIStepperToAngle, setAPIAcceleration, setAPIVelocity, toggleAPIStepperState } from '../api/commands';
 
 export interface ParsedInstruction {
   command: string;
@@ -68,19 +68,19 @@ export const executeInstruction = async (instruction: ParsedInstruction) => {
         const [joint, angle] = param.split('_');
         jointsAngles.set(parseInt(joint.replace('J', '')), parseInt(angle));
       });
-      await driveStepperToAngle(jointsAngles);
+      await driveAPIStepperToAngle(jointsAngles);
       break;
 
     case 'TOGGLE':
       instruction.params.forEach(async (param) => {
         const [joint, state] = param.split('_');
-        await toggleStepperState(parseInt(joint.replace('J', '')), state);
+        await toggleAPIStepperState(parseInt(joint.replace('J', '')), state);
       });
       break;
 
     case 'CALIBRATE':
       const jointsToCalibrate = instruction.params.map((param) => parseInt(param.replace('J', '')));
-      await calibrateStepper(jointsToCalibrate);
+      await calibrateAPIStepper(jointsToCalibrate);
       break;
 
     case 'SETVEL':

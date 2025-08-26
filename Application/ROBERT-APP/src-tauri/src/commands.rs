@@ -43,8 +43,7 @@ pub async fn set_acceleration<'a>(
     state: State<'a, SharedAppState>,
 ) -> Result<String, String> {
     // Convert to i16 to prevent overflow
-    let scaled_acceleration = (acceleration as i16) * constants::PARAMETERS_MULTIPLIER as i16
-    ;
+    let scaled_acceleration = (acceleration as i16) * constants::PARAMETERS_MULTIPLIER as i16;
 
     let set_acc_command = format!("{}{}", constants::CommandCodes::SETACC, scaled_acceleration);
 

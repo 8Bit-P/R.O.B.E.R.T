@@ -1,5 +1,5 @@
 import { useConnection } from '../../context/ConnectionContext';
-import { driveStepperToAngle, moveStep } from '../../api/commands';
+import { driveAPIStepperToAngle, moveAPIStep } from '../../api/commands';
 import { useState } from 'react';
 
 import toast from 'react-hot-toast';
@@ -26,7 +26,7 @@ const JointControl = () => {
       }
     });
 
-    driveStepperToAngle(jointAngles)
+    driveAPIStepperToAngle(jointAngles)
       .then((res) => {
         console.log(res);
       })
@@ -37,7 +37,7 @@ const JointControl = () => {
   const handleJointIncrement = (jointIndex: number) => {
     if (!isConnected) return;
 
-    moveStep(jointIndex, DEFAULT_INCREMENT_STEPS)
+    moveAPIStep(jointIndex, DEFAULT_INCREMENT_STEPS)
       .then((res) => console.log(res))
       .catch((err) => toast.error(err));
   };
@@ -46,7 +46,7 @@ const JointControl = () => {
   const handleJointDecrement = (jointIndex: number) => {
     if (!isConnected) return;
 
-    moveStep(jointIndex, -DEFAULT_INCREMENT_STEPS)
+    moveAPIStep(jointIndex, -DEFAULT_INCREMENT_STEPS)
       .then((res) => console.log(res))
       .catch((err) => toast.error(err));
   };
