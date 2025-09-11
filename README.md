@@ -22,17 +22,17 @@ The project has three main parts:
 
 ## 🛠 Hardware  
 
-The robotic arm has 6 joints, each powered by stepper motors (J6 can be swapped with a servo gripper).  
+The robotic arm has 6 joints, each powered by stepper motors. A gripper can be added to the end of J6 for more control. 
 
 Electronics box components:  
 - ⚡ Power supply (200W)  
-- 🧠 Arduino Mega 2560 + RAMPS board (normally for 3D printers)  
-- 🌀 TB6600 stepper motor drivers  
-- 🎛️ Custom 3D-printed front panel for connectors  
+- 🌀 TB6600 stepper motor driver for stepper 1
+- 🧠 Arduino Mega 2560 + RAMPS board to manage steppers 2 to 6  
+- 🎛️ Custom 3D-printed front panel for connectors
 - 🔌 On/off switch + power input  
-- 🔋 5V regulator  
 
 Each joint (except J6) has a **limit switch** for homing and preventing over-rotation.  
+The overall build is made using a 3d printer for most of the parts of the robot, a bunch of nuts and bolts of different m-sizes, bearings and aluminum tube for structure. 
 
 ---
 

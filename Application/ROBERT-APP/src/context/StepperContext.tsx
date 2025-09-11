@@ -57,7 +57,6 @@ export const StepperProvider: React.FC<StepperProviderProps> = ({ children }) =>
     Object.fromEntries([...Array(6)].map((_, i) => [i, CalibrationStates.NOT_CALIBRATED]))
   );
 
-
   const updateCalibrationState = (jointId: number, calState: CalibrationStates) => {
     setCalibrationStates((prev) => ({ ...prev, [jointId]: calState }));
   };
@@ -66,32 +65,32 @@ export const StepperProvider: React.FC<StepperProviderProps> = ({ children }) =>
     setStates((prev) => ({ ...prev, [jointId]: state }));
   };
 
+  //Gets the states of the steppers from the API and sets them into a state
   const fetchSteppersState = async () => {
     try {
       const data: boolean[] = await checkAPISteppersState();
-      const stateRecord = Object.fromEntries(data.map((state, index) => [index, state]));
+      const stateRecord: Record<number, boolean> = Object.fromEntries(data.map((state, index) => [index, state]));
       setStates(stateRecord);
     } catch (error) {
       toast.error('Error fetching steppers state');
     }
   };
 
+  //Gets the angles of the steppers form the API and sets them into a state
   const fetchSteppersAngles = async () => {
     try {
       const data: (number | null)[] = await getAPISteppersAngles();
-      
+
       // Create an angles record with absolute values (or null if the angle is null)
-      const anglesRecord = Object.fromEntries(
-        data.map((angle, index) => [index, angle !== null ? Math.abs(angle) : null])
-      );
-      
+      const anglesRecord: Record<number, number | null> = Object.fromEntries(data.map((angle, index) => [index, angle !== null ? Math.abs(angle) : null]));
+
       setAngles(anglesRecord); // Store the angles record
     } catch (error) {
       toast.error('Error fetching steppers angles');
     }
   };
-  
 
+  //Gets Velocity and Acceleration from API and sets them in a state
   const fetchParameters = async () => {
     try {
       const params: number[] = await getAPIParameters();
@@ -104,11 +103,10 @@ export const StepperProvider: React.FC<StepperProviderProps> = ({ children }) =>
 
   // @index: is the number of the joint (from 1 to 6)
   const handleCalibrate = (index: number) => {
-    
     //Set state as calibrating
     updateCalibrationState(index, CalibrationStates.CALIBRATING);
     //Create array to call rust function
-    var calibrationIndexArray: number[] = [index+1];
+    var calibrationIndexArray: number[] = [index + 1];
 
     calibrateAPIStepper(calibrationIndexArray)
       .then((res) => {
@@ -127,25 +125,43 @@ export const StepperProvider: React.FC<StepperProviderProps> = ({ children }) =>
   const handleCalibrateAll = () => {
     setCalibrationStates(new Array(6).fill(CalibrationStates.CALIBRATING));
 
-    var calibrationIndexArray: number[] = Array.from({ length: 4 }, (_, index) => index+1);
+    /* TODO: for now only calibrating 4 joints (5 and 6 still no limit switches) */
+    const calibrationIndexArray: number[] = Array.from({ length: 4 }, (_, index) => index + 1);
 
-    //TODO: logic to see if any calibration went wrong
     calibrateAPIStepper(calibrationIndexArray)
-      .then((res) => {
-        //If no error response assume joints are calibrated
-        console.log(res);
-        for(let stepperIdx of calibrationIndexArray) {
-          updateCalibrationState(stepperIdx-1, CalibrationStates.CALIBRATED);
+      .then((res: string) => {
+        console.log('Calibration response:', res);
+
+        // Track failed joints
+        const failedJoints = new Set<number>();
+
+        if (res.length === 0) {
+          // empty string means nothing was returned → treat as failure
+          calibrationIndexArray.forEach((idx) => failedJoints.add(idx));
+        } else if (res !== 'OK') {
+          // Response like "J1;J3;J4"
+          res.split(';').forEach((joint) => {
+            if (joint.startsWith('J')) {
+              const idx = parseInt(joint.slice(1), 10);
+              if (!isNaN(idx)) failedJoints.add(idx);
+            }
+          });
         }
 
-        fetchSteppersAngles();
-        
+        // Update calibration states
+        for (const stepperIdx of calibrationIndexArray) {
+          if (failedJoints.has(stepperIdx)) {
+            updateCalibrationState(stepperIdx - 1, CalibrationStates.NOT_CALIBRATED);
+          } else {
+            updateCalibrationState(stepperIdx - 1, CalibrationStates.CALIBRATED);
+          }
+        }
       })
       .catch((err) => {
         toast.error(err);
         setCalibrationStates(new Array(6).fill(CalibrationStates.NOT_CALIBRATED));
       })
-      
+      .finally(() => fetchSteppersAngles());
   };
 
   const initializeSteppersInfo = async () => {
@@ -156,7 +172,7 @@ export const StepperProvider: React.FC<StepperProviderProps> = ({ children }) =>
 
   const updateVelocity = async (vel: number) => {
     try {
-      setAPIVelocity(vel);
+      await setAPIVelocity(vel);
       setVelocity(vel);
     } catch (error) {
       toast.error('Error updating velocity');
@@ -165,7 +181,7 @@ export const StepperProvider: React.FC<StepperProviderProps> = ({ children }) =>
 
   const updateAcceleration = async (acc: number) => {
     try {
-      setAPIAcceleration(acc);
+      await setAPIAcceleration(acc);
       setAcceleration(acc);
     } catch (error) {
       toast.error('Error updating acceleration');
@@ -175,10 +191,10 @@ export const StepperProvider: React.FC<StepperProviderProps> = ({ children }) =>
   const toggleStepper = async (jointId: number) => {
     try {
       const newState = !states[jointId]; // Toggle current state
-      setStates((prev) => ({ ...prev, [jointId]: newState })); 
+      setStates((prev) => ({ ...prev, [jointId]: newState }));
 
       await toggleAPIStepperState(jointId + 1, newState ? 'ENABLED' : 'DISABLED');
-      
+
       //Set stepper as not calibrated
       updateCalibrationState(jointId, CalibrationStates.NOT_CALIBRATED);
 
@@ -197,17 +213,16 @@ export const StepperProvider: React.FC<StepperProviderProps> = ({ children }) =>
   // Listen for stepper angles update event
   listen<SteppersAngles>('report-steppers-angles', (event) => {
     const { j1, j2, j3, j4, j5, j6 } = event.payload;
-  
+
     setAngles({
-      0: j1 !== null ? Math.abs(j1) : null, 
-      1: j2 !== null ? Math.abs(j2) : null, 
-      2: j3 !== null ? Math.abs(j3) : null, 
-      3: j4 !== null ? Math.abs(j4) : null, 
-      4: j5 !== null ? Math.abs(j5) : null, 
-      5: j6 !== null ? Math.abs(j6) : null, 
+      0: j1 !== null ? Math.abs(j1) : null,
+      1: j2 !== null ? Math.abs(j2) : null,
+      2: j3 !== null ? Math.abs(j3) : null,
+      3: j4 !== null ? Math.abs(j4) : null,
+      4: j5 !== null ? Math.abs(j5) : null,
+      5: j6 !== null ? Math.abs(j6) : null,
     });
   });
-  
 
   return (
     <StepperContext.Provider

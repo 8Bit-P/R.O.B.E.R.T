@@ -10,12 +10,29 @@ pub async fn connect_to_port<'a>(
     port: String,
     state: State<'a, SharedAppState>,
 ) -> Result<String, String> {
-   utils::connect_to_port(port, state).await
+    utils::connect_to_port(port, state).await
+}
+
+#[tauri::command]
+pub fn get_ports() -> Vec<String> {
+    let mut ports_list = Vec::new();
+
+    // Attempt to get the list of available serial ports
+    if let Ok(ports) = available_ports() {
+        for port in ports {
+            // Add all detected port names, regardless of type
+            ports_list.push(port.port_name);
+        }
+    } else {
+        println!("Failed to list ports.");
+    }
+
+    ports_list
 }
 
 #[tauri::command]
 pub async fn disconnect_from_active_connection<'a>(
-    state: State<'a, SharedAppState>, 
+    state: State<'a, SharedAppState>,
 ) -> Result<String, String> {
     // Lock the shared app state
     let mut app_state = state.write().await;
@@ -25,17 +42,16 @@ pub async fn disconnect_from_active_connection<'a>(
 
         // Explicitly drop the connection
         app_state.serial_connection = None;
-        
+
         // Give the OS time to release the port
         tokio::time::sleep(Duration::from_millis(200)).await;
-        
+
         println!("###DEBUG### - Serial port disconnected.");
         Ok("Successfully disconnected from the port.".to_string())
     } else {
         Err("No active serial connection.".to_string())
     }
 }
-
 
 #[tauri::command]
 pub async fn set_acceleration<'a>(
@@ -78,8 +94,8 @@ pub async fn set_velocity<'a>(
 #[tauri::command]
 pub async fn move_step<'a>(
     app: AppHandle,
-    joint_index: i8, 
-    mut n_steps: i16, 
+    joint_index: i8,
+    mut n_steps: i16,
     state: State<'a, SharedAppState>,
 ) -> Result<String, String> {
     if joint_index <= 0 || joint_index as usize >= constants::STEPPER_POSITIVE_TO_LIMIT.len() {
@@ -101,7 +117,8 @@ pub async fn move_step<'a>(
     );
 
     // Send movement command
-    let response = send_and_receive_from_shared_state(&move_step_command, state.inner().clone(), None).await;
+    let response =
+        send_and_receive_from_shared_state(&move_step_command, state.inner().clone(), None).await;
 
     // If the command is successful, get updated stepper angles
     match response {
@@ -120,16 +137,12 @@ pub async fn move_step<'a>(
     }
 }
 
-
-
-
 #[tauri::command]
 pub async fn toggle_stepper<'a>(
     joint_index: i8,
     enabled: &str,
     state: State<'a, SharedAppState>,
 ) -> Result<String, String> {
-
     // Arduino command format: TOGGLE>JOINT_STATE;
     let toggle_command = format!(
         "{}J{}_{};",
@@ -165,32 +178,46 @@ pub async fn calibrate_steppers<'a>(
         joint_commands.join("")
     );
 
-    // Send the command using the shared connection
-    //Use a high timeout duration for calibration
-    match send_and_receive_from_shared_state(&calibrate_command, state.inner().clone(), Some(Duration::from_secs(35))).await {
-        Ok(response) => Ok(format!(
-            "Successfully sent calibrate command. Response: {}",
-            response
-        )),
+    // Send the command using the shared connection with a high timeout duration
+    match send_and_receive_from_shared_state(
+        &calibrate_command,
+        state.inner().clone(),
+        Some(Duration::from_secs(35)),
+    )
+    .await
+    {
+        Ok(response) => {
+            // Now that we have the response, trim it properly
+            let trimmed_response = response
+                .trim_start_matches(constants::ResponseCodes::CALIBRATION_RESPONSE)
+                .trim_end_matches('~')
+                .trim()
+                .to_string();
+
+            Ok(trimmed_response) //Return just the response to act in the front
+        }
         Err(e) => Err(format!("Error: {}", e)),
     }
 }
 
-//Command assumes all joint angles are provided as positive numbers 
+//Command assumes all joint angles are provided as positive numbers
 #[tauri::command]
 pub async fn drive_steppers_to_angles<'a>(
     app: AppHandle,
-    joints_angles: Vec<(i8, f32)>, 
+    joints_angles: Vec<(i8, f32)>,
     state: State<'a, SharedAppState>,
 ) -> Result<String, String> {
-
     // Adjust angles based on the joint's positive limit switch
     let adjusted_angles: Vec<(i8, f32)> = joints_angles
         .into_iter()
         .map(|(joint_index, angle)| {
             let joint_index_u8 = joint_index as u8; // Convert to u8 for HashMap lookup
-        
-            if constants::STEPPER_POSITIVE_TO_LIMIT.get(&joint_index_u8).copied().unwrap_or(false) {
+
+            if constants::STEPPER_POSITIVE_TO_LIMIT
+                .get(&joint_index_u8)
+                .copied()
+                .unwrap_or(false)
+            {
                 (joint_index, -angle) // Negate if true
             } else {
                 (joint_index, angle) // Keep as is
@@ -198,27 +225,35 @@ pub async fn drive_steppers_to_angles<'a>(
         })
         .collect();
 
-    utils::drive_steppers_to_angles(&app,adjusted_angles, state.inner().clone()).await
+    utils::drive_steppers_to_angles(&app, adjusted_angles, state.inner().clone()).await
 }
 
 #[tauri::command]
-pub async fn get_parameters<'a>(
-    state: State<'a, SharedAppState>,
-) -> Result<[u8; 2], String> {
+pub async fn get_parameters<'a>(state: State<'a, SharedAppState>) -> Result<[u8; 2], String> {
     // Send the command using the shared connection
-    match send_and_receive_from_shared_state(constants::CommandCodes::PARAMS, state.inner().clone(), None).await {
+    match send_and_receive_from_shared_state(
+        constants::CommandCodes::PARAMS,
+        state.inner().clone(),
+        None,
+    )
+    .await
+    {
         Ok(response) => {
             // Expected response format: "[PARAMS];VEL_20;ACC_40;"
             if response.starts_with(constants::ResponseCodes::PARAMS_RESPONSE) {
                 let parts: Vec<&str> = response.split(';').collect();
                 let mut vel: u8 = 0;
                 let mut acc: u8 = 0;
-                
+
                 for part in parts {
                     if part.starts_with("VEL_") {
-                        vel = (part[4..].parse::<f32>().unwrap_or(0.0) / constants::PARAMETERS_MULTIPLIER as f32) as u8;
+                        vel = (part[4..].parse::<f32>().unwrap_or(0.0)
+                            / constants::PARAMETERS_MULTIPLIER as f32)
+                            as u8;
                     } else if part.starts_with("ACC_") {
-                        acc = (part[4..].parse::<f32>().unwrap_or(0.0) / constants::PARAMETERS_MULTIPLIER as f32) as u8;
+                        acc = (part[4..].parse::<f32>().unwrap_or(0.0)
+                            / constants::PARAMETERS_MULTIPLIER as f32)
+                            as u8;
                     }
                 }
 
@@ -243,22 +278,5 @@ pub async fn get_steppers_angles<'a>(
     app: AppHandle,
     state: State<'a, SharedAppState>,
 ) -> Result<[Option<f32>; 6], String> {
-    return utils::get_steppers_angles(&app,state.inner().clone()).await;
-}
-
-#[tauri::command]
-pub fn get_ports() -> Vec<String> {
-    let mut ports_list = Vec::new();
-
-    // Attempt to get the list of available serial ports
-    if let Ok(ports) = available_ports() {
-        for port in ports {
-            // Add all detected port names, regardless of type
-            ports_list.push(port.port_name);
-        }
-    } else {
-        println!("Failed to list ports.");
-    }
-
-    ports_list
+    return utils::get_steppers_angles(&app, state.inner().clone()).await;
 }

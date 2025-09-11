@@ -52,8 +52,8 @@ export const getAPIParameters = async (): Promise<number[]> => {
 };
 
 //calibrates the array of indexes sent by parameters
-export const calibrateAPIStepper = async (jointsIndexes: number[]): Promise<string[]> => {
-  return invoke<string[]>('calibrate_steppers', { jointsIndexes });
+export const calibrateAPIStepper = async (jointsIndexes: number[]): Promise<string> => {
+  return invoke<string>('calibrate_steppers', { jointsIndexes });
 };
 
 //Given a map of indexes of steppers and angles it moves the steppers to the specified angles

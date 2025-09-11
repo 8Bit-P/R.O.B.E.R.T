@@ -5,8 +5,8 @@ import { useConnection } from '../context/ConnectionContext';
 import { useStepperContext } from '../context/StepperContext';
 import { driveAPIStepperToAngle } from '../api/commands';
 import toast from 'react-hot-toast';
-import { deletePosition, getStoredPositionsIDs, storePosition } from '../Utils/LocalStorageUtils';
 import DeleteButton from './DeleteButton';
+import { LocalStorageUtils } from '../Utils/LocalStorageUtils';
 
 const RecordPositions = () => {
   const { isConnected } = useConnection();
@@ -20,21 +20,20 @@ const RecordPositions = () => {
   }, []);
 
   const updateStoredPositionsID = () => {
-    setStoredPositionsIDs(getStoredPositionsIDs());
+    setStoredPositionsIDs(LocalStorageUtils.getStoredPositionsIDs());
   };
 
   const handleStorePosition = () => {
-    storePosition(angles).then((res) => {
+    LocalStorageUtils.storePosition(angles).then((res) => {
       if (res) {
         toast.success('Position stored successfully!');
         updateStoredPositionsID();
-      }
-      else toast.error('Failed to store position');
+      } else toast.error('Failed to store position');
     });
   };
 
   const handleDeletePosition = () => {
-    deletePosition(currentPosID).then((res) => {
+    LocalStorageUtils.deletePosition(currentPosID).then((res) => {
       if (res) {
         updateStoredPositionsID();
         setCurrentPosID(null);
@@ -47,38 +46,33 @@ const RecordPositions = () => {
   };
 
   const handleDriveToSelectedPosition = () => {
-    if (currentPosID) {
-      const storedAngle = localStorage.getItem(currentPosID);
-      if (storedAngle) {
-
-        const parsedAngle = JSON.parse(storedAngle);
-        const jointAngles = new Map<number, number>();
-
-        // Iterate over the object using Object.entries
-        Object.entries(parsedAngle).forEach(([key, value]) => {
-          const idx = Number(key); // Convert the key to a number
-          if (value !== null) {
-            jointAngles.set(idx + 1, Number(value)); // Joint numbers are 1-based
-          }
-        });
-
-        driveAPIStepperToAngle(jointAngles)
-          .then((res) => {
-            console.log(res);
-          })
-          .catch((err) => toast.error(err));
-      }
-    } else {
+    if (!currentPosID) {
       toast.error('No position selected');
+      return;
     }
+
+    const storedAngle = localStorage.getItem(currentPosID);
+    if (!storedAngle) return;
+
+    const parsedAngle = JSON.parse(storedAngle);
+    const jointAngles = new Map<number, number>();
+
+    // Iterate over the object using Object.entries
+    Object.entries(parsedAngle).forEach(([key, value]) => {
+      const idx = Number(key); // Convert the key to a number
+      if (value !== null) {
+        jointAngles.set(idx + 1, Number(value)); // Joint numbers are 1-based
+      }
+    });
+
+    driveAPIStepperToAngle(jointAngles).catch((err) => toast.error(err));
   };
 
   return (
     <div className="flex flex-col gap-4 w-full max-w-md">
       {/* Button to store position */}
       <button
-        className={`text-white font-medium py-2 rounded-md w-full 
-            ${isConnected ? 'bg-gray-600 hover:bg-gray-700' : 'bg-gray-400 cursor-not-allowed'}`}
+        className={`text-white font-medium py-2 rounded-md w-full ${isConnected ? 'bg-gray-600 hover:bg-gray-700' : 'bg-gray-400 cursor-not-allowed'}`}
         onClick={handleStorePosition}
         disabled={!isConnected}
       >

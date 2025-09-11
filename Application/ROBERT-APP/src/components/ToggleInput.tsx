@@ -4,7 +4,7 @@ interface ToggleInputProps {
   isChecked: boolean;
   handleToggleInput: (event: React.ChangeEvent<HTMLInputElement>) => void;
   isActive: boolean;
-  index?: number;
+  index?: number; //Only for animation ordering
 }
 
 const ToggleInput = ({ isChecked, handleToggleInput, isActive = true, index = 1 }: ToggleInputProps) => {

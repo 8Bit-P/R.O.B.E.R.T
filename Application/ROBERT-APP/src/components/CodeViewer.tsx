@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { FaPlay, FaStepForward } from 'react-icons/fa'; // Importing icons
-import { executeInstruction, highlightKeywords, ParsedInstruction, parseFile } from '../Utils/ScriptParserUtils';
+import { ParsedInstruction, ScriptParserUtils } from '../Utils/ScriptParserUtils';
 import toast from 'react-hot-toast';
 
 interface CodeViewerProps {
@@ -30,7 +30,7 @@ const CodeViewer: React.FC<CodeViewerProps> = ({ file }) => {
     // Read the file as text
     reader.readAsText(file);
 
-    parseFile(file)
+    ScriptParserUtils.parseFile(file)
       .then((res) => {
         setParsedInstructionStack(res);
         setCurrentLine(0);
@@ -65,7 +65,7 @@ const CodeViewer: React.FC<CodeViewerProps> = ({ file }) => {
     }
 
     try {
-      await executeInstruction(parsedInstructionStack[lineNumber]); // Wait for execution to finish
+      await ScriptParserUtils.executeInstruction(parsedInstructionStack[lineNumber]); // Wait for execution to finish
       setCurrentLine((prevLineCount) => prevLineCount + 1);
     } catch (error) {
       toast.error(String(error));
@@ -112,7 +112,7 @@ const CodeViewer: React.FC<CodeViewerProps> = ({ file }) => {
             {/* Line number */}
             <span className="text-gray-500 pr-4 w-10 text-right">{index + 1}</span>
             {/* Code line with highlighted keywords */}
-            <span className="whitespace-pre-wrap" dangerouslySetInnerHTML={{ __html: highlightKeywords(line) }}></span>
+            <span className="whitespace-pre-wrap" dangerouslySetInnerHTML={{ __html: ScriptParserUtils.highlightKeywords(line) }}></span>
           </div>
         ))}
       </pre>

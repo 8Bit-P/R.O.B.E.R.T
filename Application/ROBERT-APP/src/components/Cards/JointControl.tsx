@@ -15,6 +15,7 @@ const JointControl = () => {
     setJointValues(newValues);
   };
 
+  //Gets the values stored in jointValues state and sends a command to the API to move them to that angle
   const driveToCustomAngle = () => {
     if (!isConnected) return;
 
@@ -26,29 +27,22 @@ const JointControl = () => {
       }
     });
 
-    driveAPIStepperToAngle(jointAngles)
-      .then((res) => {
-        console.log(res);
-      })
-      .catch((err) => toast.error(err));
+    //Execute backend command
+    driveAPIStepperToAngle(jointAngles).catch((err) => toast.error(err));
   };
 
   //Individual increase of joint angle
   const handleJointIncrement = (jointIndex: number) => {
     if (!isConnected) return;
 
-    moveAPIStep(jointIndex, DEFAULT_INCREMENT_STEPS)
-      .then((res) => console.log(res))
-      .catch((err) => toast.error(err));
+    moveAPIStep(jointIndex, DEFAULT_INCREMENT_STEPS).catch((err) => toast.error(err));
   };
 
   //Individual decrease of joint angle
   const handleJointDecrement = (jointIndex: number) => {
     if (!isConnected) return;
 
-    moveAPIStep(jointIndex, -DEFAULT_INCREMENT_STEPS)
-      .then((res) => console.log(res))
-      .catch((err) => toast.error(err));
+    moveAPIStep(jointIndex, -DEFAULT_INCREMENT_STEPS).catch((err) => toast.error(err));
   };
 
   return (

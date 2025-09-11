@@ -5,7 +5,7 @@ import UploadFile from './UploadFile';
 import toast from 'react-hot-toast';
 import { useConnection } from '../context/ConnectionContext';
 import ScriptRunnerModal from './ScriptRunnerModal';
-import { parseFile } from '../Utils/ScriptParserUtils';
+import { ScriptParserUtils } from '../Utils/ScriptParserUtils';
 
 const ScriptRunner = () => {
   const { isConnected } = useConnection();
@@ -23,7 +23,7 @@ const ScriptRunner = () => {
     }
 
     //parse file contents to check for errors
-    parseFile(file)
+    ScriptParserUtils.parseFile(file)
       .then(() => setIsModalOpen(true))
       .catch((error) => {
         toast.error(error.message);
