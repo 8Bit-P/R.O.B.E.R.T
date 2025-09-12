@@ -1,69 +1,38 @@
 use crate::constants;
 use crate::state::SharedAppState;
-use crate::utils::{self, send_and_receive_from_shared_state};
-use serialport::available_ports;
+use crate::utils::command_utils::send_and_receive_from_shared_state;
+use crate::utils::{connection_utils, parameter_utils, stepper_utils};
 use tauri::{AppHandle, State};
 use tokio::time::Duration;
 
 #[tauri::command]
 pub async fn connect_to_port<'a>(port: String, state: State<'a, SharedAppState>) -> Result<String, String> {
-    utils::connect_to_port(port, state).await
+    connection_utils::connect_to_port(port, state).await
 }
 
 #[tauri::command]
 pub fn get_ports() -> Vec<String> {
-    let mut ports_list = Vec::new();
-
-    // Attempt to get the list of available serial ports
-    if let Ok(ports) = available_ports() {
-        for port in ports {
-            // Add all detected port names, regardless of type
-            ports_list.push(port.port_name);
-        }
-    } else {
-        println!("Failed to list ports.");
-    }
-
-    ports_list
+    connection_utils::get_ports_list()
 }
 
 #[tauri::command]
 pub async fn disconnect_from_active_connection<'a>(state: State<'a, SharedAppState>) -> Result<String, String> {
-    // Lock the shared app state
-    let mut app_state = state.write().await;
-
-    if app_state.serial_connection.is_some() {
-        println!("###DEBUG### - Disconnecting from serial port.");
-
-        // Explicitly drop the connection
-        app_state.serial_connection = None;
-
-        // Give the OS time to release the port
-        tokio::time::sleep(Duration::from_millis(200)).await;
-
-        println!("###DEBUG### - Serial port disconnected.");
-        Ok("Successfully disconnected from the port.".to_string())
-    } else {
-        Err("No active serial connection.".to_string())
-    }
+    connection_utils::disconnect(state.inner()).await
 }
 
 #[tauri::command]
 pub async fn set_acceleration<'a>(acceleration: i8, state: State<'a, SharedAppState>) -> Result<String, String> {
-    // Convert to i16 to prevent overflow
-    let scaled_acceleration = (acceleration as i16) * constants::PARAMETERS_MULTIPLIER as i16;
-    let set_acc_command = format!("{}{}", constants::CommandCodes::SETACC, scaled_acceleration);
-
-    utils::send_command(&set_acc_command, state, None, "Successfully sent set_acc command").await
+    parameter_utils::set_acceleration(acceleration, state).await
 }
 
 #[tauri::command]
 pub async fn set_velocity<'a>(velocity: i8, state: State<'a, SharedAppState>) -> Result<String, String> {
-    // Convert to i16 to prevent overflow
-    let scaled_velocity = (velocity as i16) * constants::PARAMETERS_MULTIPLIER as i16;
-    let set_vel_command = format!("{}{}", constants::CommandCodes::SETVEL, scaled_velocity);
+    parameter_utils::set_velocity(velocity, state).await
+}
 
-    utils::send_command(&set_vel_command, state, None, "Successfully sent set_vel command").await
+#[tauri::command]
+pub async fn get_parameters<'a>(state: State<'a, SharedAppState>) -> Result<[u8; 2], String> {
+    parameter_utils::get_parameters(state.inner().clone()).await
 }
 
 #[tauri::command]
@@ -88,7 +57,7 @@ pub async fn move_step<'a>(app: AppHandle, joint_index: i8, mut n_steps: i16, st
     match response {
         Ok(resp) => {
             // Call `get_steppers_angles` to retrieve updated angles
-            if let Err(e) = utils::get_steppers_angles(&app, state.inner().clone()).await {
+            if let Err(e) = stepper_utils::get_steppers_angles(&app, state.inner().clone()).await {
                 return Err(format!("Error retrieving stepper angles: {}", e));
             }
 
@@ -100,10 +69,7 @@ pub async fn move_step<'a>(app: AppHandle, joint_index: i8, mut n_steps: i16, st
 
 #[tauri::command]
 pub async fn toggle_stepper<'a>(joint_index: i8, enabled: &str, state: State<'a, SharedAppState>) -> Result<String, String> {
-    // Arduino command format: TOGGLE>JOINT_STATE;
-    let toggle_command = format!("{}J{}_{};", constants::CommandCodes::TOGGLE, joint_index, enabled);
-
-    utils::send_command(&toggle_command, state, None, "Successfully sent toggle_step command").await
+    stepper_utils::toggle_stepper(joint_index, enabled, state).await
 }
 
 #[tauri::command]
@@ -146,43 +112,15 @@ pub async fn drive_steppers_to_angles<'a>(app: AppHandle, joints_angles: Vec<(i8
         })
         .collect();
 
-    utils::drive_steppers_to_angles(&app, adjusted_angles, state.inner().clone()).await
-}
-
-#[tauri::command]
-pub async fn get_parameters<'a>(state: State<'a, SharedAppState>) -> Result<[u8; 2], String> {
-    // Send the command using the shared connection
-    match send_and_receive_from_shared_state(constants::CommandCodes::PARAMS, state.inner().clone(), None).await {
-        Ok(response) => {
-            // Expected response format: "[PARAMS];VEL_20;ACC_40;"
-            if response.starts_with(constants::ResponseCodes::PARAMS_RESPONSE) {
-                let parts: Vec<&str> = response.split(';').collect();
-                let mut vel: u8 = 0;
-                let mut acc: u8 = 0;
-
-                for part in parts {
-                    if part.starts_with("VEL_") {
-                        vel = (part[4..].parse::<f32>().unwrap_or(0.0) / constants::PARAMETERS_MULTIPLIER as f32) as u8;
-                    } else if part.starts_with("ACC_") {
-                        acc = (part[4..].parse::<f32>().unwrap_or(0.0) / constants::PARAMETERS_MULTIPLIER as f32) as u8;
-                    }
-                }
-
-                Ok([vel, acc])
-            } else {
-                Err("Invalid response format".to_string())
-            }
-        }
-        Err(e) => Err(format!("Error: {}", e)),
-    }
+    stepper_utils::drive_steppers_to_angles(&app, adjusted_angles, state.inner().clone()).await
 }
 
 #[tauri::command]
 pub async fn check_steppers_state<'a>(state: State<'a, SharedAppState>) -> Result<[bool; 6], String> {
-    return utils::get_steppers_state(state.inner().clone()).await;
+    return stepper_utils::get_steppers_state(state.inner().clone()).await;
 }
 
 #[tauri::command]
 pub async fn get_steppers_angles<'a>(app: AppHandle, state: State<'a, SharedAppState>) -> Result<[Option<f32>; 6], String> {
-    return utils::get_steppers_angles(&app, state.inner().clone()).await;
+    return stepper_utils::get_steppers_angles(&app, state.inner().clone()).await;
 }

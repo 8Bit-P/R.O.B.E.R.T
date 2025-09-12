@@ -53,7 +53,7 @@ pub static JOINT_REDUCTIONS: Lazy<HashMap<u8, f32>> = Lazy::new(|| {
     m.insert(3, 100.0 / 16.0);
     m.insert(4, 60.0 / 16.0);
     m.insert(5, 32.0 / 16.0);
-    m.insert(6, 1.0 / 1.0); //TODO: register actual reduction
+    m.insert(6, 1.0 / 1.0); //No reduction on gripper rotatation
     m
 });
 
@@ -69,7 +69,7 @@ pub static MAX_ANGLES: Lazy<HashMap<u8, f32>> = Lazy::new(|| {
     m.insert(3, 120.0);
     m.insert(4, 270.0);
     m.insert(5, 45.0);
-    m.insert(6, 360.0); // J6 max angle 120°
+    //J6 has no max angles so it does not belong to this list
     m
 });
 

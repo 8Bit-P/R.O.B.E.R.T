@@ -1,146 +1,8 @@
 use crate::constants;
 use crate::state::SharedAppState;
-use std::sync::Arc;
-use tauri::State;
-use tauri::{AppHandle, Emitter};
-use tokio::sync::Mutex;
-use tokio::{
-    io::{AsyncReadExt, AsyncWriteExt},
-    time::{timeout, Duration},
-};
-use tokio_serial::{DataBits, Parity, SerialPortBuilderExt, StopBits};
-
-pub async fn send_and_receive_from_shared_state(
-    data: &str,
-    state: SharedAppState,
-    opt_timeout: Option<Duration>, // Optional timeout
-) -> Result<String, String> {
-    let timeout_duration = opt_timeout.unwrap_or(Duration::from_secs(3)); // Default to 3 seconds if None
-
-    // Acquire the lock on the shared state
-    let app_state = state.write().await;
-
-    // Check if a serial connection exists
-    let connection = match app_state.serial_connection.as_ref() {
-        Some(conn) => conn.clone(),
-        None => return Err("No serial connection available".to_string()),
-    };
-
-    // Concatenate '~' to the data
-    let data_to_send = format!("{}~", data);
-
-    println!("###DEBUG### - Sending data: {}", data_to_send);
-
-    // Correctly handle the lock on the serial connection
-    let mut port = connection.lock().await;
-
-    // Write the data to the port
-    port.write_all(data_to_send.as_bytes())
-        .await
-        .map_err(|e| format!("Failed to write to serial port: {}", e))?;
-    port.flush().await.map_err(|e| format!("Failed to flush serial port: {}", e))?;
-
-    println!("###DEBUG### - Waiting for response...");
-
-    let mut response = Vec::new();
-    let mut buffer = [0; 1024]; // Buffer to read data in chunks
-
-    let read_result = timeout(timeout_duration, async {
-        loop {
-            match port.read(&mut buffer).await {
-                Ok(bytes_read) => {
-                    response.extend_from_slice(&buffer[..bytes_read]);
-
-                    // Check if we have received a complete response
-                    if response.ends_with(b"\n") || response.ends_with(b"~") {
-                        break Ok(());
-                    }
-                }
-                Err(e) => {
-                    break Err(format!("Error reading from serial port: {}", e));
-                }
-            }
-        }
-    })
-    .await;
-
-    match read_result {
-        Ok(Ok(())) => {
-            let response_string = String::from_utf8_lossy(&response).to_string();
-            println!("###DEBUG### - Response obtained: {}", response_string);
-            Ok(response_string)
-        }
-        Ok(Err(e)) => Err(e),
-        Err(_) => Err("Timeout while waiting for response".to_string()),
-    }
-}
-
-pub async fn send_command(command: &str, state: State<'_, SharedAppState>, timeout: Option<Duration>, success_msg: &str) -> Result<String, String> {
-    match send_and_receive_from_shared_state(command, state.inner().clone(), timeout).await {
-        Ok(resp) => Ok(format!("{}: {}", success_msg, resp)),
-        Err(e) => Err(format!("Error: {}", e)),
-    }
-}
-
-pub async fn connect_to_port<'a>(port: String, state: State<'a, SharedAppState>) -> Result<String, String> {
-    let baud_rate = 115200;
-    let timeout_duration = Duration::from_secs(3);
-    let max_retries = 3;
-
-    for attempt in 1..=max_retries {
-        {
-            // Lock the state and clear any existing connection before trying again
-            let mut app_state = state.write().await;
-            if app_state.serial_connection.is_some() {
-                println!(
-                    "###DEBUG### - Attempt {}/{}: Closing existing connection before reconnecting.",
-                    attempt, max_retries
-                );
-                app_state.serial_connection = None;
-            }
-        }
-
-        println!("###DEBUG### - Attempt {}/{}: Connecting to port: {}", attempt, max_retries, port);
-
-        match tokio_serial::new(port.clone(), baud_rate)
-            .timeout(timeout_duration)
-            .data_bits(DataBits::Eight)
-            .parity(Parity::None)
-            .stop_bits(StopBits::One)
-            .open_native_async()
-        {
-            Ok(serial_connection) => {
-                let shared_connection = Arc::new(Mutex::new(serial_connection));
-
-                {
-                    let mut app_state = state.write().await;
-                    app_state.set_connection(shared_connection.clone());
-                }
-
-                match send_and_receive_from_shared_state(crate::constants::CommandCodes::CHECK, state.inner().clone(), None).await {
-                    Ok(response) => {
-                        if response.trim() == crate::constants::ResponseCodes::CONNECTED_RESPONSE {
-                            return Ok(format!("Successfully connected to port: {}.", port));
-                        } else {
-                            println!("###DEBUG### - Attempt {}/{}: Unexpected response: {}", attempt, max_retries, response);
-                        }
-                    }
-                    Err(e) => {
-                        println!("###DEBUG### - Attempt {}/{}: Failed to verify connection: {}", attempt, max_retries, e);
-                    }
-                }
-            }
-            Err(e) => {
-                println!("###DEBUG### - Attempt {}/{}: Failed to open serial port: {}", attempt, max_retries, e);
-            }
-        }
-
-        // Wait before retrying
-        tokio::time::sleep(Duration::from_millis(500)).await;
-    }
-
-    Err(format!("Failed to connect to port: {} after {} attempts.", port, max_retries))
-}
+use crate::utils::command_utils::send_and_receive_from_shared_state;
+use tauri::{AppHandle, Emitter, State};
+use tokio::time::Duration;
 
 //Sends state command to arduino and returns an array of bools representing the state of the steppers
 pub async fn get_steppers_state(state: SharedAppState) -> Result<[bool; 6], String> {
@@ -202,6 +64,7 @@ pub async fn get_steppers_steps(state: SharedAppState) -> Result<[Option<f32>; 6
     Ok(stepper_steps)
 }
 
+//Queries the arduino the steps of each stepper and converts them to angles according to their reductions and degrees, then emits an event for the frontend to listen
 pub async fn get_steppers_angles(app: &AppHandle, state: SharedAppState) -> Result<[Option<f32>; 6], String> {
     let steps = get_steppers_steps(state).await?;
     let mut angles = [None; 6];
@@ -232,6 +95,7 @@ pub async fn get_steppers_angles(app: &AppHandle, state: SharedAppState) -> Resu
     Ok(angles)
 }
 
+//Given a set of angles for the steppers, moves then to the specified angle
 pub async fn drive_steppers_to_angles(
     app: &AppHandle, // Pass by reference
     joints_angles: Vec<(i8, f32)>,
@@ -286,4 +150,11 @@ pub async fn drive_steppers_to_angles(
         }
         Err(e) => Err(format!("Error: {}", e)),
     }
+}
+
+/// Toggle a stepper on/off
+pub async fn toggle_stepper<'a>(joint_index: i8, enabled: &str, state: State<'a, SharedAppState>) -> Result<String, String> {
+    let toggle_command = format!("{}J{}_{};", constants::CommandCodes::TOGGLE, joint_index, enabled);
+
+    crate::utils::command_utils::send_command(&toggle_command, state, None, "Successfully sent toggle_step command").await
 }
