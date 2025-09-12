@@ -1,5 +1,6 @@
 use crate::state::SharedAppState;
 use crate::utils::command_utils::send_and_receive_from_shared_state;
+use colored::*;
 use serialport::available_ports;
 use std::sync::Arc;
 use tauri::State;
@@ -18,14 +19,19 @@ pub async fn connect_to_port<'a>(port: String, state: State<'a, SharedAppState>)
             let mut app_state = state.write().await;
             if app_state.serial_connection.is_some() {
                 println!(
-                    "###DEBUG### - Attempt {}/{}: Closing existing connection before reconnecting.",
-                    attempt, max_retries
+                    "{} {}",
+                    "###DEBUG###".yellow().bold(),
+                    format!("Attempt {}/{}: Closing existing connection before reconnecting.", attempt, max_retries).blue()
                 );
                 app_state.serial_connection = None;
             }
         }
 
-        println!("###DEBUG### - Attempt {}/{}: Connecting to port: {}", attempt, max_retries, port);
+        println!(
+            "{} {}",
+            "###DEBUG###".yellow().bold(),
+            format!("Attempt {}/{}: Connecting to port: {}", attempt, max_retries, port).cyan()
+        );
 
         match tokio_serial::new(port.clone(), baud_rate)
             .timeout(timeout_duration)
@@ -47,16 +53,33 @@ pub async fn connect_to_port<'a>(port: String, state: State<'a, SharedAppState>)
                         if response.trim() == crate::constants::ResponseCodes::CONNECTED_RESPONSE {
                             return Ok(format!("Successfully connected to port: {}.", port));
                         } else {
-                            println!("###DEBUG### - Attempt {}/{}: Unexpected response: {}", attempt, max_retries, response);
+                            println!(
+                                "{} {}",
+                                "###DEBUG###".yellow().bold(),
+                                format!("Attempt {}/{}: Unexpected response: {}", attempt, max_retries, response.red().bold())
+                            );
                         }
                     }
                     Err(e) => {
-                        println!("###DEBUG### - Attempt {}/{}: Failed to verify connection: {}", attempt, max_retries, e);
+                        println!(
+                            "{} {}",
+                            "###DEBUG###".yellow().bold(),
+                            format!("Attempt {}/{}: Failed to verify connection: {}", attempt, max_retries, e.red().bold())
+                        );
                     }
                 }
             }
             Err(e) => {
-                println!("###DEBUG### - Attempt {}/{}: Failed to open serial port: {}", attempt, max_retries, e);
+                println!(
+                    "{} {}",
+                    "###DEBUG###".yellow().bold(),
+                    format!(
+                        "Attempt {}/{}: Failed to open serial port: {}",
+                        attempt,
+                        max_retries,
+                        e.to_string().red().bold()
+                    )
+                );
             }
         }
 
@@ -76,19 +99,18 @@ pub fn get_ports_list() -> Vec<String> {
             ports_list.push(port.port_name);
         }
     } else {
-        println!("Failed to list ports.");
+        println!("{} {}", "###DEBUG###".yellow().bold(), "Failed to list ports.".blue());
     }
 
     ports_list
 }
-
 
 /// Disconnects from the currently active serial connection, if any.
 pub async fn disconnect(state: &SharedAppState) -> Result<String, String> {
     let mut app_state = state.write().await;
 
     if app_state.serial_connection.is_some() {
-        println!("###DEBUG### - Disconnecting from serial port.");
+        println!("{} {}", "###DEBUG###".yellow().bold(), "Disconnecting from serial port.".blue());
 
         // Drop the connection
         app_state.serial_connection = None;
@@ -96,7 +118,7 @@ pub async fn disconnect(state: &SharedAppState) -> Result<String, String> {
         // Allow OS to release the port
         sleep(Duration::from_millis(200)).await;
 
-        println!("###DEBUG### - Serial port disconnected.");
+        println!("{} {}", "###DEBUG###".yellow().bold(), "Serial port disconnected.".blue());
         Ok("Successfully disconnected from the port.".to_string())
     } else {
         Err("No active serial connection.".to_string())

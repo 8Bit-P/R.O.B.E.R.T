@@ -1,4 +1,5 @@
 use crate::state::SharedAppState;
+use colored::*;
 use tokio::{
     io::{AsyncReadExt, AsyncWriteExt},
     time::{timeout, Duration},
@@ -23,7 +24,7 @@ pub async fn send_and_receive_from_shared_state(
     // Concatenate '~' to the data
     let data_to_send = format!("{}~", data);
 
-    println!("###DEBUG### - Sending data: {}", data_to_send);
+    println!("{}", format!("###DEBUG### - Sending data: {}", data_to_send).blue());
 
     // Correctly handle the lock on the serial connection
     let mut port = connection.lock().await;
@@ -34,7 +35,7 @@ pub async fn send_and_receive_from_shared_state(
         .map_err(|e| format!("Failed to write to serial port: {}", e))?;
     port.flush().await.map_err(|e| format!("Failed to flush serial port: {}", e))?;
 
-    println!("###DEBUG### - Waiting for response...");
+    println!("{} {}", "###DEBUG###".yellow().bold(), "Waiting for response...".blue());
 
     let mut response = Vec::new();
     let mut buffer = [0; 1024]; // Buffer to read data in chunks
@@ -61,7 +62,7 @@ pub async fn send_and_receive_from_shared_state(
     match read_result {
         Ok(Ok(())) => {
             let response_string = String::from_utf8_lossy(&response).to_string();
-            println!("###DEBUG### - Response obtained: {}", response_string);
+            println!("{} {}", "###DEBUG###".yellow().bold(), format!("Response obtained: {}", response_string).cyan());
             Ok(response_string)
         }
         Ok(Err(e)) => Err(e),
