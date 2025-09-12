@@ -6,10 +6,7 @@ use tauri::{AppHandle, State};
 use tokio::time::Duration;
 
 #[tauri::command]
-pub async fn connect_to_port<'a>(
-    port: String,
-    state: State<'a, SharedAppState>,
-) -> Result<String, String> {
+pub async fn connect_to_port<'a>(port: String, state: State<'a, SharedAppState>) -> Result<String, String> {
     utils::connect_to_port(port, state).await
 }
 
@@ -31,9 +28,7 @@ pub fn get_ports() -> Vec<String> {
 }
 
 #[tauri::command]
-pub async fn disconnect_from_active_connection<'a>(
-    state: State<'a, SharedAppState>,
-) -> Result<String, String> {
+pub async fn disconnect_from_active_connection<'a>(state: State<'a, SharedAppState>) -> Result<String, String> {
     // Lock the shared app state
     let mut app_state = state.write().await;
 
@@ -54,50 +49,25 @@ pub async fn disconnect_from_active_connection<'a>(
 }
 
 #[tauri::command]
-pub async fn set_acceleration<'a>(
-    acceleration: i8,
-    state: State<'a, SharedAppState>,
-) -> Result<String, String> {
+pub async fn set_acceleration<'a>(acceleration: i8, state: State<'a, SharedAppState>) -> Result<String, String> {
     // Convert to i16 to prevent overflow
     let scaled_acceleration = (acceleration as i16) * constants::PARAMETERS_MULTIPLIER as i16;
-
     let set_acc_command = format!("{}{}", constants::CommandCodes::SETACC, scaled_acceleration);
 
-    match send_and_receive_from_shared_state(&set_acc_command, state.inner().clone(), None).await {
-        Ok(response) => Ok(format!(
-            "Successfully sent set_acc command. Response: {}",
-            response
-        )),
-        Err(e) => Err(format!("Error: {}", e)),
-    }
+    utils::send_command(&set_acc_command, state, None, "Successfully sent set_acc command").await
 }
 
 #[tauri::command]
-pub async fn set_velocity<'a>(
-    velocity: i8,
-    state: State<'a, SharedAppState>,
-) -> Result<String, String> {
+pub async fn set_velocity<'a>(velocity: i8, state: State<'a, SharedAppState>) -> Result<String, String> {
     // Convert to i16 to prevent overflow
     let scaled_velocity = (velocity as i16) * constants::PARAMETERS_MULTIPLIER as i16;
-
     let set_vel_command = format!("{}{}", constants::CommandCodes::SETVEL, scaled_velocity);
 
-    match send_and_receive_from_shared_state(&set_vel_command, state.inner().clone(), None).await {
-        Ok(response) => Ok(format!(
-            "Successfully sent set_vel command. Response: {}",
-            response
-        )),
-        Err(e) => Err(format!("Error: {}", e)),
-    }
+    utils::send_command(&set_vel_command, state, None, "Successfully sent set_vel command").await
 }
 
 #[tauri::command]
-pub async fn move_step<'a>(
-    app: AppHandle,
-    joint_index: i8,
-    mut n_steps: i16,
-    state: State<'a, SharedAppState>,
-) -> Result<String, String> {
+pub async fn move_step<'a>(app: AppHandle, joint_index: i8, mut n_steps: i16, state: State<'a, SharedAppState>) -> Result<String, String> {
     if joint_index <= 0 || joint_index as usize >= constants::STEPPER_POSITIVE_TO_LIMIT.len() {
         return Err("Invalid joint index".to_string());
     }
@@ -109,16 +79,10 @@ pub async fn move_step<'a>(
         n_steps = -n_steps;
     }
 
-    let move_step_command = format!(
-        "{}J{}_{};",
-        constants::CommandCodes::MOVE,
-        joint_index,
-        n_steps
-    );
+    let move_step_command = format!("{}J{}_{};", constants::CommandCodes::MOVE, joint_index, n_steps);
 
     // Send movement command
-    let response =
-        send_and_receive_from_shared_state(&move_step_command, state.inner().clone(), None).await;
+    let response = send_and_receive_from_shared_state(&move_step_command, state.inner().clone(), None).await;
 
     // If the command is successful, get updated stepper angles
     match response {
@@ -128,64 +92,29 @@ pub async fn move_step<'a>(
                 return Err(format!("Error retrieving stepper angles: {}", e));
             }
 
-            Ok(format!(
-                "Successfully sent move_step command. Response: {}",
-                resp
-            ))
+            Ok(format!("Successfully sent move_step command. Response: {}", resp))
         }
         Err(e) => Err(format!("Error: {}", e)),
     }
 }
 
 #[tauri::command]
-pub async fn toggle_stepper<'a>(
-    joint_index: i8,
-    enabled: &str,
-    state: State<'a, SharedAppState>,
-) -> Result<String, String> {
+pub async fn toggle_stepper<'a>(joint_index: i8, enabled: &str, state: State<'a, SharedAppState>) -> Result<String, String> {
     // Arduino command format: TOGGLE>JOINT_STATE;
-    let toggle_command = format!(
-        "{}J{}_{};",
-        constants::CommandCodes::TOGGLE,
-        joint_index,
-        enabled
-    );
+    let toggle_command = format!("{}J{}_{};", constants::CommandCodes::TOGGLE, joint_index, enabled);
 
-    // Send the command using the shared connection
-    match send_and_receive_from_shared_state(&toggle_command, state.inner().clone(), None).await {
-        Ok(response) => Ok(format!(
-            "Successfully sent toggle_step command. Response: {}",
-            response
-        )),
-        Err(e) => Err(format!("Error: {}", e)),
-    }
+    utils::send_command(&toggle_command, state, None, "Successfully sent toggle_step command").await
 }
 
 #[tauri::command]
-pub async fn calibrate_steppers<'a>(
-    joints_indexes: Vec<i8>,
-    state: State<'a, SharedAppState>,
-) -> Result<String, String> {
-    let joint_commands: Vec<String> = joints_indexes
-        .iter()
-        .map(|&index| format!("J{};", index))
-        .collect();
+pub async fn calibrate_steppers<'a>(joints_indexes: Vec<i8>, state: State<'a, SharedAppState>) -> Result<String, String> {
+    let joint_commands: Vec<String> = joints_indexes.iter().map(|&index| format!("J{};", index)).collect();
 
     // Join all joint commands with no separator, and prepend the CALIBRATE> part
-    let calibrate_command = format!(
-        "{}{}",
-        constants::CommandCodes::CALIBRATE,
-        joint_commands.join("")
-    );
+    let calibrate_command = format!("{}{}", constants::CommandCodes::CALIBRATE, joint_commands.join(""));
 
     // Send the command using the shared connection with a high timeout duration
-    match send_and_receive_from_shared_state(
-        &calibrate_command,
-        state.inner().clone(),
-        Some(Duration::from_secs(35)),
-    )
-    .await
-    {
+    match send_and_receive_from_shared_state(&calibrate_command, state.inner().clone(), Some(Duration::from_secs(35))).await {
         Ok(response) => {
             // Now that we have the response, trim it properly
             let trimmed_response = response
@@ -202,22 +131,14 @@ pub async fn calibrate_steppers<'a>(
 
 //Command assumes all joint angles are provided as positive numbers
 #[tauri::command]
-pub async fn drive_steppers_to_angles<'a>(
-    app: AppHandle,
-    joints_angles: Vec<(i8, f32)>,
-    state: State<'a, SharedAppState>,
-) -> Result<String, String> {
+pub async fn drive_steppers_to_angles<'a>(app: AppHandle, joints_angles: Vec<(i8, f32)>, state: State<'a, SharedAppState>) -> Result<String, String> {
     // Adjust angles based on the joint's positive limit switch
     let adjusted_angles: Vec<(i8, f32)> = joints_angles
         .into_iter()
         .map(|(joint_index, angle)| {
             let joint_index_u8 = joint_index as u8; // Convert to u8 for HashMap lookup
 
-            if constants::STEPPER_POSITIVE_TO_LIMIT
-                .get(&joint_index_u8)
-                .copied()
-                .unwrap_or(false)
-            {
+            if constants::STEPPER_POSITIVE_TO_LIMIT.get(&joint_index_u8).copied().unwrap_or(false) {
                 (joint_index, -angle) // Negate if true
             } else {
                 (joint_index, angle) // Keep as is
@@ -231,13 +152,7 @@ pub async fn drive_steppers_to_angles<'a>(
 #[tauri::command]
 pub async fn get_parameters<'a>(state: State<'a, SharedAppState>) -> Result<[u8; 2], String> {
     // Send the command using the shared connection
-    match send_and_receive_from_shared_state(
-        constants::CommandCodes::PARAMS,
-        state.inner().clone(),
-        None,
-    )
-    .await
-    {
+    match send_and_receive_from_shared_state(constants::CommandCodes::PARAMS, state.inner().clone(), None).await {
         Ok(response) => {
             // Expected response format: "[PARAMS];VEL_20;ACC_40;"
             if response.starts_with(constants::ResponseCodes::PARAMS_RESPONSE) {
@@ -247,13 +162,9 @@ pub async fn get_parameters<'a>(state: State<'a, SharedAppState>) -> Result<[u8;
 
                 for part in parts {
                     if part.starts_with("VEL_") {
-                        vel = (part[4..].parse::<f32>().unwrap_or(0.0)
-                            / constants::PARAMETERS_MULTIPLIER as f32)
-                            as u8;
+                        vel = (part[4..].parse::<f32>().unwrap_or(0.0) / constants::PARAMETERS_MULTIPLIER as f32) as u8;
                     } else if part.starts_with("ACC_") {
-                        acc = (part[4..].parse::<f32>().unwrap_or(0.0)
-                            / constants::PARAMETERS_MULTIPLIER as f32)
-                            as u8;
+                        acc = (part[4..].parse::<f32>().unwrap_or(0.0) / constants::PARAMETERS_MULTIPLIER as f32) as u8;
                     }
                 }
 
@@ -267,16 +178,11 @@ pub async fn get_parameters<'a>(state: State<'a, SharedAppState>) -> Result<[u8;
 }
 
 #[tauri::command]
-pub async fn check_steppers_state<'a>(
-    state: State<'a, SharedAppState>,
-) -> Result<[bool; 6], String> {
+pub async fn check_steppers_state<'a>(state: State<'a, SharedAppState>) -> Result<[bool; 6], String> {
     return utils::get_steppers_state(state.inner().clone()).await;
 }
 
 #[tauri::command]
-pub async fn get_steppers_angles<'a>(
-    app: AppHandle,
-    state: State<'a, SharedAppState>,
-) -> Result<[Option<f32>; 6], String> {
+pub async fn get_steppers_angles<'a>(app: AppHandle, state: State<'a, SharedAppState>) -> Result<[Option<f32>; 6], String> {
     return utils::get_steppers_angles(&app, state.inner().clone()).await;
 }

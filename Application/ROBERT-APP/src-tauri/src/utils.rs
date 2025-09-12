@@ -38,9 +38,7 @@ pub async fn send_and_receive_from_shared_state(
     port.write_all(data_to_send.as_bytes())
         .await
         .map_err(|e| format!("Failed to write to serial port: {}", e))?;
-    port.flush()
-        .await
-        .map_err(|e| format!("Failed to flush serial port: {}", e))?;
+    port.flush().await.map_err(|e| format!("Failed to flush serial port: {}", e))?;
 
     println!("###DEBUG### - Waiting for response...");
 
@@ -77,10 +75,14 @@ pub async fn send_and_receive_from_shared_state(
     }
 }
 
-pub async fn connect_to_port<'a>(
-    port: String,
-    state: State<'a, SharedAppState>,
-) -> Result<String, String> {
+pub async fn send_command(command: &str, state: State<'_, SharedAppState>, timeout: Option<Duration>, success_msg: &str) -> Result<String, String> {
+    match send_and_receive_from_shared_state(command, state.inner().clone(), timeout).await {
+        Ok(resp) => Ok(format!("{}: {}", success_msg, resp)),
+        Err(e) => Err(format!("Error: {}", e)),
+    }
+}
+
+pub async fn connect_to_port<'a>(port: String, state: State<'a, SharedAppState>) -> Result<String, String> {
     let baud_rate = 115200;
     let timeout_duration = Duration::from_secs(3);
     let max_retries = 3;
@@ -98,10 +100,7 @@ pub async fn connect_to_port<'a>(
             }
         }
 
-        println!(
-            "###DEBUG### - Attempt {}/{}: Connecting to port: {}",
-            attempt, max_retries, port
-        );
+        println!("###DEBUG### - Attempt {}/{}: Connecting to port: {}", attempt, max_retries, port);
 
         match tokio_serial::new(port.clone(), baud_rate)
             .timeout(timeout_duration)
@@ -118,36 +117,21 @@ pub async fn connect_to_port<'a>(
                     app_state.set_connection(shared_connection.clone());
                 }
 
-                match send_and_receive_from_shared_state(
-                    crate::constants::CommandCodes::CHECK,
-                    state.inner().clone(),
-                    None,
-                )
-                .await
-                {
+                match send_and_receive_from_shared_state(crate::constants::CommandCodes::CHECK, state.inner().clone(), None).await {
                     Ok(response) => {
                         if response.trim() == crate::constants::ResponseCodes::CONNECTED_RESPONSE {
                             return Ok(format!("Successfully connected to port: {}.", port));
                         } else {
-                            println!(
-                                "###DEBUG### - Attempt {}/{}: Unexpected response: {}",
-                                attempt, max_retries, response
-                            );
+                            println!("###DEBUG### - Attempt {}/{}: Unexpected response: {}", attempt, max_retries, response);
                         }
                     }
                     Err(e) => {
-                        println!(
-                            "###DEBUG### - Attempt {}/{}: Failed to verify connection: {}",
-                            attempt, max_retries, e
-                        );
+                        println!("###DEBUG### - Attempt {}/{}: Failed to verify connection: {}", attempt, max_retries, e);
                     }
                 }
             }
             Err(e) => {
-                println!(
-                    "###DEBUG### - Attempt {}/{}: Failed to open serial port: {}",
-                    attempt, max_retries, e
-                );
+                println!("###DEBUG### - Attempt {}/{}: Failed to open serial port: {}", attempt, max_retries, e);
             }
         }
 
@@ -155,10 +139,7 @@ pub async fn connect_to_port<'a>(
         tokio::time::sleep(Duration::from_millis(500)).await;
     }
 
-    Err(format!(
-        "Failed to connect to port: {} after {} attempts.",
-        port, max_retries
-    ))
+    Err(format!("Failed to connect to port: {} after {} attempts.", port, max_retries))
 }
 
 //Sends state command to arduino and returns an array of bools representing the state of the steppers
@@ -167,9 +148,7 @@ pub async fn get_steppers_state(state: SharedAppState) -> Result<[bool; 6], Stri
     let response = send_and_receive_from_shared_state(data, state, None).await?;
 
     // Parse the response
-    let state_str = response
-        .trim_start_matches(constants::ResponseCodes::STATE_RESPONSE)
-        .trim_end_matches("~");
+    let state_str = response.trim_start_matches(constants::ResponseCodes::STATE_RESPONSE).trim_end_matches("~");
 
     // Split the response into parts
     let parts: Vec<&str> = state_str.split(';').collect();
@@ -180,11 +159,7 @@ pub async fn get_steppers_state(state: SharedAppState) -> Result<[bool; 6], Stri
         // Strip any trailing newline or extra spaces from each part
         let part = part.trim();
 
-        if let Some(index) = part
-            .strip_prefix("J")
-            .and_then(|s| s.chars().next())
-            .and_then(|c| c.to_digit(10))
-        {
+        if let Some(index) = part.strip_prefix("J").and_then(|s| s.chars().next()).and_then(|c| c.to_digit(10)) {
             let idx = (index as usize).saturating_sub(1);
             if idx < 6 {
                 stepper_states[idx] = part.ends_with("ENABLED");
@@ -201,9 +176,7 @@ pub async fn get_steppers_steps(state: SharedAppState) -> Result<[Option<f32>; 6
     let response = send_and_receive_from_shared_state(data, state, Some(Duration::from_secs(8))).await?;
 
     // Parse the response
-    let state_str = response
-        .trim_start_matches(constants::ResponseCodes::STEPS_RESPONSE)
-        .trim_end_matches("~");
+    let state_str = response.trim_start_matches(constants::ResponseCodes::STEPS_RESPONSE).trim_end_matches("~");
 
     // Split the response into parts
     let parts: Vec<&str> = state_str.split(';').collect();
@@ -214,19 +187,12 @@ pub async fn get_steppers_steps(state: SharedAppState) -> Result<[Option<f32>; 6
         // Strip any trailing newline or extra spaces from each part
         let part = part.trim();
 
-        if let Some(index) = part
-            .strip_prefix("J")
-            .and_then(|s| s.chars().next())
-            .and_then(|c| c.to_digit(10))
-        {
+        if let Some(index) = part.strip_prefix("J").and_then(|s| s.chars().next()).and_then(|c| c.to_digit(10)) {
             let idx = (index as usize).saturating_sub(1);
             if idx < 6 {
                 if part.ends_with("UNKNOWN") {
                     stepper_steps[idx] = None;
-                } else if let Some(steps) = part
-                    .strip_prefix(&format!("J{}_", index))
-                    .and_then(|s| s.parse::<f32>().ok())
-                {
+                } else if let Some(steps) = part.strip_prefix(&format!("J{}_", index)).and_then(|s| s.parse::<f32>().ok()) {
                     stepper_steps[idx] = Some(steps);
                 }
             }
@@ -236,19 +202,15 @@ pub async fn get_steppers_steps(state: SharedAppState) -> Result<[Option<f32>; 6
     Ok(stepper_steps)
 }
 
-pub async fn get_steppers_angles(
-    app: &AppHandle,
-    state: SharedAppState,
-) -> Result<[Option<f32>; 6], String> {
+pub async fn get_steppers_angles(app: &AppHandle, state: SharedAppState) -> Result<[Option<f32>; 6], String> {
     let steps = get_steppers_steps(state).await?;
     let mut angles = [None; 6];
 
     for (i, step) in steps.iter().enumerate() {
         if let Some(steps) = step {
-            if let (Some(reduction_ratio), Some(degrees_per_step)) = (
-                constants::get_reduction_ratio((i + 1) as u8),
-                constants::get_degrees_per_step((i + 1) as u8),
-            ) {
+            if let (Some(reduction_ratio), Some(degrees_per_step)) =
+                (constants::get_reduction_ratio((i + 1) as u8), constants::get_degrees_per_step((i + 1) as u8))
+            {
                 angles[i] = Some(((*steps as f32) / reduction_ratio) * degrees_per_step);
             }
         }
@@ -272,7 +234,7 @@ pub async fn get_steppers_angles(
 
 pub async fn drive_steppers_to_angles(
     app: &AppHandle, // Pass by reference
-    joints_angles: Vec<(i8, f32)>, 
+    joints_angles: Vec<(i8, f32)>,
     state: SharedAppState,
 ) -> Result<String, String> {
     // Get the current angles of the steppers
@@ -296,26 +258,21 @@ pub async fn drive_steppers_to_angles(
 
         // Check if the target angle exceeds joint limits
         if target_angle > constants::get_max_angle(joint_id as u8).unwrap() {
-            return Err(format!(
-                "Target angle exceeds joint limits for J{}",
-                joint_id
-            ));
+            return Err(format!("Target angle exceeds joint limits for J{}", joint_id));
         }
 
         // Convert angle difference to steps
-        if let (Some(reduction_ratio), Some(degrees_per_step)) = (
-            constants::get_reduction_ratio(joint_id as u8),
-            constants::get_degrees_per_step(joint_id as u8),
-        ) {
-            let steps =
-                ((target_angle - current_angle) * (1.0 / degrees_per_step) * reduction_ratio).round() as i32;
+        if let (Some(reduction_ratio), Some(degrees_per_step)) =
+            (constants::get_reduction_ratio(joint_id as u8), constants::get_degrees_per_step(joint_id as u8))
+        {
+            let steps = ((target_angle - current_angle) * (1.0 / degrees_per_step) * reduction_ratio).round() as i32;
             move_command.push_str(&format!("J{}_{};", joint_id, steps));
         } else {
             return Err(format!("Invalid Joint: {}", joint_id));
         }
     }
 
-    let response = send_and_receive_from_shared_state(&move_command, state.clone(),  Some(Duration::from_secs(20))).await;
+    let response = send_and_receive_from_shared_state(&move_command, state.clone(), Some(Duration::from_secs(20))).await;
 
     // Send the command using the shared connection
     match response {
@@ -325,10 +282,7 @@ pub async fn drive_steppers_to_angles(
                 return Err(format!("Error retrieving stepper angles: {}", e));
             }
 
-            Ok(format!(
-                "Successfully sent move command. Response: {}",
-                response
-            ))
+            Ok(format!("Successfully sent move command. Response: {}", response))
         }
         Err(e) => Err(format!("Error: {}", e)),
     }
