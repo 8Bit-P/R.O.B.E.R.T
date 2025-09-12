@@ -1,7 +1,7 @@
 use crate::constants;
 use crate::state::SharedAppState;
 use crate::utils::command_utils::send_and_receive_from_shared_state;
-use tauri::{AppHandle, Emitter, State};
+use tauri::{AppHandle, Emitter};
 use tokio::time::Duration;
 
 //Sends state command to arduino and returns an array of bools representing the state of the steppers
@@ -101,13 +101,27 @@ pub async fn drive_steppers_to_angles(
     joints_angles: Vec<(i8, f32)>,
     state: SharedAppState,
 ) -> Result<String, String> {
+    // Adjust angles based on the joint's positive limit switch
+    let adjusted_angles: Vec<(i8, f32)> = joints_angles
+        .into_iter()
+        .map(|(joint_index, angle)| {
+            let joint_index_u8 = joint_index as u8; // Convert to u8 for HashMap lookup
+
+            if constants::STEPPER_POSITIVE_TO_LIMIT.get(&joint_index_u8).copied().unwrap_or(false) {
+                (joint_index, -angle) // Negate if true
+            } else {
+                (joint_index, angle) // Keep as is
+            }
+        })
+        .collect();
+
     // Get the current angles of the steppers
     let current_angles = get_steppers_angles(app, state.clone()).await?;
 
     let mut move_command = String::from(constants::CommandCodes::MOVE);
 
     // Build move command for each stepper taking into account current and max angles
-    for (joint_id, target_angle) in joints_angles {
+    for (joint_id, target_angle) in adjusted_angles {
         let joint_index = (joint_id - 1) as usize; // Convert joint ID to array index (1-based to 0-based)
 
         if joint_index >= 6 {
@@ -152,9 +166,62 @@ pub async fn drive_steppers_to_angles(
     }
 }
 
+/// Move a single stepper by a number of steps, taking into account the positive limit switch
+pub async fn move_step(app: &AppHandle, joint_index: i8, mut n_steps: i16, state: SharedAppState) -> Result<String, String> {
+    // Validate joint index
+    if joint_index <= 0 || joint_index as usize >= constants::STEPPER_POSITIVE_TO_LIMIT.len() {
+        return Err("Invalid joint index".to_string());
+    }
+
+    // Invert steps if joint has a positive limit switch
+    let joint_index_u8 = joint_index as u8;
+    if constants::STEPPER_POSITIVE_TO_LIMIT[&joint_index_u8] {
+        n_steps = -n_steps;
+    }
+
+    // Format command
+    let move_step_command = format!("{}J{}_{};", constants::CommandCodes::MOVE, joint_index, n_steps);
+
+    // Send command
+    let response = send_and_receive_from_shared_state(&move_step_command, state.clone(), None).await;
+
+    match response {
+        Ok(resp) => {
+            // Update stepper angles after movement
+            if let Err(e) = get_steppers_angles(app, state.clone()).await {
+                return Err(format!("Error retrieving stepper angles: {}", e));
+            }
+
+            Ok(format!("Successfully sent move_step command. Response: {}", resp))
+        }
+        Err(e) => Err(format!("Error: {}", e)),
+    }
+}
+
 /// Toggle a stepper on/off
-pub async fn toggle_stepper<'a>(joint_index: i8, enabled: &str, state: State<'a, SharedAppState>) -> Result<String, String> {
+pub async fn toggle_stepper<'a>(joint_index: i8, enabled: &str, state: SharedAppState) -> Result<String, String> {
     let toggle_command = format!("{}J{}_{};", constants::CommandCodes::TOGGLE, joint_index, enabled);
 
     crate::utils::command_utils::send_command(&toggle_command, state, None, "Successfully sent toggle_step command").await
+}
+
+/// Calibrate multiple steppers
+pub async fn calibrate_steppers(joints_indexes: Vec<i8>, state: SharedAppState) -> Result<String, String> {
+    // Format joint commands
+    let joint_commands: Vec<String> = joints_indexes.iter().map(|&index| format!("J{};", index)).collect();
+
+    // Prepend the CALIBRATE command
+    let calibrate_command = format!("{}{}", constants::CommandCodes::CALIBRATE, joint_commands.join(""));
+
+    // Send command with high timeout
+    let response = send_and_receive_from_shared_state(&calibrate_command, state, Some(Duration::from_secs(35))).await?;
+
+    // Trim response to remove protocol markers
+    let trimmed_response = response
+        .trim_start_matches(constants::ResponseCodes::CALIBRATION_RESPONSE)
+        .trim_end_matches('~')
+        .trim()
+        .to_string();
+
+    Ok(trimmed_response)
 }

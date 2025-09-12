@@ -1,5 +1,4 @@
 use crate::state::SharedAppState;
-use tauri::State;
 use tokio::{
     io::{AsyncReadExt, AsyncWriteExt},
     time::{timeout, Duration},
@@ -70,8 +69,8 @@ pub async fn send_and_receive_from_shared_state(
     }
 }
 
-pub async fn send_command(command: &str, state: State<'_, SharedAppState>, timeout: Option<Duration>, success_msg: &str) -> Result<String, String> {
-    match send_and_receive_from_shared_state(command, state.inner().clone(), timeout).await {
+pub async fn send_command(command: &str, state: SharedAppState, timeout: Option<Duration>, success_msg: &str) -> Result<String, String> {
+    match send_and_receive_from_shared_state(command, state, timeout).await {
         Ok(resp) => Ok(format!("{}: {}", success_msg, resp)),
         Err(e) => Err(format!("Error: {}", e)),
     }

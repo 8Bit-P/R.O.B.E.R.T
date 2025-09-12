@@ -1,16 +1,16 @@
 use crate::constants;
 use crate::state::SharedAppState;
 use crate::utils::command_utils::{self, send_and_receive_from_shared_state};
-use tauri::State;
 
-pub async fn set_acceleration<'a>(acceleration: i8, state: State<'a, SharedAppState>) -> Result<String, String> {
+
+pub async fn set_acceleration<'a>(acceleration: i8, state: SharedAppState) -> Result<String, String> {
     let scaled_acceleration = (acceleration as i16) * constants::PARAMETERS_MULTIPLIER as i16;
     let set_acc_command = format!("{}{}", constants::CommandCodes::SETACC, scaled_acceleration);
 
     command_utils::send_command(&set_acc_command, state, None, "Successfully sent set_acc command").await
 }
 
-pub async fn set_velocity<'a>(velocity: i8, state: State<'a, SharedAppState>) -> Result<String, String> {
+pub async fn set_velocity<'a>(velocity: i8, state: SharedAppState) -> Result<String, String> {
     let scaled_velocity = (velocity as i16) * constants::PARAMETERS_MULTIPLIER as i16;
     let set_vel_command = format!("{}{}", constants::CommandCodes::SETVEL, scaled_velocity);
 
