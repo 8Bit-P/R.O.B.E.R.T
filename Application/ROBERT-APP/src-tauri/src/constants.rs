@@ -28,7 +28,6 @@ impl ResponseCodes {
     pub const PARAMS_RESPONSE: &'static str = "[PARAMS];";
 }
 
-/* TODO: use */
 // Error Codes (as a HashMap for easy lookup by code)
 pub static ERROR_CODES: Lazy<HashMap<&'static str, &'static str>> = Lazy::new(|| {
     let mut m = HashMap::new();
@@ -40,10 +39,6 @@ pub static ERROR_CODES: Lazy<HashMap<&'static str, &'static str>> = Lazy::new(||
     m
 });
 
-// Optional helper function to get error messages by code
-pub fn get_error_message(code: &str) -> Option<&'static str> {
-    ERROR_CODES.get(code).copied()
-}
 
 // Joint Reduction Ratios (as a HashMap where key = Joint ID, value = reduction ratio as a float)
 pub static JOINT_REDUCTIONS: Lazy<HashMap<u8, f32>> = Lazy::new(|| {

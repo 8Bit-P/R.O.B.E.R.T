@@ -1,5 +1,5 @@
-import RecordPositions from '../RecordPositions';
-import ScriptRunner from '../ScriptRunner';
+import RecordPositions from '../../RecordPositions';
+import ScriptRunner from '../../ScriptRunner';
 
 const RecordMovements = () => {
   return (

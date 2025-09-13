@@ -1,4 +1,5 @@
 use crate::state::SharedAppState;
+use crate::constants;
 use colored::*;
 use tokio::{
     io::{AsyncReadExt, AsyncWriteExt},
@@ -63,6 +64,14 @@ pub async fn send_and_receive_from_shared_state(
         Ok(Ok(())) => {
             let response_string = String::from_utf8_lossy(&response).to_string();
             println!("{} {}", "###DEBUG###".yellow().bold(), format!("Response obtained: {}", response_string).cyan());
+
+            // Check for known error codes
+            for (code, message) in constants::ERROR_CODES.iter() {
+                if response_string.contains(code) {
+                    return Err(format!("{} ({})", message, code));
+                }
+            }
+
             Ok(response_string)
         }
         Ok(Err(e)) => Err(e),

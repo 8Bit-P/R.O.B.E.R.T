@@ -1,6 +1,6 @@
-import { useStepperContext } from "../../context/StepperContext";
-import { useConnection } from "../../context/ConnectionContext";
-import ToggleInput from "../ToggleInput";
+import { useStepperContext } from "../../../context/StepperContext";
+import { useConnection } from "../../../context/ConnectionContext";
+import ToggleInput from "../../ToggleInput";
 
 const EnableSteppers = () => {
   const { isConnected } = useConnection();

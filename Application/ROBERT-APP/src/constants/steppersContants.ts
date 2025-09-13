@@ -6,7 +6,7 @@ export const STEPPER_LIMITS: Record<number, number> = {
   3: 120,
   4: 270,
   5: 45, //TODO: set when joints developed
-  6: 360, //TODO: set when joints developed
+  6: 360,
 };
 
 export const enum CalibrationStates {

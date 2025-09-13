@@ -1,7 +1,7 @@
 import { useEffect } from "react";
-import { useConnection } from "../../context/ConnectionContext";
-import { ConnectionStates, DEFAULT_PORT_LABEL } from "../../constants/connectionConstants";
-import ToggleInput from "../ToggleInput";
+import { useConnection } from "../../../context/ConnectionContext";
+import { ConnectionStates, DEFAULT_PORT_LABEL } from "../../../constants/connectionConstants";
+import ToggleInput from "../../ToggleInput";
 
 const Connection = () => {
   const {

@@ -1,12 +1,13 @@
 import './App.css';
 import Card from './components/Card';
-import Calibration from './components/Cards/Calibration';
-import Connection from './components/Cards/Connection';
-import JointControl from './components/Cards/JointControl';
-import Joints from './components/Cards/Joints';
-import Parameters from './components/Cards/Parameters';
-import EnableSteppers from './components/Cards/EnableSteppers';
-import RecordMovements from './components/Cards/RecordMovements';
+import Calibration from './components/Cards/MainDashboard/Calibration';
+import Connection from './components/Cards/MainDashboard/Connection';
+import JointControl from './components/Cards/MainDashboard/JointControl';
+import Joints from './components/Cards/MainDashboard/Joints';
+import Parameters from './components/Cards/MainDashboard/Parameters';
+import EnableSteppers from './components/Cards/MainDashboard/EnableSteppers';
+import RecordMovements from './components/Cards/MainDashboard/RecordMovements';
+import Simulation from './components/Cards/Kinematics/Simulation';
 
 import { ConnectionProvider } from './context/ConnectionContext';
 import { Toaster } from 'react-hot-toast';
@@ -26,7 +27,7 @@ function App() {
             </div>
           </div>
 
-          <div className="grid gap-1 gap-y-1 mt-[60px]" style={{ gridTemplateColumns: 'repeat(20, 50px)', gridTemplateRows: 'repeat(12, 50px)' }}>
+          <div className="w-[1060px] grid gap-1 gap-y-1 mt-[60px]" style={{ gridTemplateColumns: 'repeat(20, 50px)', gridTemplateRows: 'repeat(12, 50px)' }}>
             <div className="col-span-6 row-span-6">
               <Card width={300} height={300} title={'Joints'} children={<Joints />} />
             </div>
@@ -47,6 +48,26 @@ function App() {
             </div>
             <div className="col-span-6 row-span-6">
               <Card width={300} height={300} title={'Recorded movements'} children={<RecordMovements />} />
+            </div>
+          </div>
+
+          <div className="w-[1060px] text-left mt-10">
+            <h2 className="text-3xl font-bold" style={{ fontFamily: 'nothing' }}>
+              Kinematics
+            </h2>
+          </div>
+
+          <div className="w-[1060px] grid gap-1 gap-y-1 mt-[60px]" style={{ gridTemplateColumns: 'repeat(20, 50px)', gridTemplateRows: 'repeat(12, 50px)' }}>
+            <div className="col-span-12 row-span-12">
+              <Card width={600} height={600} title={'Simulation'} children={<Simulation/>} />
+            </div>
+
+            <div className="col-span-6 row-span-6">
+              <Card width={415} height={300} title={'Kinematics control'} children={<></>} />
+            </div>
+
+            <div className="col-span-6 row-span-6">
+              <Card width={415} height={275} title={'Kinematics control'} children={<></>} />
             </div>
           </div>
         </main>

@@ -1,9 +1,9 @@
-import { useConnection } from '../../context/ConnectionContext';
-import { driveAPIStepperToAngle, moveAPIStep } from '../../api/commands';
+import { useConnection } from '../../../context/ConnectionContext';
+import { driveAPIStepperToAngle, moveAPIStep } from '../../../api/commands';
 import { useState } from 'react';
 
 import toast from 'react-hot-toast';
-import { DEFAULT_INCREMENT_STEPS, STEPPER_LIMITS } from '../../constants/steppersContants';
+import { DEFAULT_INCREMENT_STEPS, STEPPER_LIMITS } from '../../../constants/steppersContants';
 
 const JointControl = () => {
   const { isConnected } = useConnection();

@@ -1,7 +1,7 @@
 import React from 'react';
 import { useEffect, useState } from 'react';
-import { useConnection } from '../../context/ConnectionContext';
-import { useStepperContext } from '../../context/StepperContext';
+import { useConnection } from '../../../context/ConnectionContext';
+import { useStepperContext } from '../../../context/StepperContext';
 
 const Parameters = () => {
   const { acceleration, velocity, setVelocity, setAcceleration } = useStepperContext();
