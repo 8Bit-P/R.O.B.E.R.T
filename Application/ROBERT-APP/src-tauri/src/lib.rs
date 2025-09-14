@@ -2,6 +2,7 @@ mod commands;
 mod utils;
 mod constants;
 mod state;
+mod structs;
 
 use tauri::async_runtime::RwLock;
 use state::SharedAppState;

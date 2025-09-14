@@ -8,10 +8,14 @@ import Parameters from './components/Cards/MainDashboard/Parameters';
 import EnableSteppers from './components/Cards/MainDashboard/EnableSteppers';
 import RecordMovements from './components/Cards/MainDashboard/RecordMovements';
 import Simulation from './components/Cards/Kinematics/Simulation';
+import KinematicsControl from './components/Cards/Kinematics/KinematicsControl';
+import RobotTransform from './components/Cards/Kinematics/RobotTransform';
 
 import { ConnectionProvider } from './context/ConnectionContext';
-import { Toaster } from 'react-hot-toast';
+import { KinematicProvider } from './context/KinematicContext';
 import { StepperProvider } from './context/StepperContext';
+import { Toaster } from 'react-hot-toast';
+
 
 function App() {
   return (
@@ -57,19 +61,24 @@ function App() {
             </h2>
           </div>
 
-          <div className="w-[1060px] grid gap-1 gap-y-1 mt-[60px]" style={{ gridTemplateColumns: 'repeat(20, 50px)', gridTemplateRows: 'repeat(12, 50px)' }}>
-            <div className="col-span-12 row-span-12">
-              <Card width={600} height={600} title={'Simulation'} children={<Simulation/>} />
-            </div>
+          <KinematicProvider>
+            <div
+              className="w-[1060px] grid gap-0.5 gap-y-0.5 mt-[60px]"
+              style={{ gridTemplateColumns: 'repeat(20, 50px)', gridTemplateRows: 'repeat(12, 50px)' }}
+            >
+              <div className="col-span-12 row-span-12">
+                <Card width={600} height={600} title={'Simulation'} dark={true} children={<Simulation />} />
+              </div>
 
-            <div className="col-span-6 row-span-6">
-              <Card width={415} height={300} title={'Kinematics control'} children={<></>} />
-            </div>
+              <div className="col-span-6 row-span-6">
+                <Card width={415} height={360} title={'Kinematics control'} children={<KinematicsControl />} />
+              </div>
 
-            <div className="col-span-6 row-span-6">
-              <Card width={415} height={275} title={'Kinematics control'} children={<></>} />
+              <div className="col-span-6 row-span-6 mt-[75px]">
+                <Card width={415} height={210} title={'End Effector Transform'} children={<RobotTransform />} />
+              </div>
             </div>
-          </div>
+          </KinematicProvider>
         </main>
       </ConnectionProvider>
     </StepperProvider>
