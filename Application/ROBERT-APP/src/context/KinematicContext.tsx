@@ -1,5 +1,5 @@
-import React, { createContext, useContext, useState, ReactNode, useEffect } from "react";
-import { listen } from "@tauri-apps/api/event";
+import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import { listen } from '@tauri-apps/api/event';
 
 export interface Transform {
   x: number;
@@ -25,9 +25,7 @@ const defaultTransform: Transform = {
   roll: 0,
 };
 
-const KinematicContext = createContext<KinematicContextType | undefined>(
-  undefined
-);
+const KinematicContext = createContext<KinematicContextType | undefined>(undefined);
 
 export const KinematicProvider = ({ children }: { children: ReactNode }) => {
   const [transform, setTransform] = useState<Transform>(defaultTransform);
@@ -37,9 +35,11 @@ export const KinematicProvider = ({ children }: { children: ReactNode }) => {
   };
 
   useEffect(() => {
-    const unlisten = listen<Transform>("report-robot-transform", (event) => {
-      const { x, y, z, yaw, pitch, roll } = event.payload;
+    let unlisten: (() => void) | undefined;
 
+    // listen returns a Promise that resolves to the unlisten function
+    listen<Transform>('report-robot-transform', (event) => {
+      const { x, y, z, yaw, pitch, roll } = event.payload;
       setTransform({
         x: x ?? 0,
         y: y ?? 0,
@@ -48,27 +48,23 @@ export const KinematicProvider = ({ children }: { children: ReactNode }) => {
         pitch: pitch ?? 0,
         roll: roll ?? 0,
       });
+    }).then((fn) => {
+      unlisten = fn;
     });
 
+    // cleanup on unmount
     return () => {
-      // Clean up the subscription on unmount
-      unlisten.then((dispose) => dispose());
+      if (unlisten) unlisten();
     };
   }, []);
 
-  return (
-    <KinematicContext.Provider
-      value={{ transform, setTransform, updateTransform }}
-    >
-      {children}
-    </KinematicContext.Provider>
-  );
+  return <KinematicContext.Provider value={{ transform, setTransform, updateTransform }}>{children}</KinematicContext.Provider>;
 };
 
 export const useKinematic = () => {
   const context = useContext(KinematicContext);
   if (!context) {
-    throw new Error("useKinematic must be used within a KinematicProvider");
+    throw new Error('useKinematic must be used within a KinematicProvider');
   }
   return context;
 };

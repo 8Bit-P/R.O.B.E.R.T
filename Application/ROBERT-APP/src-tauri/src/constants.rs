@@ -103,6 +103,7 @@ lazy_static::lazy_static! {
 //Velocity and acceleration "sensitivity"
 pub const PARAMETERS_MULTIPLIER: u8 = 10;
 
+/* TODO: move this into structs folder */
 //Denavit–Hartenberg (DH) parameters
 #[derive(Debug, Clone, Copy)]
 pub struct DHParameters {
@@ -154,15 +155,8 @@ pub static DH_TABLE: Lazy<[DHParameters; 6]> = Lazy::new(|| {
     ]
 });
 
-// Helper to get parameters by joint index (1-6)
-pub fn get_dh_parameters(joint_id: u8) -> Option<DHParameters> {
-    if joint_id >= 1 && joint_id <= 6 {
-        Some(DH_TABLE[(joint_id - 1) as usize])
-    } else {
-        None
-    }
-}
 
+/* TODO: move this into structs folder */
 #[derive(Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SteppersAngles {

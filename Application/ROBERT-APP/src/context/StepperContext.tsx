@@ -7,6 +7,7 @@ import {
   setAPIAcceleration,
   setAPIVelocity,
   calibrateAPIStepper,
+  getFKFromAngles,
 } from '../api/commands';
 import { listen } from '@tauri-apps/api/event';
 import { SteppersAngles } from '../interfaces/SteppersAngles';
@@ -87,6 +88,9 @@ export const StepperProvider: React.FC<StepperProviderProps> = ({ children }) =>
       setAngles(anglesRecord); // Store the angles record
     } catch (error) {
       toast.error('Error fetching steppers angles');
+    } finally {
+      //Fetch also the Transform of the arm
+      await getFKFromAngles();
     }
   };
 
@@ -213,7 +217,7 @@ export const StepperProvider: React.FC<StepperProviderProps> = ({ children }) =>
   // Listen for stepper angles update event
   listen<SteppersAngles>('report-steppers-angles', (event) => {
     const { j1, j2, j3, j4, j5, j6 } = event.payload;
-
+    
     setAngles({
       0: j1 !== null ? Math.abs(j1) : null,
       1: j2 !== null ? Math.abs(j2) : null,
