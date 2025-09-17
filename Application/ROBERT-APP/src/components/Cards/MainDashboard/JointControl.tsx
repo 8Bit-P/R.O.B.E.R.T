@@ -91,12 +91,12 @@ const JointControl = () => {
               <label className="font-medium text-gray-700">J{index + 1}</label>
               <input
                 type="number"
-                min="0"
-                max={STEPPER_LIMITS[index + 1]}
+                min={STEPPER_LIMITS[index + 1].min}
+                max={STEPPER_LIMITS[index + 1].max}
                 value={jointValues[index]} // Controlled input
                 onChange={(e) => handleInputChange(index, e.target.value)}
-                className="w-full p-2 border border-gray-300 rounded-md text-center hover:border-blue-400 hover:bg-blue-50"
-                placeholder={'0-' + STEPPER_LIMITS[index + 1] + 'º'}
+                className="w-full p-2 border border-gray-300 rounded-md text-center hover:border-blue-400 hover:bg-blue-50 placeholder:text-sm placeholder:text-gray-400"
+                placeholder={`${STEPPER_LIMITS[index + 1].min} – ${STEPPER_LIMITS[index + 1].max}º`}
               />
             </div>
           ))}

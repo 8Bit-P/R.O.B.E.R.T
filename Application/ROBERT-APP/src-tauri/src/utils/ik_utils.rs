@@ -37,8 +37,7 @@ pub fn forward_kinematics(joint_angles: [f32; 6]) -> Transform {
 
     Transform {
         position,
-        rotation: Rotation3::from_euler_angles(roll, pitch, yaw).into(),
-        scale: nalgebra::Vector3::new(1.0, 1.0, 1.0),
+        rotation: Rotation3::from_euler_angles(roll, pitch, yaw).into()
     }
 }
 

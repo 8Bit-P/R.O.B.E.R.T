@@ -1,5 +1,6 @@
-use crate::constants;
+use crate::constants::{self, STEPPER_POSITIVE_TO_LIMIT};
 use crate::state::SharedAppState;
+use crate::structs::angles::SteppersAngles;
 use crate::utils::command_utils::send_and_receive_from_shared_state;
 use tauri::{AppHandle, Emitter};
 use tokio::time::Duration;
@@ -74,13 +75,26 @@ pub async fn get_steppers_angles(app: &AppHandle, state: SharedAppState) -> Resu
             if let (Some(reduction_ratio), Some(degrees_per_step)) =
                 (constants::get_reduction_ratio((i + 1) as u8), constants::get_degrees_per_step((i + 1) as u8))
             {
-                angles[i] = Some(((*steps as f32) / reduction_ratio) * degrees_per_step);
+                // 1. Compute absolute mechanical angle
+                let mut angle = ((*steps as f32) / reduction_ratio) * degrees_per_step;
+
+                // 2. Flip sign if this joint's direction is inverted
+                if STEPPER_POSITIVE_TO_LIMIT.get(&((i + 1) as u8)).copied().unwrap_or(false) {
+                    angle = -angle;
+                }
+
+                // 3. Convert to relative angle (0 at min)
+                if let Some(limits) = constants::get_max_angles((i + 1) as u8) {
+                    angle -= limits.min.abs();
+                }
+
+                angles[i] = Some(angle);
             }
         }
     }
 
     // Convert `angles` array into `SteppersAngles` struct
-    let steppers_angles = constants::SteppersAngles {
+    let steppers_angles = SteppersAngles {
         j1: angles[0],
         j2: angles[1],
         j3: angles[2],
@@ -95,25 +109,29 @@ pub async fn get_steppers_angles(app: &AppHandle, state: SharedAppState) -> Resu
     Ok(angles)
 }
 
+/// Validate a set of joint angles against their configured limits.
+pub fn validate_joint_angles(joints_angles: &Vec<(i8, f32)>) -> Result<(), String> {
+    for (joint_id, angle) in joints_angles {
+        if let Some(limits) = constants::get_max_angles(*joint_id as u8) {
+            if *angle < limits.min || *angle > limits.max {
+                return Err(format!(
+                    "Target angle {} exceeds joint limits [{}, {}] for J{}",
+                    angle, limits.min, limits.max, joint_id
+                ));
+            }
+        }
+    }
+    Ok(())
+}
+
 //Given a set of angles for the steppers, moves then to the specified angle
 pub async fn drive_steppers_to_angles(
     app: &AppHandle, // Pass by reference
     joints_angles: Vec<(i8, f32)>,
     state: SharedAppState,
 ) -> Result<String, String> {
-    // Adjust angles based on the joint's positive limit switch
-    let adjusted_angles: Vec<(i8, f32)> = joints_angles
-        .into_iter()
-        .map(|(joint_index, angle)| {
-            let joint_index_u8 = joint_index as u8; // Convert to u8 for HashMap lookup
-
-            if constants::STEPPER_POSITIVE_TO_LIMIT.get(&joint_index_u8).copied().unwrap_or(false) {
-                (joint_index, -angle) // Negate if true
-            } else {
-                (joint_index, angle) // Keep as is
-            }
-        })
-        .collect();
+    // Validate angles first
+    validate_joint_angles(&joints_angles)?;
 
     // Get the current angles of the steppers
     let current_angles = get_steppers_angles(app, state.clone()).await?;
@@ -121,7 +139,7 @@ pub async fn drive_steppers_to_angles(
     let mut move_command = String::from(constants::CommandCodes::MOVE);
 
     // Build move command for each stepper taking into account current and max angles
-    for (joint_id, target_angle) in adjusted_angles {
+    for (joint_id, target_angle) in joints_angles {
         let joint_index = (joint_id - 1) as usize; // Convert joint ID to array index (1-based to 0-based)
 
         if joint_index >= 6 {
@@ -134,16 +152,20 @@ pub async fn drive_steppers_to_angles(
             None => return Err(format!("Current angle for J{} is unknown", joint_id)),
         };
 
-        // Check if the target angle exceeds joint limits
-        if target_angle > constants::get_max_angle(joint_id as u8).unwrap() {
-            return Err(format!("Target angle exceeds joint limits for J{}", joint_id));
-        }
-
         // Convert angle difference to steps
         if let (Some(reduction_ratio), Some(degrees_per_step)) =
             (constants::get_reduction_ratio(joint_id as u8), constants::get_degrees_per_step(joint_id as u8))
         {
-            let steps = ((target_angle - current_angle) * (1.0 / degrees_per_step) * reduction_ratio).round() as i32;
+            // Determine direction based on positive-to-limit mapping
+            let sign_multiplier = if constants::STEPPER_POSITIVE_TO_LIMIT.get(&(joint_id as u8)).copied().unwrap_or(false) {
+                -1.0
+            } else {
+                1.0
+            };
+
+            // Compute steps with correct direction
+            let steps = (((target_angle - current_angle) * sign_multiplier) * (1.0 / degrees_per_step) * reduction_ratio).round() as i32;
+
             move_command.push_str(&format!("J{}_{};", joint_id, steps));
         } else {
             return Err(format!("Invalid Joint: {}", joint_id));
@@ -169,13 +191,13 @@ pub async fn drive_steppers_to_angles(
 /// Move a single stepper by a number of steps, taking into account the positive limit switch
 pub async fn move_step(app: &AppHandle, joint_index: i8, mut n_steps: i16, state: SharedAppState) -> Result<String, String> {
     // Validate joint index
-    if joint_index <= 0 || joint_index as usize >= constants::STEPPER_POSITIVE_TO_LIMIT.len() {
+    if joint_index <= 0 || joint_index as usize >= STEPPER_POSITIVE_TO_LIMIT.len() {
         return Err("Invalid joint index".to_string());
     }
 
     // Invert steps if joint has a positive limit switch
     let joint_index_u8 = joint_index as u8;
-    if constants::STEPPER_POSITIVE_TO_LIMIT[&joint_index_u8] {
+    if STEPPER_POSITIVE_TO_LIMIT[&joint_index_u8] {
         n_steps = -n_steps;
     }
 

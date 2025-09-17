@@ -83,7 +83,7 @@ export const StepperProvider: React.FC<StepperProviderProps> = ({ children }) =>
       const data: (number | null)[] = await getAPISteppersAngles();
 
       // Create an angles record with absolute values (or null if the angle is null)
-      const anglesRecord: Record<number, number | null> = Object.fromEntries(data.map((angle, index) => [index, angle !== null ? Math.abs(angle) : null]));
+      const anglesRecord: Record<number, number | null> = Object.fromEntries(data.map((angle, index) => [index, angle]));
 
       setAngles(anglesRecord); // Store the angles record
     } catch (error) {
@@ -217,14 +217,14 @@ export const StepperProvider: React.FC<StepperProviderProps> = ({ children }) =>
   // Listen for stepper angles update event
   listen<SteppersAngles>('report-steppers-angles', (event) => {
     const { j1, j2, j3, j4, j5, j6 } = event.payload;
-    
+
     setAngles({
-      0: j1 !== null ? Math.abs(j1) : null,
-      1: j2 !== null ? Math.abs(j2) : null,
-      2: j3 !== null ? Math.abs(j3) : null,
-      3: j4 !== null ? Math.abs(j4) : null,
-      4: j5 !== null ? Math.abs(j5) : null,
-      5: j6 !== null ? Math.abs(j6) : null,
+      0: j1,
+      1: j2,
+      2: j3,
+      3: j4,
+      4: j5,
+      5: j6,
     });
   });
 
