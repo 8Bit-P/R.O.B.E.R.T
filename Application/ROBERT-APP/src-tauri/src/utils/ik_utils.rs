@@ -20,6 +20,12 @@ pub fn forward_kinematics_all(joint_angles: [f32; 6]) -> Vec<Transform> {
     let mut t_total = Matrix4::<f32>::identity();
     let mut transforms: Vec<Transform> = Vec::new();
 
+    // Push the base origin (J1)
+    transforms.push(Transform {
+        position: Vector3::new(0.0, 0.0, 0.0),
+        rotation: Rotation3::identity().into(),
+    });
+
     for (i, dh) in constants::DH_TABLE.iter().enumerate() {
         // Add the current joint angle to the base theta
         let theta = dh.theta + joint_angles[i];
@@ -34,11 +40,15 @@ pub fn forward_kinematics_all(joint_angles: [f32; 6]) -> Vec<Transform> {
         let yaw = rot[(1, 0)].atan2(rot[(0, 0)]);
         let roll = rot[(2, 1)].atan2(rot[(2, 2)]);
 
-        transforms.push(Transform { position, rotation: Rotation3::from_euler_angles(roll, pitch, yaw).into() });
+        transforms.push(Transform {
+            position,
+            rotation: Rotation3::from_euler_angles(roll, pitch, yaw).into(),
+        });
     }
 
     transforms
 }
+
 
 //Fetches the stepper angles from the arduino and calculates the transform of the end effector
 //It returns it as an array [x,y,z,yaw,pitch,roll]
@@ -50,7 +60,7 @@ pub async fn get_robot_transform_from_angles(app: &AppHandle, state: SharedAppSt
     // Convert Option<f32> to f32 with 0.0 fallback
     let joint_angles: [f32; 6] = stepper_angles.map(|angle_opt| angle_opt.unwrap_or(0.0));
     // let joint_angles: [f32; 6] = [30.0, 0.0, 0.0, 0.0, 0.0, 0.0];
-    
+
     // Convert to radians
     let joint_angles_radians: [f32; 6] = joint_angles.map(|a| a.to_radians());
 

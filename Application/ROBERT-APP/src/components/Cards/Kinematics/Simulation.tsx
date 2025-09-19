@@ -49,17 +49,21 @@ const Simulation = () => {
         {/* Orbit controls constrained to Z-axis rotation */}
         <OrbitControls enableZoom={true} enablePan={false} />
         {/* Parent axes */}
-        <AxesWithArrows size={5} origin={[-2.5, -2.5, 0]} />
+        <AxesWithArrows size={5} origin={[-2.5, -2.5, -0.85]} />
         {/* Floor grid aligned with axes */}
         <primitive
           object={new THREE.GridHelper(10, 10, 0xaaaaaa, 0x888888)}
           rotation={[Math.PI / 2, 0, 0]} // Rotate to lie on XY plane
-          position={[0, 0, 0]} // At floor (z=0)
+          position={[0, 0, -0.85]} // At floor (z=0)
         />
         {/* Plot all joint transforms */}
         {transforms.map((t, i) => {
           // t.x,t.y,t.z in same units as backend; if backend uses mm convert to meters: /1000
-          const posVec = new THREE.Vector3(t.x / 100, t.y / 100, t.z / 100);
+          const posVec = new THREE.Vector3(
+            t.x / 100,
+            t.y / 100,
+            t.z / 100
+          );
 
           // if you're receiving degrees for roll/pitch/yaw:
           const roll = (t.roll * Math.PI) / 180;
@@ -68,7 +72,7 @@ const Simulation = () => {
 
           return (
             <group key={i} position={posVec} rotation={[roll, pitch, yaw] /* order: XYZ */}>
-              <AxesWithArrows size={1}/>
+              <AxesWithArrows size={1} />
               <Point position={[0, 0, 0]} size={0.1} color={i === transforms.length - 1 ? 0xff6600 : 0x00aaff} />
               <Billboard follow={true} lockZ={false}>
                 <Text position={[0.15, 0.15, 0]} fontSize={0.2} color="white" anchorX="left" anchorY="middle">
