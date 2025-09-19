@@ -1,5 +1,5 @@
 import { Canvas } from '@react-three/fiber';
-import { OrbitControls } from '@react-three/drei';
+import { Billboard, OrbitControls, Text } from '@react-three/drei';
 import * as THREE from 'three';
 import Point from '../../3D/Point';
 import RobotModel from '../../3D/RobotModel';
@@ -21,7 +21,7 @@ const AxesWithArrows = ({ size = 3, origin = [0, 0, 0] }) => {
 };
 
 const Simulation = () => {
-  const { transform } = useKinematic();
+  const { transforms } = useKinematic();
 
   return (
     <div
@@ -38,35 +38,46 @@ const Simulation = () => {
       >
         {/* Global soft light */}
         <ambientLight intensity={0.4} />
-
         {/* Key light (main, strong) */}
         <directionalLight position={[5, 5, 5]} intensity={1.2} castShadow shadow-mapSize-width={1024} shadow-mapSize-height={1024} />
-
         {/* Fill light (so shadows aren’t fully black) */}
         <directionalLight position={[-5, 2, 5]} intensity={0.6} />
-
         {/* Back/rim light (adds edge highlight to make shape pop) */}
         <directionalLight position={[0, -5, 5]} intensity={0.8} />
-
         {/* Optional: subtle hemisphere light for ambient sky/ground tint */}
         <hemisphereLight groundColor={0x444433} intensity={0.3} />
-
         {/* Orbit controls constrained to Z-axis rotation */}
-        <OrbitControls enableZoom={false} enablePan={false} />
-
+        <OrbitControls enableZoom={true} enablePan={false} />
         {/* Parent axes */}
         <AxesWithArrows size={5} origin={[-2.5, -2.5, 0]} />
-
-        {/* Smaller local axes shifted along X and Y */}
-        <AxesWithArrows size={2} origin={[0, 0, 0]} />
         {/* Floor grid aligned with axes */}
         <primitive
           object={new THREE.GridHelper(10, 10, 0xaaaaaa, 0x888888)}
           rotation={[Math.PI / 2, 0, 0]} // Rotate to lie on XY plane
           position={[0, 0, 0]} // At floor (z=0)
         />
+        {/* Plot all joint transforms */}
+        {transforms.map((t, i) => {
+          // t.x,t.y,t.z in same units as backend; if backend uses mm convert to meters: /1000
+          const posVec = new THREE.Vector3(t.x / 100, t.y / 100, t.z / 100);
 
-        <Point position={[transform.x/10, transform.y/10, transform.z/10]} color={0xff6600} size={0.1} />
+          // if you're receiving degrees for roll/pitch/yaw:
+          const roll = (t.roll * Math.PI) / 180;
+          const pitch = (t.pitch * Math.PI) / 180;
+          const yaw = (t.yaw * Math.PI) / 180;
+
+          return (
+            <group key={i} position={posVec} rotation={[roll, pitch, yaw] /* order: XYZ */}>
+              <AxesWithArrows size={1}/>
+              <Point position={[0, 0, 0]} size={0.1} color={i === transforms.length - 1 ? 0xff6600 : 0x00aaff} />
+              <Billboard follow={true} lockZ={false}>
+                <Text position={[0.15, 0.15, 0]} fontSize={0.2} color="white" anchorX="left" anchorY="middle">
+                  J{i + 1}
+                </Text>
+              </Billboard>
+            </group>
+          );
+        })}
 
         <Suspense fallback={null}>
           <RobotModel scale={1} position={[0, 0, 0]} />

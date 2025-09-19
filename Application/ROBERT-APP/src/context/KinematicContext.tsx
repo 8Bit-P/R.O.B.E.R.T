@@ -11,9 +11,9 @@ export interface Transform {
 }
 
 interface KinematicContextType {
-  transform: Transform;
-  setTransform: React.Dispatch<React.SetStateAction<Transform>>;
-  updateTransform: (updates: Partial<Transform>) => void;
+  transforms: Transform[]; // all joint transforms
+  endEffector: Transform; // convenience: last transform
+  setTransforms: React.Dispatch<React.SetStateAction<Transform[]>>;
 }
 
 const defaultTransform: Transform = {
@@ -28,26 +28,14 @@ const defaultTransform: Transform = {
 const KinematicContext = createContext<KinematicContextType | undefined>(undefined);
 
 export const KinematicProvider = ({ children }: { children: ReactNode }) => {
-  const [transform, setTransform] = useState<Transform>(defaultTransform);
-
-  const updateTransform = (updates: Partial<Transform>) => {
-    setTransform((prev) => ({ ...prev, ...updates }));
-  };
+  const [transforms, setTransforms] = useState<Transform[]>([]);
 
   useEffect(() => {
     let unlisten: (() => void) | undefined;
 
-    // listen returns a Promise that resolves to the unlisten function
-    listen<Transform>('report-robot-transform', (event) => {
-      const { x, y, z, yaw, pitch, roll } = event.payload;
-      setTransform({
-        x: x ?? 0,
-        y: y ?? 0,
-        z: z ?? 0,
-        yaw: yaw ?? 0,
-        pitch: pitch ?? 0,
-        roll: roll ?? 0,
-      });
+    // Listen for all joint transforms (array)
+    listen<Transform[]>('report-robot-transforms', (event) => {
+      setTransforms(event.payload ?? []);
     }).then((fn) => {
       unlisten = fn;
     });
@@ -58,7 +46,13 @@ export const KinematicProvider = ({ children }: { children: ReactNode }) => {
     };
   }, []);
 
-  return <KinematicContext.Provider value={{ transform, setTransform, updateTransform }}>{children}</KinematicContext.Provider>;
+  const endEffector = transforms.length > 0 ? transforms[transforms.length - 1] : defaultTransform;
+
+  return (
+    <KinematicContext.Provider value={{ transforms, endEffector, setTransforms }}>
+      {children}
+    </KinematicContext.Provider>
+  );
 };
 
 export const useKinematic = () => {

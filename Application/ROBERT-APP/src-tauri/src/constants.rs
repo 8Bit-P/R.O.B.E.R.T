@@ -1,5 +1,5 @@
 use once_cell::sync::Lazy;
-use std::{collections::HashMap, f32::consts::PI};
+use std::collections::HashMap;
 
 use crate::structs::{angles::AngleLimits, dh_parameters::DHParameters};
 
@@ -103,19 +103,15 @@ lazy_static::lazy_static! {
 //Velocity and acceleration "sensitivity"
 pub const PARAMETERS_MULTIPLIER: u8 = 10;
 
+//TODO: GRIPPER PARAMETERS MISSING
 // DH Parameters for the 6-DOF robotic arm
 pub static DH_TABLE: Lazy<[DHParameters; 6]> = Lazy::new(|| {
     [
-        DHParameters { theta: 0.0, d: 43.66, a: 37.866, alpha: 90.0 * (PI / 180.0) }, // Joint 1
-        DHParameters { theta: -90.0 * (PI / 180.0), d: 0.0, a: 16.0848, alpha: 180.0 * (PI / 180.0) }, // Joint 2
-        DHParameters { theta: 180.0 * (PI / 180.0), d: 0.0, a: 0.0, alpha: -90.0 * (PI / 180.0) }, // Joint 3
-        DHParameters { theta: 0.0, d: 14.0, a: 35.151, alpha: 90.0 * (PI / 180.0) },  // Joint 4
-        DHParameters { theta: 0.0, d: 0.0, a: 0.0, alpha: -90.0 * (PI / 180.0) },     // Joint 5
-        DHParameters {
-            theta: 0.0,
-            d: 0.0, /* TODO: we still need to know the gripper length */
-            a: 0.0,
-            alpha: 180.0 * (PI / 180.0),
-        }, // Joint 6
+        DHParameters { theta: 0.0, d: 43.66, a: 37.866, alpha: -90.0_f32.to_radians() }, // Joint 1
+        DHParameters { theta: -90.0_f32.to_radians(), d: 0.0, a: 160.0848, alpha: 0.0 },  // Joint 2
+        DHParameters { theta: 180.0_f32.to_radians(), d: 0.0, a: 0.0, alpha: 90.0_f32.to_radians() },   // Joint 3
+        DHParameters { theta: 0.0, d: 140.0, a: 0.0, alpha: -90.0_f32.to_radians() },    // Joint 4
+        DHParameters { theta: 0.0, d: 0.0, a: 0.0, alpha: 90.0_f32.to_radians() },      // Joint 5
+        DHParameters { theta: 0.0, d: 36.0, a: 0.0, alpha: 0.0 },                         // Joint 6
     ]
 });
