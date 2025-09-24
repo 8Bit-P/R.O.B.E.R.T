@@ -13,15 +13,15 @@ const RobotTransform = () => {
           <div className="space-y-2">
             <div className="flex justify-between">
               <span className="font-medium">X:</span>
-              <span>{endEffector.x.toFixed(2)}</span>
+              <span>{endEffector.x.toFixed(2)} mm</span>
             </div>
             <div className="flex justify-between">
               <span className="font-medium">Y:</span>
-              <span>{endEffector.y.toFixed(2)}</span>
+              <span>{endEffector.y.toFixed(2)} mm</span>
             </div>
             <div className="flex justify-between">
               <span className="font-medium">Z:</span>
-              <span>{endEffector.z.toFixed(2)}</span>
+              <span>{endEffector.z.toFixed(2)} mm</span>
             </div>
           </div>
         </div>

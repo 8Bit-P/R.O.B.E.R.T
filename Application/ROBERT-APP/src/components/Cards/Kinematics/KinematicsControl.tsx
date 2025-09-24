@@ -2,15 +2,13 @@ import { useState } from 'react';
 import { useConnection } from '../../../context/ConnectionContext';
 import toast from 'react-hot-toast';
 import { useKinematic } from '../../../context/KinematicContext';
-import { getAnglesFromIK } from '../../../api/commands';
+import { driveAPIStepperToAngle, getAnglesFromIK } from '../../../api/commands';
 import { Transform } from '../../../interfaces/Transform';
 
 const DEFAULT_POSE = { x: '', y: '', z: '', yaw: '', pitch: '', roll: '' };
 
 const KinematicsControl = () => {
-  //TODO: 
-  // const { isConnected } = useConnection();
-  const isConnected = true;
+  const { isConnected } = useConnection();
   const { setTargetTransform, targetTransform } = useKinematic();
   const [poseValues, setPoseValues] = useState<Record<string, number | string>>(DEFAULT_POSE);
 
@@ -31,7 +29,15 @@ const KinematicsControl = () => {
 
   const handleClear = () => setPoseValues(DEFAULT_POSE);
 
-  const handleRun = () => {
+  const arrayToJointMap = (angles: number[]): Map<number, number> => {
+    if (angles.length !== 6) {
+      throw new Error(`Expected 6 joint angles, got ${angles.length}`);
+    }
+
+    return new Map(angles.map((angle, i) => [i + 1, angle]));
+  };
+
+  const handleRun = async () => {
     if (!isConnected) return;
 
     // Build array [x, y, z, yaw, pitch, roll]
@@ -44,9 +50,19 @@ const KinematicsControl = () => {
       targetTransform.roll ?? 0,
     ];
 
-    getAnglesFromIK(apiTargetTransform)
-      .then((res) => console.log('IK VALUES: ', res))
-      .catch((err) => toast.error(err));
+    try {
+      const ikAngles: number[] = await getAnglesFromIK(apiTargetTransform);
+      
+      console.log('IK VALUES: ', ikAngles);
+
+      // convert array → Map
+      const jointsMap = arrayToJointMap(ikAngles);
+
+      // now send it
+      await driveAPIStepperToAngle(jointsMap);
+    } catch (err) {
+      toast.error(String(err));
+    }
   };
 
   const positionFields = ['x', 'y', 'z'];
