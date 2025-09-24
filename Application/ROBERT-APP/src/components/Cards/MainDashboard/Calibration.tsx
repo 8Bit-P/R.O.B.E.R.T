@@ -1,5 +1,5 @@
-import { useConnection } from '../../context/ConnectionContext';
-import { useStepperContext } from '../../context/StepperContext';
+import { useConnection } from '../../../context/ConnectionContext';
+import { useStepperContext } from '../../../context/StepperContext';
 
 const Calibration = () => {
   const { isConnected } = useConnection();

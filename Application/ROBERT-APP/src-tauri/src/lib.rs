@@ -2,6 +2,7 @@ mod commands;
 mod utils;
 mod constants;
 mod state;
+mod structs;
 
 use tauri::async_runtime::RwLock;
 use state::SharedAppState;
@@ -27,6 +28,8 @@ pub fn run() {
             commands::check_steppers_state,
             commands::get_steppers_angles,
             commands::get_parameters,
+            commands::get_fk_from_angles,
+            commands::get_angles_from_ik
             ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

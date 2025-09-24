@@ -1,9 +1,9 @@
-import { useConnection } from '../../context/ConnectionContext';
-import { driveStepperToAngle, moveStep } from '../../api/commands';
+import { useConnection } from '../../../context/ConnectionContext';
+import { driveAPIStepperToAngle, getFKFromAngles, moveAPIStep } from '../../../api/commands';
 import { useState } from 'react';
 
 import toast from 'react-hot-toast';
-import { DEFAULT_INCREMENT_STEPS, STEPPER_LIMITS } from '../../constants/steppersContants';
+import { DEFAULT_INCREMENT_STEPS, STEPPER_LIMITS } from '../../../constants/steppersContants';
 
 const JointControl = () => {
   const { isConnected } = useConnection();
@@ -15,6 +15,7 @@ const JointControl = () => {
     setJointValues(newValues);
   };
 
+  //Gets the values stored in jointValues state and sends a command to the API to move them to that angle
   const driveToCustomAngle = () => {
     if (!isConnected) return;
 
@@ -26,29 +27,28 @@ const JointControl = () => {
       }
     });
 
-    driveStepperToAngle(jointAngles)
-      .then((res) => {
-        console.log(res);
-      })
-      .catch((err) => toast.error(err));
+    //Execute backend command
+    driveAPIStepperToAngle(jointAngles)
+      .catch((err) => toast.error(err))
+      .then(() => getFKFromAngles());
   };
 
   //Individual increase of joint angle
   const handleJointIncrement = (jointIndex: number) => {
     if (!isConnected) return;
 
-    moveStep(jointIndex, DEFAULT_INCREMENT_STEPS)
-      .then((res) => console.log(res))
-      .catch((err) => toast.error(err));
+    moveAPIStep(jointIndex, DEFAULT_INCREMENT_STEPS)
+      .catch((err) => toast.error(err))
+      .then(() => getFKFromAngles());
   };
 
   //Individual decrease of joint angle
   const handleJointDecrement = (jointIndex: number) => {
     if (!isConnected) return;
 
-    moveStep(jointIndex, -DEFAULT_INCREMENT_STEPS)
-      .then((res) => console.log(res))
-      .catch((err) => toast.error(err));
+    moveAPIStep(jointIndex, -DEFAULT_INCREMENT_STEPS)
+      .catch((err) => toast.error(err))
+      .then(() => getFKFromAngles());
   };
 
   return (
@@ -91,12 +91,12 @@ const JointControl = () => {
               <label className="font-medium text-gray-700">J{index + 1}</label>
               <input
                 type="number"
-                min="0"
-                max={STEPPER_LIMITS[index + 1]}
+                min={STEPPER_LIMITS[index + 1].min}
+                max={STEPPER_LIMITS[index + 1].max}
                 value={jointValues[index]} // Controlled input
                 onChange={(e) => handleInputChange(index, e.target.value)}
-                className="w-full p-2 border border-gray-300 rounded-md text-center hover:border-blue-400 hover:bg-blue-50"
-                placeholder={'0-' + STEPPER_LIMITS[index + 1]}
+                className="w-full p-2 border border-gray-300 rounded-md text-center hover:border-blue-400 hover:bg-blue-50 placeholder:text-sm placeholder:text-gray-400"
+                placeholder={`${STEPPER_LIMITS[index + 1].min} – ${STEPPER_LIMITS[index + 1].max}º`}
               />
             </div>
           ))}
