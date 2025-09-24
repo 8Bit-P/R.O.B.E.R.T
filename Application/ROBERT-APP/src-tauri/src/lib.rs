@@ -29,6 +29,7 @@ pub fn run() {
             commands::get_steppers_angles,
             commands::get_parameters,
             commands::get_fk_from_angles,
+            commands::get_angles_from_ik
             ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -65,6 +65,11 @@ pub async fn get_steppers_angles<'a>(app: AppHandle, state: State<'a, SharedAppS
 
 #[tauri::command]
 pub async fn get_fk_from_angles(app: AppHandle, state: State<'_, SharedAppState>) -> Result<[f32; 6], String> {
-    // Call the async function and await it here, do NOT return a reference
     return ik_utils::get_robot_transform_from_angles(&app, state.inner().clone()).await
 }
+
+#[tauri::command]
+pub async fn get_angles_from_ik(end_effector_transform: [f32; 6],app: AppHandle, state: State<'_, SharedAppState>) -> Result<[f32; 6], String> {
+    return ik_utils::get_angles_from_end_effector_transform(end_effector_transform,&app, state.inner().clone()).await
+}
+

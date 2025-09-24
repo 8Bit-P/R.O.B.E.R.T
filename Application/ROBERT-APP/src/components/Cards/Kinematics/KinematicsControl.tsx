@@ -1,21 +1,31 @@
 import { useState } from 'react';
 import { useConnection } from '../../../context/ConnectionContext';
 import toast from 'react-hot-toast';
+import { useKinematic } from '../../../context/KinematicContext';
+import { getAnglesFromIK } from '../../../api/commands';
+import { Transform } from '../../../interfaces/Transform';
 
-// placeholder functions (replace with your real API calls later)
-const driveToPoseAPI = async (pose: Record<string, number>) => {
-  console.log('Driving to pose:', pose);
-};
 const DEFAULT_POSE = { x: '', y: '', z: '', yaw: '', pitch: '', roll: '' };
 
 const KinematicsControl = () => {
-  const { isConnected } = useConnection();
+  //TODO: 
+  // const { isConnected } = useConnection();
+  const isConnected = true;
+  const { setTargetTransform, targetTransform } = useKinematic();
   const [poseValues, setPoseValues] = useState<Record<string, number | string>>(DEFAULT_POSE);
 
   const handleInputChange = (key: string, value: string) => {
+    const numericValue = value === '' ? '' : parseFloat(value) || 0;
+
     setPoseValues((prev) => ({
       ...prev,
-      [key]: value === '' ? '' : parseFloat(value) || 0,
+      [key]: numericValue,
+    }));
+
+    // Update only the changed field in targetTransform
+    setTargetTransform((prev: Transform) => ({
+      ...prev,
+      [key]: numericValue, // update only this key
     }));
   };
 
@@ -24,12 +34,19 @@ const KinematicsControl = () => {
   const handleRun = () => {
     if (!isConnected) return;
 
-    const pose: Record<string, number> = {};
-    Object.entries(poseValues).forEach(([key, value]) => {
-      if (value !== '') pose[key] = Number(value);
-    });
+    // Build array [x, y, z, yaw, pitch, roll]
+    const apiTargetTransform: number[] = [
+      targetTransform.x ?? 0,
+      targetTransform.y ?? 0,
+      targetTransform.z ?? 0,
+      targetTransform.yaw ?? 0,
+      targetTransform.pitch ?? 0,
+      targetTransform.roll ?? 0,
+    ];
 
-    driveToPoseAPI(pose).catch((err) => toast.error(err));
+    getAnglesFromIK(apiTargetTransform)
+      .then((res) => console.log('IK VALUES: ', res))
+      .catch((err) => toast.error(err));
   };
 
   const positionFields = ['x', 'y', 'z'];

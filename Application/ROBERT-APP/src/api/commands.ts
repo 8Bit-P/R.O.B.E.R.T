@@ -67,3 +67,9 @@ export const driveAPIStepperToAngle = async (jointsAngles: Map<number, number>):
 export const getFKFromAngles = async (): Promise<number[]> => {
   return invoke<number[]>('get_fk_from_angles');
 };
+
+//Gets the transform of the end efector from the angles of the steppers
+export const getAnglesFromIK = async (endEffectorTransform: number[]): Promise<number[]> => {
+  return invoke<number[]>('get_angles_from_ik', { endEffectorTransform: endEffectorTransform });
+};
+

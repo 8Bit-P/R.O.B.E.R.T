@@ -1,19 +1,15 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { listen } from '@tauri-apps/api/event';
+import { Transform } from '../interfaces/Transform';
 
-export interface Transform {
-  x: number;
-  y: number;
-  z: number;
-  yaw: number;
-  pitch: number;
-  roll: number;
-}
+
 
 interface KinematicContextType {
   transforms: Transform[]; // all joint transforms
+  targetTransform: Transform; // Transform specified in Kinematics control tab
   endEffector: Transform; // convenience: last transform
   setTransforms: React.Dispatch<React.SetStateAction<Transform[]>>;
+  setTargetTransform: React.Dispatch<React.SetStateAction<Transform>>;
 }
 
 const defaultTransform: Transform = {
@@ -28,7 +24,8 @@ const defaultTransform: Transform = {
 const KinematicContext = createContext<KinematicContextType | undefined>(undefined);
 
 export const KinematicProvider = ({ children }: { children: ReactNode }) => {
-  const [transforms, setTransforms] = useState<Transform[]>([]);
+  const [transforms, setTransforms] = useState<Transform[]>([]); //Transforms of the joints
+  const [targetTransform, setTargetTransform] = useState<Transform>(defaultTransform);
 
   useEffect(() => {
     let unlisten: (() => void) | undefined;
@@ -49,7 +46,7 @@ export const KinematicProvider = ({ children }: { children: ReactNode }) => {
   const endEffector = transforms.length > 0 ? transforms[transforms.length - 1] : defaultTransform;
 
   return (
-    <KinematicContext.Provider value={{ transforms, endEffector, setTransforms }}>
+    <KinematicContext.Provider value={{ transforms, targetTransform, endEffector, setTransforms, setTargetTransform }}>
       {children}
     </KinematicContext.Provider>
   );

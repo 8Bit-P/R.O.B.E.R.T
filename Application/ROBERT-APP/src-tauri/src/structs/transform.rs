@@ -1,5 +1,5 @@
 use nalgebra::{ UnitQuaternion, Vector3};
-use serde::Serialize;
+use serde::{ Serialize};
 
 #[derive(Debug, Clone)]
 pub struct Transform {
